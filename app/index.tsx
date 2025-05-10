@@ -20,24 +20,24 @@ import StatisticsDashboard from "./components/StatisticsDashboard";
 const mockRecentInjections = [
   {
     id: "1",
-    medication: "Insulin",
-    dosage: "10 units",
-    date: "2023-06-15 08:30 AM",
-    site: "Left Abdomen",
+    medication: "Testosterone Cypionate 250",
+    dosage: "100mg",
+    date: "2025-06-15 08:30 AM",
+    site: "Left Glute",
   },
   {
     id: "2",
-    medication: "Vitamin B12",
-    dosage: "1000 mcg",
-    date: "2023-06-14 09:15 AM",
-    site: "Right Thigh",
+    medication: "Testosterone Cypionate 250",
+    dosage: "100 mg",
+    date: "2025-06 11  09:15 AM",
+    site: "Right Glute",
   },
   {
     id: "3",
-    medication: "Insulin",
-    dosage: "8 units",
-    date: "2023-06-13 07:45 PM",
-    site: "Right Abdomen",
+    medication: "Testosterone Cypionate 250",
+    dosage: "100mg",
+    date: "2025-06-7 08:30 AM",
+    site: "Left Glute",
   },
 ];
 
@@ -66,28 +66,53 @@ export default function HomeScreen() {
           <ScrollView className="flex-1 px-4">
             <View className="mt-4 mb-6">
               <Text className="text-2xl font-bold text-white mb-1">
-                Welcome back
+                MediTrack
               </Text>
               <Text className="text-gray-400">
-                Track your injections easily
+                Track your medication easily
               </Text>
             </View>
 
             {/* Add Injection Button */}
             <TouchableOpacity
               onPress={() => setShowInjectionForm(true)}
-              className="mb-6"
+              className="mb-6"    
+                        
             >
               <LinearGradient
                 colors={["#4c669f", "#3b5998", "#192f6a"]}
-                className="rounded-xl py-4 px-6 flex-row items-center justify-center"
+                className="rounded-xl py-4 px-6 flex-row items-center justify-center"                
               >
-                <Plus size={24} color="white" />
-                <Text className="text-white text-lg font-semibold ml-2">
-                  Add Injection
-                </Text>
+                
+                <View style={{flexDirection:'row'}} className="p-4">
+                  <Plus size={24} color="white" />
+                  <Text className="text-white text-lg font-semibold ml-2">
+                    Add Injection
+                  </Text>
+                </View>
               </LinearGradient>
             </TouchableOpacity>
+
+            {/* Recent Injections */}
+            <View className="mb-6">
+              <Text className="text-xl font-semibold text-white mb-3">
+                Next Injection
+              </Text>
+              <View
+                className="bg-gray-800 rounded-lg p-4 mb-3"
+              >
+                <View className="flex-row justify-between">
+                  <Text className="text-white font-semibold">
+                    Testosterone Cypionate 250
+                  </Text>
+                  <Text className="text-gray-400">80mg</Text>
+                </View>
+                <View className="flex-row justify-between mt-2">
+                  <Text className="text-gray-400">Left Glute</Text>
+                  <Text className="text-gray-400">2025-06-18 08:30AM</Text>
+                </View>
+              </View>
+            </View>
 
             {/* Recent Injections */}
             <View className="mb-6">
@@ -121,11 +146,11 @@ export default function HomeScreen() {
               <View className="flex-row justify-between">
                 <View className="bg-gray-800 rounded-lg p-4 flex-1 mr-2 items-center">
                   <Text className="text-2xl font-bold text-blue-400">12</Text>
-                  <Text className="text-gray-400">This Week</Text>
+                  <Text className="text-gray-400">Last Week</Text>
                 </View>
                 <View className="bg-gray-800 rounded-lg p-4 flex-1 ml-2 items-center">
                   <Text className="text-2xl font-bold text-purple-400">42</Text>
-                  <Text className="text-gray-400">This Month</Text>
+                  <Text className="text-gray-400">Last 30 days</Text>
                 </View>
               </View>
             </View>
@@ -147,10 +172,6 @@ export default function HomeScreen() {
     >
       <StatusBar barStyle="light-content" backgroundColor="#111827" />
 
-      {/* Header */}
-      <View className="px-4 py-3 bg-gray-800">
-        <Text className="text-xl font-bold text-white">Injection Tracker</Text>
-      </View>
 
       {/* Main Content */}
       <View className="flex-1">{renderContent()}</View>

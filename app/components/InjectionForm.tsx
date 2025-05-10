@@ -10,6 +10,8 @@ import { Calendar, Clock, Check } from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 interface InjectionFormProps {
+  onClose:()=>void,
+  onSave:()=>void,
   onSubmit?: (data: InjectionData) => void;
   isOpen?: boolean;
 }
@@ -30,8 +32,13 @@ const PlaceholderBodyDiagram = ({
   selectedSite: string;
 }) => {
   const sites = [
+    
+    "Left Delt",
+    "Right Delt",
     "Left Arm",
     "Right Arm",
+    "Left Glute",
+    "Right Glute",
     "Left Thigh",
     "Right Thigh",
     "Abdomen",
@@ -39,9 +46,6 @@ const PlaceholderBodyDiagram = ({
 
   return (
     <View className="w-full bg-gray-700 p-4 rounded-lg">
-      <Text className="text-white text-center mb-4">
-        Body Diagram Placeholder
-      </Text>
       <View className="flex-row flex-wrap justify-center">
         {sites.map((site) => (
           <TouchableOpacity
@@ -58,7 +62,9 @@ const PlaceholderBodyDiagram = ({
 };
 
 const InjectionForm = ({
-  onSubmit = () => {},
+  onClose,
+  onSave,
+  onSubmit = () => {  },
   isOpen = true,
 }: InjectionFormProps) => {
   const [medicationName, setMedicationName] = useState("");
@@ -104,8 +110,14 @@ const InjectionForm = ({
       setDosage("");
       setDateTime(new Date());
       setInjectionSite("");
+      isOpen = false;
+      onSave();
     }
   };
+
+  const handleCancel = () => {
+    onClose();
+  }
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
@@ -235,14 +247,37 @@ const InjectionForm = ({
           )}
         </View>
 
+
+        <View>
+          <Text className="text-white text-base mb-2">How have you been feeling recently?</Text>
+          <Text className="text-white text-base mb-2">Mood</Text>
+          <Text className="text-white text-base mb-2">Sleep</Text>
+          <Text className="text-white text-base mb-2">Libido</Text>
+          <Text className="text-white text-base mb-2">Energy</Text>
+          <Text className="text-white text-base mb-2">Sides</Text>     
+        </View>
+
+
+
+
         <TouchableOpacity
           className="bg-blue-600 py-4 px-6 rounded-md items-center"
           onPress={handleSubmit}
         >
-          <View className="flex-row items-center">
-            <Check size={20} color="#fff" />
+          <View className="flex-row items-center">            
             <Text className="text-white font-bold text-lg ml-2">
-              Save Injection
+              Save
+            </Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          className="bg-red-600 py-4 px-6 rounded-md items-center mt-2"
+          onPress={handleCancel}
+        >
+          <View className="flex-row items-center">
+             
+            <Text className="text-white font-bold text-lg ml-2">
+              Cancel
             </Text>
           </View>
         </TouchableOpacity>
