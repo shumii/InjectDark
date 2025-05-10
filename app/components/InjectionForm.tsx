@@ -5,13 +5,15 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
+  Modal,
+  FlatList,
 } from "react-native";
-import { Calendar, Clock, Check } from "lucide-react-native";
+import { Calendar, Clock, Check, ChevronDown } from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 interface InjectionFormProps {
-  onClose:()=>void,
-  onSave:()=>void,
+  onClose: () => void,
+  onSave: () => void,
   onSubmit?: (data: InjectionData) => void;
   isOpen?: boolean;
 }
@@ -21,18 +23,24 @@ export interface InjectionData {
   dosage: string;
   dateTime: Date;
   injectionSite: string;
+  halfLife?: string;
+}
+
+interface Medication {
+  name: string;
+  halfLife: string;
 }
 
 // Placeholder component for BodyDiagram until the actual component is implemented
 const PlaceholderBodyDiagram = ({
-  onSelectSite = (site: string) => {},
+  onSelectSite = (site: string) => { },
   selectedSite = "",
 }: {
   onSelectSite: (site: string) => void;
   selectedSite: string;
 }) => {
   const sites = [
-    
+
     "Left Delt",
     "Right Delt",
     "Left Arm",
@@ -64,10 +72,25 @@ const PlaceholderBodyDiagram = ({
 const InjectionForm = ({
   onClose,
   onSave,
-  onSubmit = () => {  },
+  onSubmit = () => { },
   isOpen = true,
 }: InjectionFormProps) => {
+  // List of medications with their half-lives
+  const medications: Medication[] = [
+    { name: "Insulin Glargine", halfLife: "24 hours" },
+    { name: "Insulin Lispro", halfLife: "1 hour" },
+    { name: "Insulin Aspart", halfLife: "81 minutes" },
+    { name: "Heparin", halfLife: "1-2 hours" },
+    { name: "Enoxaparin", halfLife: "4.5 hours" },
+    { name: "Morphine", halfLife: "2-3 hours" },
+    { name: "Epinephrine", halfLife: "2 minutes" },
+    { name: "Methotrexate", halfLife: "3-10 hours" },
+    { name: "Vitamin B12", halfLife: "6 days" },
+    { name: "Growth Hormone", halfLife: "3.4 hours" },
+  ];
   const [medicationName, setMedicationName] = useState("");
+  const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
+  const [showMedicationDropdown, setShowMedicationDropdown] = useState(false);
   const [dosage, setDosage] = useState("");
   const [dateTime, setDateTime] = useState(new Date());
   const [injectionSite, setInjectionSite] = useState("");
@@ -103,14 +126,16 @@ const InjectionForm = ({
         dosage,
         dateTime,
         injectionSite,
+        halfLife: selectedMedication?.halfLife,
       });
 
       // Reset form
       setMedicationName("");
+      setSelectedMedication(null);
       setDosage("");
       setDateTime(new Date());
       setInjectionSite("");
-      isOpen = false;
+
       onSave();
     }
   };
@@ -118,6 +143,12 @@ const InjectionForm = ({
   const handleCancel = () => {
     onClose();
   }
+
+  const handleSelectMedication = (medication: Medication) => {
+    setSelectedMedication(medication);
+    setMedicationName(medication.name);
+    setShowMedicationDropdown(false);
+  };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
@@ -164,16 +195,58 @@ const InjectionForm = ({
 
         <View className="mb-4">
           <Text className="text-white text-base mb-2">Medication Name</Text>
-          <TextInput
-            className={`bg-gray-700 text-white p-3 rounded-md ${errors.medicationName ? "border border-red-500" : ""}`}
-            placeholder="Enter medication name"
-            placeholderTextColor="#9ca3af"
-            value={medicationName}
-            onChangeText={setMedicationName}
-          />
+          <TouchableOpacity
+            className={`bg-gray-700 p-3 rounded-md flex-row justify-between items-center ${errors.medicationName ? "border border-red-500" : ""}`}
+            onPress={() => setShowMedicationDropdown(true)}
+          >
+            <Text className="text-white">
+              {medicationName || "Select medication"}
+            </Text>
+            <ChevronDown size={20} color="#fff" />
+          </TouchableOpacity>
+          {selectedMedication && (
+            <Text className="text-gray-400 mt-1">
+              Half-life: {selectedMedication.halfLife}
+            </Text>
+          )}
           {errors.medicationName && (
             <Text className="text-red-500 mt-1">{errors.medicationName}</Text>
           )}
+          <Modal
+            visible={showMedicationDropdown}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={() => setShowMedicationDropdown(false)}
+          >
+            <TouchableOpacity
+              style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }}
+              activeOpacity={1}
+              onPress={() => setShowMedicationDropdown(false)}
+            >
+              <View className="bg-gray-800 rounded-t-lg absolute bottom-0 left-0 right-0 max-h-96">
+                <View className="p-4 border-b border-gray-700">
+                  <Text className="text-white text-lg font-bold">
+                    Select Medication
+                  </Text>
+                </View>
+                <FlatList
+                  data={medications}
+                  keyExtractor={(item) => item.name}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      className="p-4 border-b border-gray-700"
+                      onPress={() => handleSelectMedication(item)}
+                    >
+                      <Text className="text-white text-base">{item.name}</Text>
+                      <Text className="text-gray-400 text-sm">
+                        Half-life: {item.halfLife}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
+            </TouchableOpacity>
+          </Modal>
         </View>
 
         <View className="mb-4">
@@ -254,7 +327,7 @@ const InjectionForm = ({
           <Text className="text-white text-base mb-2">Sleep</Text>
           <Text className="text-white text-base mb-2">Libido</Text>
           <Text className="text-white text-base mb-2">Energy</Text>
-          <Text className="text-white text-base mb-2">Sides</Text>     
+          <Text className="text-white text-base mb-2">Sides</Text>
         </View>
 
 
@@ -264,7 +337,7 @@ const InjectionForm = ({
           className="bg-blue-600 py-4 px-6 rounded-md items-center"
           onPress={handleSubmit}
         >
-          <View className="flex-row items-center">            
+          <View className="flex-row items-center">
             <Text className="text-white font-bold text-lg ml-2">
               Save
             </Text>
@@ -275,7 +348,7 @@ const InjectionForm = ({
           onPress={handleCancel}
         >
           <View className="flex-row items-center">
-             
+
             <Text className="text-white font-bold text-lg ml-2">
               Cancel
             </Text>

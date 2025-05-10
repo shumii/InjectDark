@@ -54,6 +54,7 @@ export default function HomeScreen() {
           onSave={(data) => {
             // Handle saving injection data
             console.log("Saving injection data:", data);
+            // persist to storage
             setShowInjectionForm(false);
           }}
         />
@@ -69,7 +70,7 @@ export default function HomeScreen() {
                 MediTrack
               </Text>
               <Text className="text-gray-400">
-                Track your medication easily
+                Track your injections easily
               </Text>
             </View>
 
