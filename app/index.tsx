@@ -391,9 +391,10 @@ export default function HomeScreen() {
                 id: injection.id,
                 medicationName: injection.medicationName,
                 dosage: injection.dosage,                
-                dateTime: injection.dateTime, //injection != null ? new Date(injection.date).toISOString() : "",
+                dateTime: injection.dateTime,
                 dateTimeDisplay: new Date(injection.dateTime).toISOString(),
                 site: injection.injectionSite,
+                halfLifeMinutes: injection.halfLifeMinutes
               }))}
             />
 

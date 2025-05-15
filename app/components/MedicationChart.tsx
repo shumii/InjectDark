@@ -23,6 +23,7 @@ interface MedicationChartProps {
     dateTime: Date;
     dateTimeDisplay:string;
     site: string;
+    halfLifeMinutes?: number;
   }>;
 }
 
@@ -54,25 +55,11 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
 
   // Process data for chart
   const chartData = useMemo(() => {
-    // Group injections by medication name and date
+    // Group injections by medication name and calculate daily testosterone levels
     const medicationMap: Record<string, Record<string, number>> = {};
     const medications = new Set<string>();
 
-    filteredData.forEach((injection) => {
-       
-      const medicationName = injection.medicationName;
-      const date = injection.dateTime.split("T")[0];
-
-      medications.add(medicationName);
-
-      if (!medicationMap[medicationName]) {
-        medicationMap[medicationName] = {};
-      }
-
-      medicationMap[medicationName][date] = injection.dosage;
-    });
-
-    // Generate date range for x-axis
+    // Generate date range for x-axis first
     const dateRange: string[] = [];
     const endDate = new Date();
     const startDate = new Date();
@@ -86,16 +73,79 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
       dateRange.push(d.toISOString().split("T")[0]);
     }
 
+    // Initialize medication map with all dates
+    filteredData.forEach((injection) => {
+      const medicationName = injection.medicationName;
+      medications.add(medicationName);
+      if (!medicationMap[medicationName]) {
+        medicationMap[medicationName] = {};
+        // Initialize all dates with 0
+        dateRange.forEach(date => {
+          medicationMap[medicationName][date] = 0;
+        });
+      }
+    });
+
+    // Calculate testosterone levels for each day
+    filteredData.forEach((injection) => {
+      const medicationName = injection.medicationName;
+      const injectionDate = new Date(injection.dateTime);
+      const halfLifeMinutes = injection.halfLifeMinutes || 0;
+
+      console.log('Processing injection:', {
+        medicationName,
+        injectionDate,
+        halfLifeMinutes,
+        dosage: injection.dosage
+      });
+
+      if (halfLifeMinutes > 0) {
+        // Process each day from injection date
+        dateRange.forEach(date => {
+          const currentDate = new Date(date);
+          // Set current date to end of day to include full day's levels
+          currentDate.setHours(23, 59, 59, 999);
+          
+          // Calculate minutes difference
+          const minutesDiff = (currentDate.getTime() - injectionDate.getTime()) / (1000 * 60);
+          
+          if (minutesDiff >= 0) { // Only calculate for times after the injection
+            // Calculate remaining testosterone using half-life decay
+            const halfLifePeriods = minutesDiff / halfLifeMinutes;
+            const decayFactor = Math.pow(0.5, halfLifePeriods);
+            const levelForThisInjection = injection.dosage * decayFactor;
+
+            console.log('Calculation for date', date, {
+              minutesDiff,
+              halfLifePeriods,
+              decayFactor,
+              levelForThisInjection,
+              currentLevel: medicationMap[medicationName][date]
+            });
+            
+            // Add this level to any existing level for this day
+            medicationMap[medicationName][date] += levelForThisInjection;
+          }
+        });
+      }
+    });
+
+    // Log final data
+    console.log('Final medication map:', medicationMap);
+
     // Create dataset for each medication
-    return Array.from(medications).map((medication) => {
+    const finalData = Array.from(medications).map((medication) => {
       return {
         medication,
         data: dateRange.map((date) => ({
           x: date,
-          y: medicationMap[medication]?.[date] || 0,
+          y: Math.round(medicationMap[medication]?.[date] || 0),
         })),
       };
     });
+
+    console.log('Final chart data:', finalData);
+    return finalData;
   }, [filteredData, selectedPeriod]);
 
   // Generate colors for each medication line
@@ -216,6 +266,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
           height={50}
           centerTitle
           orientation="horizontal"
+          itemsPerRow={2}
           style={{
             labels: { fill: "white", fontSize: 10 },
           }}
