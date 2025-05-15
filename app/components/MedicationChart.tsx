@@ -130,6 +130,21 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
       }
     });
 
+    // Calculate Total T by summing up all testosterone medications for each date
+    const totalTLevels: Record<string, number> = {};
+    dateRange.forEach(date => {
+      totalTLevels[date] = 0;
+      Object.entries(medicationMap).forEach(([medicationName, levels]) => {
+        if (medicationName.toLowerCase().includes('testosterone')) {
+          totalTLevels[date] += levels[date];
+        }
+      });
+    });
+
+    // Add Total T to the medication map
+    medicationMap['Total T'] = totalTLevels;
+    medications.add('Total T');
+
     // Log final data
     console.log('Final medication map:', medicationMap);
 
@@ -149,7 +164,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
   }, [filteredData, selectedPeriod]);
 
   // Generate colors for each medication line
-  const colors = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#a4de6c"];
+  const colors = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#a4de6c", "#ff0000"]; // Added red color for Total T
 
   // Format x-axis labels based on selected period
   const formatXAxisLabel = (date: string) => {
