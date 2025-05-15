@@ -234,10 +234,25 @@ export default function HomeScreen() {
 
   const renderContent = () => {
     if (showInjectionForm) {
+      // Calculate the suggested site for the new injection
+      let suggestedSite = "";
+      if (allInjections.length >= 2) {
+        const nextInjection = calculateNextInjection(allInjections);
+        if (nextInjection) {
+          suggestedSite = nextInjection.injectionSite;
+        }
+      } else if (allInjections.length === 1) {
+        // If we only have one injection, suggest the opposite site
+        suggestedSite = getOppositeSite(allInjections[0].injectionSite);
+      }
+
       return (
         <InjectionForm
           onClose={() => setShowInjectionForm(false)}
-          lastInjection={allInjections.length > 0 ? allInjections[0] : undefined}
+          lastInjection={allInjections.length > 0 ? {
+            ...allInjections[0],
+            injectionSite: suggestedSite || allInjections[0].injectionSite
+          } : undefined}
           onSave={async(data) => {
             // Handle saving injection data
             console.log("Saving injection data:", data);            
