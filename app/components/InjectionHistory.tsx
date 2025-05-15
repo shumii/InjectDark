@@ -1,11 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   ScrollView,
   FlatList,
+  ActivityIndicator,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Calendar, ChevronDown, List, BarChart } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -13,8 +15,10 @@ interface Injection {
   id: string;
   medicationName: string;
   dosage: string;
-  dateTime: string;
-  site: string;
+  dateTime: string | Date;
+  injectionSite?: string;
+  site?: string;
+  halfLife?: string;
 }
 
 interface InjectionHistoryProps {
@@ -23,45 +27,41 @@ interface InjectionHistoryProps {
 }
 
 const InjectionHistory = ({
-  injections = [
-    {
-      id: "1",
-      medicationName: "Insulin",
-      dosage: "10 units",
-      dateTime: "2023-05-15 08:30",
-      site: "Left Arm",
-    },
-    {
-      id: "2",
-      medicationName: "Vitamin B12",
-      dosage: "1000 mcg",
-      dateTime: "2023-05-12 19:45",
-      site: "Right Thigh",
-    },
-    {
-      id: "3",
-      medicationName: "Insulin",
-      dosage: "8 units",
-      dateTime: "2023-05-10 08:15",
-      site: "Abdomen",
-    },
-    {
-      id: "4",
-      medicationName: "Growth Hormone",
-      dosage: "0.5 mg",
-      dateTime: "2023-05-08 22:00",
-      site: "Left Thigh",
-    },
-    {
-      id: "5",
-      medicationName: "Insulin",
-      dosage: "12 units",
-      dateTime: "2023-05-05 12:30",
-      site: "Right Arm",
-    },
-  ],
+  injections: propInjections,
   onSelectInjection = () => {},
 }: InjectionHistoryProps) => {
+  const [injections, setInjections] = useState<Injection[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadInjections = async () => {
+      try {
+        setLoading(true);
+        const storedInjections = await AsyncStorage.getItem("injections");
+        if (storedInjections) {
+          const parsedInjections = JSON.parse(storedInjections);
+          setInjections(
+            parsedInjections.map((item: any) => ({
+              ...item,
+              site: item.injectionSite || item.site, // Handle both property names
+              dateTime:
+                typeof item.dateTime === "string"
+                  ? item.dateTime
+                  : new Date(item.dateTime).toISOString(),
+            })),
+          );
+        } else if (propInjections) {
+          setInjections(propInjections);
+        }
+      } catch (error) {
+        console.error("Error loading injections:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadInjections();
+  }, [propInjections]);
   const [viewMode, setViewMode] = useState<"list" | "chart">("list");
   const [sortBy, setSortBy] = useState<"date" | "medication">("date");
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
@@ -187,53 +187,69 @@ const InjectionHistory = ({
         </View>
       </View>
 
-      {viewMode === "list" && (
+      {loading ? (
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#60a5fa" />
+          <Text className="text-white mt-4">Loading injections...</Text>
+        </View>
+      ) : injections.length === 0 ? (
+        <View className="flex-1 justify-center items-center">
+          <Text className="text-white text-lg">No injection records found</Text>
+          <Text className="text-gray-400 mt-2">
+            Add your first injection to get started
+          </Text>
+        </View>
+      ) : (
         <>
-          <View className="relative mb-4">
-            <TouchableOpacity
-              className="flex-row items-center justify-between p-3 bg-gray-800 rounded-lg"
-              onPress={() => setSortMenuOpen(!sortMenuOpen)}
-            >
-              <Text className="text-white">
-                Sort by: {sortBy === "date" ? "Date" : "Medication"}
-              </Text>
-              <ChevronDown size={20} color="white" />
-            </TouchableOpacity>
+          {viewMode === "list" && (
+            <>
+              <View className="relative mb-4">
+                <TouchableOpacity
+                  className="flex-row items-center justify-between p-3 bg-gray-800 rounded-lg"
+                  onPress={() => setSortMenuOpen(!sortMenuOpen)}
+                >
+                  <Text className="text-white">
+                    Sort by: {sortBy === "date" ? "Date" : "Medication"}
+                  </Text>
+                  <ChevronDown size={20} color="white" />
+                </TouchableOpacity>
 
-            {sortMenuOpen && (
-              <View className="absolute top-12 left-0 right-0 bg-gray-800 rounded-lg z-10 border border-gray-700">
-                <TouchableOpacity
-                  className="p-3 border-b border-gray-700"
-                  onPress={() => {
-                    setSortBy("date");
-                    setSortMenuOpen(false);
-                  }}
-                >
-                  <Text className="text-white">Date</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  className="p-3"
-                  onPress={() => {
-                    setSortBy("medication");
-                    setSortMenuOpen(false);
-                  }}
-                >
-                  <Text className="text-white">Medication</Text>
-                </TouchableOpacity>
+                {sortMenuOpen && (
+                  <View className="absolute top-12 left-0 right-0 bg-gray-800 rounded-lg z-10 border border-gray-700">
+                    <TouchableOpacity
+                      className="p-3 border-b border-gray-700"
+                      onPress={() => {
+                        setSortBy("date");
+                        setSortMenuOpen(false);
+                      }}
+                    >
+                      <Text className="text-white">Date</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      className="p-3"
+                      onPress={() => {
+                        setSortBy("medication");
+                        setSortMenuOpen(false);
+                      }}
+                    >
+                      <Text className="text-white">Medication</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
-            )}
-          </View>
 
-          <FlatList
-            data={sortedInjections}
-            renderItem={renderListItem}
-            keyExtractor={(item) => item.id}
-            className="flex-1"
-          />
+              <FlatList
+                data={sortedInjections}
+                renderItem={renderListItem}
+                keyExtractor={(item) => item.id}
+                className="flex-1"
+              />
+            </>
+          )}
+
+          {viewMode === "chart" && renderChartView()}
         </>
       )}
-
-      {viewMode === "chart" && renderChartView()}
     </View>
   );
 };
