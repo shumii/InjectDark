@@ -71,6 +71,48 @@ export default function HomeScreen() {
   const [allInjections, setAllInjections] = useState<InjectionData[]>([],);
   const [loading, setLoading] = useState(true);
 
+  // Helper function to format date and time in a Facebook-style format
+  const formatRelativeDateTime = (dateTime: Date | string) => {
+    const date = new Date(dateTime);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    const timeString = date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      hour12: false 
+    });
+
+    // Just now: less than 1 minute ago
+    if (diffInSeconds < 60) {
+      return "Just now";
+    }
+    // Minutes ago: less than 1 hour ago
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes}m ago`;
+    }
+    // Hours ago: less than 24 hours ago
+    if (diffInHours < 24) {
+      return `${diffInHours}h ago`;
+    }
+    // Yesterday at TIME
+    if (diffInDays === 1) {
+      return `Yesterday at ${timeString}`;
+    }
+    // Days ago (2-7 days): include time
+    if (diffInDays < 7) {
+      return `${diffInDays}d ago at ${timeString}`;
+    }
+    // Full date for older posts
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    }) + ` at ${timeString}`;
+  };
+
   // Load injections from AsyncStorage
   const loadInjections = async () => {
     try {
@@ -88,8 +130,8 @@ export default function HomeScreen() {
             id: injection.id,
             medication: injection.medicationName,
             dosage: injection.dosage,
-            dateDisplay: formatDateTime(injection.dateTime),
-            date:injection.dateTime,
+            dateDisplay: formatRelativeDateTime(injection.dateTime),
+            date: injection.dateTime,
             site: injection.injectionSite,
           }));
     
@@ -108,19 +150,6 @@ export default function HomeScreen() {
   useEffect(() => {
     loadInjections();
   }, []);
-
-  // Helper function to format date and time
-  const formatDateTime = (dateTime: Date | string) => {
-    const date = new Date(dateTime);
-    return date.toLocaleString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-  };
 
   const handleShowInjectionForm = async () => {
     await loadInjections(); // Reload injections before showing form
