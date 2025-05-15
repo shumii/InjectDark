@@ -439,7 +439,10 @@ export default function HomeScreen() {
       <View className="flex-row bg-gray-800 px-2 py-2">
         <TouchableOpacity
           className={`flex-1 items-center py-2 ${activeTab === "home" ? "bg-gray-700 rounded-lg" : ""}`}
-          onPress={() => setActiveTab("home")}
+          onPress={() => {
+            setShowInjectionForm(false);
+            setActiveTab("home");
+          }}
         >
           <Plus
             size={24}
@@ -454,7 +457,10 @@ export default function HomeScreen() {
 
         <TouchableOpacity
           className={`flex-1 items-center py-2 ${activeTab === "history" ? "bg-gray-700 rounded-lg" : ""}`}
-          onPress={() => setActiveTab("history")}
+          onPress={() => {
+            setShowInjectionForm(false);
+            setActiveTab("history");
+          }}
         >
           <Calendar
             size={24}
@@ -471,7 +477,10 @@ export default function HomeScreen() {
 
         <TouchableOpacity
           className={`flex-1 items-center py-2 ${activeTab === "stats" ? "bg-gray-700 rounded-lg" : ""}`}
-          onPress={() => setActiveTab("stats")}
+          onPress={() => {
+            setShowInjectionForm(false);
+            setActiveTab("stats");
+          }}
         >
           <BarChart3
             size={24}
@@ -488,7 +497,10 @@ export default function HomeScreen() {
 
         <TouchableOpacity
           className={`flex-1 items-center py-2 ${activeTab === "settings" ? "bg-gray-700 rounded-lg" : ""}`}
-          onPress={() => setActiveTab("settings")}
+          onPress={() => {
+            setShowInjectionForm(false);
+            setActiveTab("settings");
+          }}
         >
           <Settings
             size={24}
