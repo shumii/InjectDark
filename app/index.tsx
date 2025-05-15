@@ -156,6 +156,82 @@ export default function HomeScreen() {
     setShowInjectionForm(true);
   };
 
+  // Helper function to get the opposite site
+  const getOppositeSite = (site: string): string => {
+    const oppositePairs = {
+      'Left Glute': 'Right Glute',
+      'Right Glute': 'Left Glute',
+      'Left Delt': 'Right Delt',
+      'Right Delt': 'Left Delt',
+      'Left Thigh': 'Right Thigh',
+      'Right Thigh': 'Left Thigh',
+      'Left Arm': 'Right Arm',
+      'Right Arm': 'Left Arm',
+      'Abdomen': 'Abdomen'
+    };
+    return oppositePairs[site as keyof typeof oppositePairs] || site;
+  };
+
+  // Function to detect site rotation pattern
+  const detectSitePattern = (injections: InjectionData[]): string | null => {
+    if (injections.length < 3) return null;
+
+    // Get the last 4 injection sites (or fewer if not available)
+    const lastSites = injections.slice(0, 4).map(inj => inj.injectionSite);
+    
+    // Check if there's a repeating pattern of 2
+    if (lastSites.length >= 4 &&
+        lastSites[0] === lastSites[2] &&
+        lastSites[1] === lastSites[3]) {
+      return lastSites[1]; // Return the next site in the pattern
+    }
+
+    // Check if there's a repeating pattern of 3
+    if (lastSites.length >= 3 &&
+        lastSites[0] === lastSites[3] &&
+        lastSites[1] === lastSites[4] &&
+        lastSites[2] === lastSites[5]) {
+      return lastSites[1]; // Return the next site in the pattern
+    }
+
+    return null; // No pattern detected
+  };
+
+  // Calculate next injection date and details based on previous injection pattern
+  const calculateNextInjection = (injections: InjectionData[]) => {
+    if (injections.length < 2) return null;
+
+    // Get the last two injections
+    const lastInjection = injections[0];
+    const secondLastInjection = injections[1];
+
+    // Calculate the time difference in minutes between the last two injections
+    const lastDate = new Date(lastInjection.dateTime);
+    const secondLastDate = new Date(secondLastInjection.dateTime);
+    const diffInMinutes = Math.floor((lastDate.getTime() - secondLastDate.getTime()) / (1000 * 60));
+
+    // Calculate the next injection date by adding the same time difference
+    const nextDate = new Date(lastDate.getTime() + diffInMinutes * 60 * 1000);
+
+    // Determine next injection site
+    let nextSite = lastInjection.injectionSite;
+    
+    // First try to detect a pattern
+    const patternSite = detectSitePattern(injections);
+    if (patternSite) {
+      nextSite = patternSite;
+    } else {
+      // If no pattern, suggest opposite side
+      nextSite = getOppositeSite(lastInjection.injectionSite);
+    }
+
+    return {
+      ...lastInjection,
+      dateTime: nextDate,
+      injectionSite: nextSite
+    };
+  };
+
   const renderContent = () => {
     if (showInjectionForm) {
       return (
@@ -213,25 +289,41 @@ export default function HomeScreen() {
             
 
             {/* Next Injection */}
-            <View className="mb-6">
-              <Text className="text-xl font-semibold text-white mb-3">
-                Next Injection
-              </Text>
-              <View
-                className="bg-gray-800 rounded-lg p-4 mb-3"
-              >
-                <View className="flex-row justify-between">
-                  <Text className="text-white font-semibold">
-                    Testosterone Cypionate 250
+            {allInjections.length >= 2 && (() => {
+              const nextInjection = calculateNextInjection(allInjections);
+              if (!nextInjection) return null;
+
+              return (
+                <View className="mb-6">
+                  <Text className="text-xl font-semibold text-white mb-3">
+                    Next Injection
                   </Text>
-                  <Text className="text-gray-400">80mg</Text>
+                  <View
+                    className="bg-gray-800 rounded-lg p-4 mb-3"
+                  >
+                    <View className="flex-row justify-between">
+                      <Text className="text-white font-semibold">
+                        {nextInjection.medicationName}
+                      </Text>
+                      <Text className="text-gray-400">{nextInjection.dosage}mg</Text>
+                    </View>
+                    <View className="flex-row justify-between mt-2">
+                      <Text className="text-gray-400">{nextInjection.injectionSite}</Text>
+                      <Text className="text-gray-400">
+                        {new Date(nextInjection.dateTime).toLocaleString('en-GB', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: false
+                        })}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
-                <View className="flex-row justify-between mt-2">
-                  <Text className="text-gray-400">Left Glute</Text>
-                  <Text className="text-gray-400">2025-06-18 08:30AM</Text>
-                </View>
-              </View>
-            </View>
+              );
+            })()}
 
             {/* Recent Injections */}
             <View className="mb-6">
