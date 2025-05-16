@@ -125,7 +125,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
   }, [injectionData]);
 
   // Generate colors for each medication line
-  const colors = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#a4de6c", "#ff0000"]; // Added red color for Total T
+  const colors = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#a4de6c"]; // Added red color for Total T
 
   // Format x-axis labels based on selected period
   const formatXAxisLabel = (date: string) => {
@@ -179,6 +179,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
             theme={VictoryTheme.material}
             domainPadding={{ y: 10 }}
             padding={{ top: 10, bottom: 50, left: 30, right: 30 }}
+            minDomain={{ y: 0 }}
           >
             <VictoryAxis
               tickFormat={formatXAxisLabel}
@@ -209,6 +210,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
                 grid: { stroke: "transparent" },
                 axis: { stroke: "transparent" },
               }}
+              minDomain={{ y: 0 }}
             />
             {chartData.map((dataset, index) => (
               <VictoryLine
