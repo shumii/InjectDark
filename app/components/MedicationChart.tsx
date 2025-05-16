@@ -29,17 +29,8 @@ interface MedicationChartProps {
 
 type TimePeriod = "week" | "month" | "year";
 
-interface ChartDataPoint {
-  x: Date;
-  y: number;
-}
-
-interface TotalsByDate {
-  [key: string]: ChartDataPoint;
-}
-
 const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
-  const [selectedPeriod, setSelectedPeriod] = useState<"week" | "month" | "year">("week");
+  const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>("week");
   const screenWidth = Dimensions.get("window").width - 32; // Account for padding
 
   // Get current date and calculate date ranges
@@ -64,68 +55,116 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
 
   // Process data for chart
   const chartData = useMemo(() => {
-    // Group medications
-    const medications = [...new Set(injectionData.map(item => item.medicationName))];
-    const testosteroneMedications = medications.filter(med => 
-      med.toLowerCase().includes('testosterone')
-    );
+    // Group injections by medication name and calculate daily testosterone levels
+    const medicationMap: Record<string, Record<string, number>> = {};
+    const medications = new Set<string>();
 
-    // Only include total T line if there are multiple testosterone medications
-    const shouldShowTotalT = testosteroneMedications.length > 1;
+    // Generate date range for x-axis first
+    const dateRange: string[] = [];
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - periodRanges[selectedPeriod]);
 
-    // Process data for each medication
-    const medicationData = medications.map(medication => {
-      const data = injectionData
-        .filter(item => item.medicationName === medication)
-        .map(item => ({
-          x: new Date(item.dateTime),
-          y: item.dosage
-        }))
-        .sort((a, b) => a.x.getTime() - b.x.getTime());
+    for (
+      let d = new Date(startDate);
+      d <= endDate;
+      d.setDate(d.getDate() + 1)
+    ) {
+      dateRange.push(d.toISOString().split("T")[0]);
+    }
 
+    // Initialize medication map with all dates
+    filteredData.forEach((injection) => {
+      const medicationName = injection.medicationName;
+      medications.add(medicationName);
+      if (!medicationMap[medicationName]) {
+        medicationMap[medicationName] = {};
+        // Initialize all dates with 0
+        dateRange.forEach(date => {
+          medicationMap[medicationName][date] = 0;
+        });
+      }
+    });
+
+    // Calculate testosterone levels for each day
+    filteredData.forEach((injection) => {
+      const medicationName = injection.medicationName;
+      const injectionDate = new Date(injection.dateTime);
+      const halfLifeMinutes = injection.halfLifeMinutes || 0;
+
+      console.log('Processing injection:', {
+        medicationName,
+        injectionDate,
+        halfLifeMinutes,
+        dosage: injection.dosage
+      });
+
+      if (halfLifeMinutes > 0) {
+        // Process each day from injection date
+        dateRange.forEach(date => {
+          const currentDate = new Date(date);
+          // Set current date to end of day to include full day's levels
+          currentDate.setHours(23, 59, 59, 999);
+          
+          // Calculate minutes difference
+          const minutesDiff = (currentDate.getTime() - injectionDate.getTime()) / (1000 * 60);
+          
+          if (minutesDiff >= 0) { // Only calculate for times after the injection
+            // Calculate remaining testosterone using half-life decay
+            const halfLifePeriods = minutesDiff / halfLifeMinutes;
+            const decayFactor = Math.pow(0.5, halfLifePeriods);
+            const levelForThisInjection = injection.dosage * decayFactor;
+
+            console.log('Calculation for date', date, {
+              minutesDiff,
+              halfLifePeriods,
+              decayFactor,
+              levelForThisInjection,
+              currentLevel: medicationMap[medicationName][date]
+            });
+            
+            // Add this level to any existing level for this day
+            medicationMap[medicationName][date] += levelForThisInjection;
+          }
+        });
+      }
+    });
+
+    // Calculate Total T by summing up all testosterone medications for each date
+    const totalTLevels: Record<string, number> = {};
+    dateRange.forEach(date => {
+      totalTLevels[date] = 0;
+      Object.entries(medicationMap).forEach(([medicationName, levels]) => {
+        if (medicationName.toLowerCase().includes('testosterone')) {
+          totalTLevels[date] += levels[date];
+        }
+      });
+    });
+
+    // Add Total T to the medication map
+    medicationMap['Total T'] = totalTLevels;
+    medications.add('Total T');
+
+    // Log final data
+    console.log('Final medication map:', medicationMap);
+
+    // Create dataset for each medication
+    const finalData = Array.from(medications).map((medication) => {
       return {
         medication,
-        data
+        data: dateRange.map((date) => ({
+          x: date,
+          y: Math.round(medicationMap[medication]?.[date] || 0),
+        })),
       };
     });
 
-    // Calculate total testosterone if needed
-    let totalTData: ChartDataPoint[] = [];
-    if (shouldShowTotalT) {
-      const testosteroneInjections = injectionData
-        .filter(item => testosteroneMedications.includes(item.medicationName))
-        .map(item => ({
-          x: new Date(item.dateTime),
-          y: item.dosage,
-          medication: item.medicationName
-        }))
-        .sort((a, b) => a.x.getTime() - b.x.getTime());
-
-      // Group by date and sum dosages
-      const totalsByDate: TotalsByDate = testosteroneInjections.reduce((acc, curr) => {
-        const dateKey = curr.x.toISOString().split('T')[0];
-        if (!acc[dateKey]) {
-          acc[dateKey] = { x: curr.x, y: 0 };
-        }
-        acc[dateKey].y += curr.y;
-        return acc;
-      }, {} as TotalsByDate);
-
-      totalTData = Object.values(totalsByDate);
-    }
-
-    // Return all datasets
-    return [
-      ...medicationData,
-      ...(shouldShowTotalT ? [{
-        medication: 'Total Testosterone',
-        data: totalTData
-      }] : [])
-    ];
-  }, [injectionData]);
+    console.log('Final chart data:', finalData);
+    return finalData;
+  }, [filteredData, selectedPeriod]);
 
   // Generate colors for each medication line
-  const colors = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#a4de6c"]; // Added red color for Total T
+  const colors = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#a4de6c", "#ff0000"]; // Added red color for Total T
 
   // Format x-axis labels based on selected period
   const formatXAxisLabel = (date: string) => {
