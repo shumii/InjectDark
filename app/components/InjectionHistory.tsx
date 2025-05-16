@@ -6,10 +6,13 @@ import {
   ScrollView,
   FlatList,
   ActivityIndicator,
+  Alert,
+  TextInput,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Calendar, ChevronDown, List, BarChart } from "lucide-react-native";
+import { Calendar, ChevronDown, List, BarChart, Trash2, Search } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from '@expo/vector-icons';
 
 interface Injection {
   id: string;
@@ -19,6 +22,12 @@ interface Injection {
   injectionSite?: string;
   site?: string;
   halfLife?: string;
+  moodRating: number | undefined;
+  sleepRating: number | undefined;
+  libidoRating: number | undefined;
+  energyRating: number | undefined;
+  sidesRating: number | undefined;
+  notes?: string;
 }
 
 interface InjectionHistoryProps {
@@ -32,75 +41,203 @@ const InjectionHistory = ({
 }: InjectionHistoryProps) => {
   const [injections, setInjections] = useState<Injection[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
+
+  const loadInjections = async () => {
+    try {
+      setLoading(true);
+      const storedInjections = await AsyncStorage.getItem("injections");
+      if (storedInjections) {
+        const parsedInjections = JSON.parse(storedInjections);
+        setInjections(
+          parsedInjections.map((item: any) => ({
+            ...item,
+            site: item.injectionSite || item.site,
+            dateTime:
+              typeof item.dateTime === "string"
+                ? item.dateTime
+                : new Date(item.dateTime).toISOString(),
+          })),
+        );
+      } else if (propInjections) {
+        setInjections(propInjections);
+      }
+    } catch (error) {
+      console.error("Error loading injections:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadInjections = async () => {
-      try {
-        setLoading(true);
-        const storedInjections = await AsyncStorage.getItem("injections");
-        if (storedInjections) {
-          const parsedInjections = JSON.parse(storedInjections);
-          setInjections(
-            parsedInjections.map((item: any) => ({
-              ...item,
-              site: item.injectionSite || item.site, // Handle both property names
-              dateTime:
-                typeof item.dateTime === "string"
-                  ? item.dateTime
-                  : new Date(item.dateTime).toISOString(),
-            })),
-          );
-        } else if (propInjections) {
-          setInjections(propInjections);
-        }
-      } catch (error) {
-        console.error("Error loading injections:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadInjections();
   }, [propInjections]);
-  const [viewMode, setViewMode] = useState<"list" | "chart">("list");
-  const [sortBy, setSortBy] = useState<"date" | "medication">("date");
-  const [sortMenuOpen, setSortMenuOpen] = useState(false);
 
-  // Sort injections based on selected sort criteria
-  const sortedInjections = [...injections].sort((a, b) => {
-    if (sortBy === "date") {
-      return new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime();
-    } else {
-      return a.medicationName.localeCompare(b.medicationName);
-    }
-  });
+  const filteredInjections = injections
+    .filter(injection => {
+      const query = searchQuery.toLowerCase();
+      return (
+        injection.medicationName.toLowerCase().includes(query) ||
+        injection.site?.toLowerCase().includes(query) ||
+        injection.dosage.toString().toLowerCase().includes(query) ||
+        injection.notes?.toLowerCase().includes(query)
+      );
+    })
+    .sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
+
+  const handleDeleteInjection = async (id: string) => {
+    Alert.alert(
+      "Delete Injection",
+      "Are you sure you want to delete this injection? This action cannot be undone.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const storedInjections = await AsyncStorage.getItem("injections");
+              if (storedInjections) {
+                const parsedInjections = JSON.parse(storedInjections);
+                const updatedInjections = parsedInjections.filter((injection: any) => injection.id !== id);
+                await AsyncStorage.setItem("injections", JSON.stringify(updatedInjections));
+                await loadInjections();
+              }
+            } catch (error) {
+              console.error("Error deleting injection:", error);
+              Alert.alert("Error", "Failed to delete injection. Please try again.");
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const renderRatingStars = (rating: number | undefined) => {
+    const ratingValue = rating || 0;
+    return (
+      <View className="flex-row">
+        {[...Array(5)].map((_, index) => (
+          <Ionicons
+            key={index}
+            name={index < ratingValue ? 'star' : 'star-outline'}
+            size={14}
+            color={index < ratingValue ? "#FFD700" : "#9CA3AF"}
+            style={{ marginRight: 2 }}
+          />
+        ))}
+      </View>
+    );
+  };
 
   const renderListItem = ({ item }: { item: Injection }) => (
-    <TouchableOpacity
-      className="mb-4 p-4 rounded-lg bg-gray-800 border border-gray-700"
-      onPress={() => onSelectInjection(item)}
-    >
-      <View className="flex-row justify-between items-start">
-        <View>
-          <Text className="text-white text-lg font-bold">
-            {item.medicationName}
-          </Text>
-          <Text className="text-gray-400">{item.dosage}</Text>
-          <Text className="text-gray-400 mt-1">{item.site}</Text>
+    <View className="mb-4 bg-gray-800 rounded-lg overflow-hidden">
+      {/* Header Section */}
+      <View className="p-4 border-b border-gray-700">
+        <View className="flex-row justify-between items-center mb-2">
+          <Text className="text-white text-lg font-bold">{item.medicationName}</Text>
+          <TouchableOpacity 
+            onPress={() => handleDeleteInjection(item.id)}
+            className="bg-red-500/10 rounded-full p-2"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Trash2 size={16} color="#ef4444" />
+          </TouchableOpacity>
         </View>
-        <View className="items-end">
-          <Text className="text-blue-400">
-            {new Date(item.dateTime).toLocaleDateString()}
-          </Text>
-          <Text className="text-gray-500">
-            {new Date(item.dateTime).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </Text>
+        <View className="flex-row justify-between items-center">
+          <View className="flex-row items-center">
+            <View className="bg-blue-500/20 rounded-full p-2 mr-3">
+              <Calendar size={14} color="#60a5fa" />
+            </View>
+            <View>
+              <Text className="text-blue-400">
+                {new Date(item.dateTime).toLocaleDateString()} • {" "}
+                <Text className="text-gray-400">
+                  {new Date(item.dateTime).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </Text>
+              </Text>
+            </View>
+          </View>
         </View>
       </View>
-    </TouchableOpacity>
+
+      {/* Details Section */}
+      <View className="p-4">
+        <View className="flex-row items-center mb-3">
+          <View className="bg-purple-500/20 rounded-full p-2 mr-3">
+            <Ionicons name="medical" size={14} color="#a855f7" />
+          </View>
+          <View>
+            <Text className="text-gray-400 text-sm">Dosage</Text>
+            <Text className="text-white">{item.dosage}</Text>
+          </View>
+        </View>
+
+        <View className="flex-row items-center mb-3">
+          <View className="bg-green-500/20 rounded-full p-2 mr-3">
+            <Ionicons name="location" size={14} color="#22c55e" />
+          </View>
+          <View>
+            <Text className="text-gray-400 text-sm">Injection Site</Text>
+            <Text className="text-white">{item.site}</Text>
+          </View>
+        </View>
+
+        {/* Ratings Section */}
+        {(item.moodRating || item.sleepRating || item.libidoRating || item.energyRating || item.sidesRating) && (
+          <View className="mt-4 pt-4 border-t border-gray-700">
+            <Text className="text-gray-400 text-sm mb-3">Ratings</Text>
+            <View className="flex-row flex-wrap">
+              {item.moodRating && item.moodRating > 0 && (
+                <View className="bg-gray-700/50 rounded-lg p-2 mr-2 mb-2">
+                  <Text className="text-gray-400 text-xs mb-1">Mood</Text>
+                  {renderRatingStars(item.moodRating)}
+                </View>
+              )}
+              {item.sleepRating && item.sleepRating > 0 && (
+                <View className="bg-gray-700/50 rounded-lg p-2 mr-2 mb-2">
+                  <Text className="text-gray-400 text-xs mb-1">Sleep</Text>
+                  {renderRatingStars(item.sleepRating)}
+                </View>
+              )}
+              {item.libidoRating && item.libidoRating > 0 && (
+                <View className="bg-gray-700/50 rounded-lg p-2 mr-2 mb-2">
+                  <Text className="text-gray-400 text-xs mb-1">Libido</Text>
+                  {renderRatingStars(item.libidoRating)}
+                </View>
+              )}
+              {item.energyRating && item.energyRating > 0 && (
+                <View className="bg-gray-700/50 rounded-lg p-2 mr-2 mb-2">
+                  <Text className="text-gray-400 text-xs mb-1">Energy</Text>
+                  {renderRatingStars(item.energyRating)}
+                </View>
+              )}
+              {item.sidesRating && item.sidesRating > 0 && (
+                <View className="bg-gray-700/50 rounded-lg p-2 mr-2 mb-2">
+                  <Text className="text-gray-400 text-xs mb-1">Side Effects</Text>
+                  {renderRatingStars(item.sidesRating)}
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+
+        {/* Notes Section */}
+        {item.notes && (
+          <View className="mt-4 pt-4 border-t border-gray-700">
+            <Text className="text-gray-400 text-sm mb-2">Notes</Text>
+            <Text className="text-white">{item.notes}</Text>
+          </View>
+        )}
+      </View>
+    </View>
   );
 
   const renderChartView = () => {
@@ -169,22 +306,24 @@ const InjectionHistory = ({
 
   return (
     <View className="flex-1 bg-gray-900 p-4">
-      <View className="flex-row justify-between items-center mb-6">
-        <Text className="text-white text-2xl font-bold">Injection History</Text>
-        <View className="flex-row">
-          <TouchableOpacity
-            className={`mr-2 p-2 rounded-full ${viewMode === "list" ? "bg-blue-600" : "bg-gray-800"}`}
-            onPress={() => setViewMode("list")}
-          >
-            <List size={20} color="white" />
+      <Text className="text-white text-2xl font-bold mb-6">Injection History</Text>
+
+      <View className={`mb-4 bg-gray-800 rounded-lg flex-row items-center px-3 ${searchFocused ? 'border border-blue-500' : ''}`}>
+        <Search size={18} color="#6B7280" />
+        <TextInput
+          className="flex-1 py-3 px-2 text-white"
+          placeholder="Search medications, sites, dosages..."
+          placeholderTextColor="#6B7280"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onFocus={() => setSearchFocused(true)}
+          onBlur={() => setSearchFocused(false)}
+        />
+        {searchQuery !== "" && (
+          <TouchableOpacity onPress={() => setSearchQuery("")}>
+            <Ionicons name="close-circle" size={18} color="#6B7280" />
           </TouchableOpacity>
-          <TouchableOpacity
-            className={`p-2 rounded-full ${viewMode === "chart" ? "bg-blue-600" : "bg-gray-800"}`}
-            onPress={() => setViewMode("chart")}
-          >
-            <BarChart size={20} color="white" />
-          </TouchableOpacity>
-        </View>
+        )}
       </View>
 
       {loading ? (
@@ -192,63 +331,31 @@ const InjectionHistory = ({
           <ActivityIndicator size="large" color="#60a5fa" />
           <Text className="text-white mt-4">Loading injections...</Text>
         </View>
-      ) : injections.length === 0 ? (
+      ) : filteredInjections.length === 0 ? (
         <View className="flex-1 justify-center items-center">
-          <Text className="text-white text-lg">No injection records found</Text>
-          <Text className="text-gray-400 mt-2">
-            Add your first injection to get started
-          </Text>
-        </View>
-      ) : (
-        <>
-          {viewMode === "list" && (
+          {searchQuery !== "" ? (
             <>
-              <View className="relative mb-4">
-                <TouchableOpacity
-                  className="flex-row items-center justify-between p-3 bg-gray-800 rounded-lg"
-                  onPress={() => setSortMenuOpen(!sortMenuOpen)}
-                >
-                  <Text className="text-white">
-                    Sort by: {sortBy === "date" ? "Date" : "Medication"}
-                  </Text>
-                  <ChevronDown size={20} color="white" />
-                </TouchableOpacity>
-
-                {sortMenuOpen && (
-                  <View className="absolute top-12 left-0 right-0 bg-gray-800 rounded-lg z-10 border border-gray-700">
-                    <TouchableOpacity
-                      className="p-3 border-b border-gray-700"
-                      onPress={() => {
-                        setSortBy("date");
-                        setSortMenuOpen(false);
-                      }}
-                    >
-                      <Text className="text-white">Date</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      className="p-3"
-                      onPress={() => {
-                        setSortBy("medication");
-                        setSortMenuOpen(false);
-                      }}
-                    >
-                      <Text className="text-white">Medication</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
-
-              <FlatList
-                data={sortedInjections}
-                renderItem={renderListItem}
-                keyExtractor={(item) => item.id}
-                className="flex-1"
-              />
+              <Text className="text-white text-lg">No matching injections found</Text>
+              <Text className="text-gray-400 mt-2 text-center">
+                Try adjusting your search terms or clear the search to see all injections
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text className="text-white text-lg">No injection records found</Text>
+              <Text className="text-gray-400 mt-2">
+                Add your first injection to get started
+              </Text>
             </>
           )}
-
-          {viewMode === "chart" && renderChartView()}
-        </>
+        </View>
+      ) : (
+        <FlatList
+          data={filteredInjections}
+          renderItem={renderListItem}
+          keyExtractor={(item) => item.id}
+          className="flex-1"
+        />
       )}
     </View>
   );

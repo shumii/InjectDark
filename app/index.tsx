@@ -6,9 +6,10 @@ import {
   ScrollView,
   SafeAreaView,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Plus, Calendar, BarChart3, Settings } from "lucide-react-native";
+import { Plus, Calendar, BarChart3, Settings, Trash2 } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -229,6 +230,41 @@ export default function HomeScreen() {
       dateTime: nextDate,
       injectionSite: nextSite
     };
+  };
+
+  const handleDeleteInjection = async (id: string) => {
+    Alert.alert(
+      "Delete Injection",
+      "Are you sure you want to delete this injection? This action cannot be undone.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // Get current injections
+              const storedInjections = await AsyncStorage.getItem("injections");
+              if (storedInjections) {
+                const parsedInjections: InjectionData[] = JSON.parse(storedInjections);
+                // Filter out the deleted injection
+                const updatedInjections = parsedInjections.filter(injection => injection.id !== id);
+                // Save back to storage
+                await AsyncStorage.setItem("injections", JSON.stringify(updatedInjections));
+                // Reload injections to update UI
+                await loadInjections();
+              }
+            } catch (error) {
+              console.error("Error deleting injection:", error);
+              Alert.alert("Error", "Failed to delete injection. Please try again.");
+            }
+          }
+        }
+      ]
+    );
   };
 
   const renderContent = () => {
