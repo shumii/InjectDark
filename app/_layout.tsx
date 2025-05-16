@@ -38,6 +38,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={DefaultTheme}>
+      <StatusBar style="light" backgroundColor="#111827" />
       <Stack
         screenOptions={({ route }) => ({
           headerShown: !route.name.startsWith("tempobook"),
@@ -45,7 +46,6 @@ export default function RootLayout() {
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
       </Stack>
-      <StatusBar style="auto" />
     </ThemeProvider>
   );
 }

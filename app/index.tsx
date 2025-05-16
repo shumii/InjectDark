@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-  StatusBar,
   ActivityIndicator,
 } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -430,8 +429,6 @@ export default function HomeScreen() {
       className="flex-1 bg-gray-900"
       style={{ paddingTop: insets.top }}
     >
-      <StatusBar barStyle="light-content" backgroundColor="#111827" />
-
 
       {/* Main Content */}
       <View className="flex-1">{renderContent()}</View>
