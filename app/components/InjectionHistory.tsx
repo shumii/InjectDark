@@ -193,7 +193,7 @@ const InjectionHistory = ({
         {/* Ratings Section */}
         {(item.moodRating || item.sleepRating || item.libidoRating || item.energyRating || item.sidesRating) && (
           <View className="mt-4 pt-4 border-t border-gray-700">
-            <Text className="text-gray-400 text-sm mb-3">Ratings</Text>
+            {/* <Text className="text-gray-400 text-sm mb-3"></Text> */}
             <View className="flex-row flex-wrap">
               {item.moodRating && item.moodRating > 0 && (
                 <View className="bg-gray-700/50 rounded-lg p-2 mr-2 mb-2">
