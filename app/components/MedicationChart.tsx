@@ -41,6 +41,30 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
     year: 365,
   };
 
+  // Calculate quick stats
+  const quickStats = useMemo(() => {
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(currentDate.getDate() - 7);
+    
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(currentDate.getDate() - 30);
+    
+    const lastWeekCount = injectionData.filter(injection => {
+      const injectionDate = new Date(injection.dateTime);
+      return injectionDate >= oneWeekAgo;
+    }).length;
+    
+    const lastThirtyDaysCount = injectionData.filter(injection => {
+      const injectionDate = new Date(injection.dateTime);
+      return injectionDate >= thirtyDaysAgo;
+    }).length;
+    
+    return {
+      lastWeekCount,
+      lastThirtyDaysCount
+    };
+  }, [injectionData, currentDate]);
+
   // Filter data based on selected time period
   const filteredData = useMemo(() => {
     const periodDays = periodRanges[selectedPeriod];
@@ -290,6 +314,23 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
           data={legendData}
         />
       )}
+      
+      {/* Quick Stats Section */}
+      <View className="mt-4 pt-4 border-t border-gray-700">
+        <Text className="text-white text-lg font-semibold mb-2">
+          Quick Stats
+        </Text>
+        <View className="flex-row justify-between">
+          <View className="bg-gray-700 rounded-lg p-3 flex-1 mr-2 items-center">
+            <Text className="text-2xl font-bold text-blue-400">{quickStats.lastWeekCount}</Text>
+            <Text className="text-gray-400 text-sm">Last Week</Text>
+          </View>
+          <View className="bg-gray-700 rounded-lg p-3 flex-1 ml-2 items-center">
+            <Text className="text-2xl font-bold text-purple-400">{quickStats.lastThirtyDaysCount}</Text>
+            <Text className="text-gray-400 text-sm">Last 30 days</Text>
+          </View>
+        </View>
+      </View>
     </View>
   );
 };

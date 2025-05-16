@@ -433,22 +433,6 @@ export default function HomeScreen() {
               }))}
             />
 
-            {/* Quick Stats */}
-            <View className="mb-6">
-              <Text className="text-xl font-semibold text-white mb-3">
-                Quick Stats
-              </Text>
-              <View className="flex-row justify-between">
-                <View className="bg-gray-800 rounded-lg p-4 flex-1 mr-2 items-center">
-                  <Text className="text-2xl font-bold text-blue-400">12</Text>
-                  <Text className="text-gray-400">Last Week</Text>
-                </View>
-                <View className="bg-gray-800 rounded-lg p-4 flex-1 ml-2 items-center">
-                  <Text className="text-2xl font-bold text-purple-400">42</Text>
-                  <Text className="text-gray-400">Last 30 days</Text>
-                </View>
-              </View>
-            </View>
           </ScrollView>
         );
       case "history":
