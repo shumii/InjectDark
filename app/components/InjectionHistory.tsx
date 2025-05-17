@@ -22,12 +22,14 @@ interface Injection {
   injectionSite?: string;
   site?: string;
   halfLife?: string;
+  halfLifeMinutes?: number;
   moodRating: number | undefined;
   sleepRating: number | undefined;
   libidoRating: number | undefined;
   energyRating: number | undefined;
   sidesRating: number | undefined;
   notes?: string;
+  concentration?: number;
 }
 
 interface InjectionHistoryProps {
@@ -73,6 +75,42 @@ const InjectionHistory = ({
   useEffect(() => {
     loadInjections();
   }, [propInjections]);
+
+  // Calculate testosterone level at a specific injection time
+  const calculateTestosteroneLevel = (currentInjection: Injection) => {
+    const currentInjectionDate = new Date(currentInjection.dateTime);
+    let totalLevel = 0;
+    
+    // Only consider injections before the current one
+    const previousInjections = injections.filter(injection => {
+      const injectionDate = new Date(injection.dateTime);
+      return injectionDate < currentInjectionDate;
+    });
+    
+    previousInjections.forEach(injection => {
+      const injectionDate = new Date(injection.dateTime);
+      const halfLifeMinutes = injection.halfLifeMinutes || 0;
+      
+      if (halfLifeMinutes > 0) {
+        // Calculate minutes difference between current injection and this previous injection
+        const minutesDiff = (currentInjectionDate.getTime() - injectionDate.getTime()) / (1000 * 60);
+        
+        if (minutesDiff >= 0) { // Only calculate for previous injections
+          // Calculate remaining testosterone using half-life decay
+          const halfLifePeriods = minutesDiff / halfLifeMinutes;
+          const decayFactor = Math.pow(0.5, halfLifePeriods);
+          const levelForThisInjection = Number(injection.dosage) * decayFactor;
+          
+          // Only add if it's a testosterone medication
+          if (injection.medicationName.toLowerCase().includes('testosterone')) {
+            totalLevel += levelForThisInjection;
+          }
+        }
+      }
+    });
+    
+    return Math.round(totalLevel);
+  };
 
   const filteredInjections = injections
     .filter(injection => {
@@ -134,7 +172,11 @@ const InjectionHistory = ({
     );
   };
 
-  const renderListItem = ({ item }: { item: Injection }) => (
+  const renderListItem = ({ item }: { item: Injection }) => {
+    // Calculate T level at this injection time
+    const tLevel = calculateTestosteroneLevel(item);
+    
+    return (
     <View className="mb-4 bg-gray-800 rounded-lg overflow-hidden">
       {/* Header Section */}
       <View className="p-4 border-b border-gray-700">
@@ -189,6 +231,16 @@ const InjectionHistory = ({
             <Text className="text-white">{item.site}</Text>
           </View>
         </View>
+        
+        <View className="flex-row items-center mb-3">
+          <View className="bg-orange-500/20 rounded-full p-2 mr-3">
+            <Ionicons name="analytics" size={14} color="#f97316" />
+          </View>
+          <View>
+            <Text className="text-gray-400 text-sm">T Level at Injection</Text>
+            <Text className="text-white">{tLevel} mg</Text>
+          </View>
+        </View>
 
         {/* Ratings Section */}
         {(item.moodRating || item.sleepRating || item.libidoRating || item.energyRating || item.sidesRating) && (
@@ -238,7 +290,8 @@ const InjectionHistory = ({
         )}
       </View>
     </View>
-  );
+    );
+  };
 
   const renderChartView = () => {
     // Group injections by date for chart visualization
