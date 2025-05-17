@@ -7,6 +7,7 @@ import {
   ScrollView,
   Modal,
   FlatList,
+  Platform,
 } from "react-native";
 import { Calendar, Clock, Check, ChevronDown, Repeat } from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -255,6 +256,7 @@ const InjectionForm = ({
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
+    
     if (selectedDate) {
       const currentDateTime = new Date(dateTime);
       currentDateTime.setFullYear(selectedDate.getFullYear());
@@ -266,6 +268,7 @@ const InjectionForm = ({
 
   const handleTimeChange = (event: any, selectedTime?: Date) => {
     setShowTimePicker(false);
+    
     if (selectedTime) {
       const currentDateTime = new Date(dateTime);
       currentDateTime.setHours(selectedTime.getHours());
@@ -432,21 +435,105 @@ const InjectionForm = ({
           </View>
 
           {showDatePicker && (
-            <DateTimePicker
-              value={dateTime}
-              mode="date"
-              display="default"
-              onChange={handleDateChange}
-            />
+            <Modal
+              transparent={true}
+              animationType="fade"
+              visible={showDatePicker}
+              onRequestClose={() => setShowDatePicker(false)}
+            >
+              <TouchableOpacity
+                style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(0,0,0,0.5)',
+                }}
+                activeOpacity={1}
+                onPress={() => setShowDatePicker(false)}
+              >
+                <View
+                  className="bg-gray-800 p-4 rounded-lg w-4/5"
+                  style={{
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.25,
+                    shadowRadius: 3.84,
+                    elevation: 5,
+                  }}
+                >
+                  <Text className="text-white text-lg font-bold mb-4 text-center">Select Date</Text>
+                  <DateTimePicker
+                    testID="datePicker"
+                    value={dateTime}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={handleDateChange}
+                    style={{
+                      backgroundColor: Platform.OS === 'ios' ? '#1f2937' : undefined,
+                      alignSelf: 'center',
+                    }}
+                    textColor={Platform.OS === 'ios' ? "white" : undefined}
+                  />
+                  <TouchableOpacity 
+                    className="bg-blue-500 p-3 rounded-md mt-4"
+                    onPress={() => setShowDatePicker(false)}
+                  >
+                    <Text className="text-white text-center font-bold">Done</Text>
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            </Modal>
           )}
 
           {showTimePicker && (
-            <DateTimePicker
-              value={dateTime}
-              mode="time"
-              display="default"
-              onChange={handleTimeChange}
-            />
+            <Modal
+              transparent={true}
+              animationType="fade"
+              visible={showTimePicker}
+              onRequestClose={() => setShowTimePicker(false)}
+            >
+              <TouchableOpacity
+                style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(0,0,0,0.5)',
+                }}
+                activeOpacity={1}
+                onPress={() => setShowTimePicker(false)}
+              >
+                <View
+                  className="bg-gray-800 p-4 rounded-lg w-4/5"
+                  style={{
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.25,
+                    shadowRadius: 3.84,
+                    elevation: 5,
+                  }}
+                >
+                  <Text className="text-white text-lg font-bold mb-4 text-center">Select Time</Text>
+                  <DateTimePicker
+                    testID="timePicker"
+                    value={dateTime}
+                    mode="time"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={handleTimeChange}
+                    style={{
+                      backgroundColor: Platform.OS === 'ios' ? '#1f2937' : undefined,
+                      alignSelf: 'center',
+                    }}
+                    textColor={Platform.OS === 'ios' ? "white" : undefined}
+                  />
+                  <TouchableOpacity 
+                    className="bg-blue-500 p-3 rounded-md mt-4"
+                    onPress={() => setShowTimePicker(false)}
+                  >
+                    <Text className="text-white text-center font-bold">Done</Text>
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            </Modal>
           )}
         </View>
 
