@@ -45,6 +45,99 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
     year: 365,
   };
 
+  // Calculate all testosterone levels first, before filtering
+  const allTestosteroneLevels = useMemo(() => {
+    // Generate full date range for calculations
+    const fullDateRange: string[] = [];
+    const endDate = new Date();
+    const startDate = new Date();
+    // Use the largest period for calculations to ensure we capture all relevant data
+    startDate.setDate(endDate.getDate() - periodRanges.year); // Use 'year' as it's the longest period
+
+    for (
+      let d = new Date(startDate);
+      d <= endDate;
+      d.setDate(d.getDate() + 1)
+    ) {
+      fullDateRange.push(d.toISOString().split("T")[0]);
+    }
+
+    // Group injections by medication name and calculate daily testosterone levels
+    const fullMedicationMap: Record<string, Record<string, number>> = {};
+    const allMedications = new Set<string>();
+
+    // Initialize medication map with all dates
+    injectionData.forEach((injection) => {
+      const medicationName = injection.medicationName;
+      allMedications.add(medicationName);
+      if (!fullMedicationMap[medicationName]) {
+        fullMedicationMap[medicationName] = {};
+        // Initialize all dates with 0
+        fullDateRange.forEach(date => {
+          fullMedicationMap[medicationName][date] = 0;
+        });
+      }
+    });
+
+    // Calculate testosterone levels for each day using ALL injections
+    injectionData.forEach((injection) => {
+      const medicationName = injection.medicationName;
+      const injectionDate = new Date(injection.dateTime);
+      const halfLifeMinutes = injection.halfLifeMinutes || 0;
+
+      console.log('Pre-calculation processing injection:', {
+        medicationName,
+        injectionDate,
+        halfLifeMinutes,
+        dosage: injection.dosage
+      });
+
+      if (halfLifeMinutes > 0) {
+        // Process each day from injection date
+        fullDateRange.forEach(date => {
+          const currentDate = new Date(date);
+          currentDate.setHours(23, 59, 59, 999);
+          
+          // Calculate minutes difference
+          const minutesDiff = (currentDate.getTime() - injectionDate.getTime()) / (1000 * 60);
+          
+          if (minutesDiff >= 0) { // Only calculate for times after the injection
+            // Calculate remaining testosterone using half-life decay
+            const halfLifePeriods = minutesDiff / halfLifeMinutes;
+            const decayFactor = Math.pow(0.5, halfLifePeriods);
+            const levelForThisInjection = injection.dosage * decayFactor;
+            
+            // Add this level to any existing level for this day
+            fullMedicationMap[medicationName][date] += levelForThisInjection;
+          }
+        });
+      }
+    });
+
+    // Calculate Total T by summing up all testosterone medications for each date
+    const fullTotalTLevels: Record<string, number> = {};
+    fullDateRange.forEach(date => {
+      fullTotalTLevels[date] = 0;
+      Object.entries(fullMedicationMap).forEach(([medicationName, levels]) => {
+        if (medicationName.toLowerCase().includes('testosterone')) {
+          fullTotalTLevels[date] += levels[date];
+        }
+      });
+    });
+
+    // Add Total T to the medication map
+    fullMedicationMap['Total T'] = fullTotalTLevels;
+    allMedications.add('Total T');
+
+    console.log('Pre-filtered complete testosterone levels calculated');
+    
+    return {
+      medicationMap: fullMedicationMap,
+      medications: allMedications,
+      dateRange: fullDateRange
+    };
+  }, [injectionData]); // Only depend on injectionData, not the selected period
+
   // Calculate quick stats
   const quickStats = useMemo(() => {
     const oneWeekAgo = new Date();
@@ -147,33 +240,33 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
         dateRange.forEach(date => {
           const currentDate = new Date(date);
          
-          // Set current date to end of day to include full day's levels
-          //currentDate.setHours(23, 59, 59, 999);
-          console.log('Injection date:', injection.dateTime);
-          var injectionDate = new Date(injection.dateTime);
-          currentDate.setHours(injectionDate.getHours(), injectionDate.getMinutes(), injectionDate.getSeconds(), injectionDate.getMilliseconds());
+          // // Set current date to end of day to include full day's levels
+          // //currentDate.setHours(23, 59, 59, 999);
+          // console.log('Injection date:', injection.dateTime);
+          // var injectionDate = new Date(injection.dateTime);
+          // currentDate.setHours(injectionDate.getHours(), injectionDate.getMinutes(), injectionDate.getSeconds(), injectionDate.getMilliseconds());
           
-          // Calculate minutes difference
-          const minutesDiff = (currentDate.getTime() - injectionDate.getTime()) / (1000 * 60);
+          // // Calculate minutes difference
+          // const minutesDiff = (currentDate.getTime() - injectionDate.getTime()) / (1000 * 60);
           
-          if (minutesDiff >= 0) { // Only calculate for times after the injection
-            debugger;
-            // Calculate remaining testosterone using half-life decay
-            const halfLifePeriods = minutesDiff / halfLifeMinutes;
-            const decayFactor = Math.pow(0.5, halfLifePeriods);
-            const levelForThisInjection = injection.dosage * decayFactor;
+          // if (minutesDiff >= 0) { // Only calculate for times after the injection
+          //   debugger;
+          //   // Calculate remaining testosterone using half-life decay
+          //   const halfLifePeriods = minutesDiff / halfLifeMinutes;
+          //   const decayFactor = Math.pow(0.5, halfLifePeriods);
+          //   const levelForThisInjection = injection.dosage * decayFactor;
 
-            console.log('Calculation for date', date, {
-              minutesDiff,
-              halfLifePeriods,
-              decayFactor,
-              levelForThisInjection,
-              currentLevel: medicationMap[medicationName][date]
-            });
+          //   console.log('Calculation for date', date, {
+          //     minutesDiff,
+          //     halfLifePeriods,
+          //     decayFactor,
+          //     levelForThisInjection,
+          //     currentLevel: medicationMap[medicationName][date]
+          //   });
             
             // Add this level to any existing level for this day
-            medicationMap[medicationName][date] += levelForThisInjection;
-          }
+            medicationMap[medicationName][date] += allTestosteroneLevels.medicationMap[medicationName][date];
+          
         });
       }
     });
