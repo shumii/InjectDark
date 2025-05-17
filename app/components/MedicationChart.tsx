@@ -21,7 +21,7 @@ interface MedicationChartProps {
     medicationName: string;
     dosage: number;
     dateTime: Date;
-    dateTimeDisplay:string;
+    dateTimeDisplay: string;
     site: string;
     halfLifeMinutes?: number;
   }>;
@@ -34,7 +34,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
   const [maxTestosterone, setMaxTestosterone] = useState(0);
   const [minTestosterone, setMinTestosterone] = useState(0);
   const [averageTestosterone, setAverageTestosterone] = useState(0);
-  
+
   const screenWidth = Dimensions.get("window").width - 32; // Account for padding
 
   // Get current date and calculate date ranges
@@ -97,16 +97,16 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
         fullDateRange.forEach(date => {
           const currentDate = new Date(date);
           currentDate.setHours(23, 59, 59, 999);
-          
+
           // Calculate minutes difference
           const minutesDiff = (currentDate.getTime() - injectionDate.getTime()) / (1000 * 60);
-          
+
           if (minutesDiff >= 0) { // Only calculate for times after the injection
             // Calculate remaining testosterone using half-life decay
             const halfLifePeriods = minutesDiff / halfLifeMinutes;
             const decayFactor = Math.pow(0.5, halfLifePeriods);
             const levelForThisInjection = injection.dosage * decayFactor;
-            
+
             // Add this level to any existing level for this day
             fullMedicationMap[medicationName][date] += levelForThisInjection;
           }
@@ -130,7 +130,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
     allMedications.add('Total T');
 
     console.log('Pre-filtered complete testosterone levels calculated');
-    
+
     return {
       medicationMap: fullMedicationMap,
       medications: allMedications,
@@ -142,15 +142,15 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
   const quickStats = useMemo(() => {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(currentDate.getDate() - 7);
-    
+
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(currentDate.getDate() - 30);
-    
+
     const lastWeekCount = injectionData.filter(injection => {
       const injectionDate = new Date(injection.dateTime);
       return injectionDate >= oneWeekAgo;
     }).length;
-    
+
     const lastThirtyDaysCount = injectionData.filter(injection => {
       const injectionDate = new Date(injection.dateTime);
       return injectionDate >= thirtyDaysAgo;
@@ -165,8 +165,8 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
     const minDosage = Math.min(...filteredData.map(injection => injection.dosage));
     const averageDosage = filteredData.reduce((acc, injection) => acc + injection.dosage, 0) / filteredData.length;
     const totalDosage = filteredData.reduce((acc, injection) => acc + injection.dosage, 0);
-    
-    
+
+
     return {
       lastWeekCount,
       lastThirtyDaysCount,
@@ -239,45 +239,21 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
         // Process each day from injection date
         dateRange.forEach(date => {
           const currentDate = new Date(date);
-         
-          // // Set current date to end of day to include full day's levels
-          // //currentDate.setHours(23, 59, 59, 999);
-          // console.log('Injection date:', injection.dateTime);
-          // var injectionDate = new Date(injection.dateTime);
-          // currentDate.setHours(injectionDate.getHours(), injectionDate.getMinutes(), injectionDate.getSeconds(), injectionDate.getMilliseconds());
-          
-          // // Calculate minutes difference
-          // const minutesDiff = (currentDate.getTime() - injectionDate.getTime()) / (1000 * 60);
-          
-          // if (minutesDiff >= 0) { // Only calculate for times after the injection
-          //   debugger;
-          //   // Calculate remaining testosterone using half-life decay
-          //   const halfLifePeriods = minutesDiff / halfLifeMinutes;
-          //   const decayFactor = Math.pow(0.5, halfLifePeriods);
-          //   const levelForThisInjection = injection.dosage * decayFactor;
 
-          //   console.log('Calculation for date', date, {
-          //     minutesDiff,
-          //     halfLifePeriods,
-          //     decayFactor,
-          //     levelForThisInjection,
-          //     currentLevel: medicationMap[medicationName][date]
-          //   });
-            
-            // Add this level to any existing level for this day
-            medicationMap[medicationName][date] += allTestosteroneLevels.medicationMap[medicationName][date];
-          
+          // Add this level to any existing level for this day
+          medicationMap[medicationName][date] += allTestosteroneLevels.medicationMap[medicationName][date];
+
         });
       }
     });
 
     const maxTestosterone = Math.max(...Object.values(medicationMap).map(levels => Math.max(...Object.values(levels))));
     const minTestosterone = Math.min(...Object.values(medicationMap).map(levels => Math.min(...Object.values(levels))));
-    const averageTestosterone = Object.values(medicationMap).reduce((acc, levels) => acc + Object.values(levels).reduce((acc, level) => acc + level, 0), 0) / Object.values(medicationMap).reduce((acc, levels) => acc + Object.values(levels).length, 0);    
+    const averageTestosterone = Object.values(medicationMap).reduce((acc, levels) => acc + Object.values(levels).reduce((acc, level) => acc + level, 0), 0) / Object.values(medicationMap).reduce((acc, levels) => acc + Object.values(levels).length, 0);
 
     setMaxTestosterone(maxTestosterone);
     setMinTestosterone(minTestosterone);
-    setAverageTestosterone(averageTestosterone);    
+    setAverageTestosterone(averageTestosterone);
 
     // Calculate Total T by summing up all testosterone medications for each date
     const totalTLevels: Record<string, number> = {};
@@ -394,7 +370,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
               tickFormat={(t) => Math.round(t)}
               style={{
                 tickLabels: { fill: "white", fontSize: 10 },
-                ticks:{stroke:"transparent"},
+                ticks: { stroke: "transparent" },
                 grid: { stroke: "transparent" },
                 axis: { stroke: "transparent" },
               }}
@@ -439,7 +415,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
           data={legendData}
         />
       )}
-      
+
       {/* Quick Stats Section */}
       <View className="mt-4 pt-4 border-t border-gray-700">
         <Text className="text-white text-lg font-semibold mb-2">
@@ -481,7 +457,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
             <Text className="text-gray-400 text-sm">Max T Level</Text>
           </View>
           <View className="bg-gray-700 rounded-lg p-3 flex-1 ml-2 items-center">
-            <Text className="text-2xl font-bold text-purple-400">{minTestosterone}mg</Text>
+            <Text className="text-2xl font-bold text-purple-400">{minTestosterone.toFixed(1)}mg</Text>
             <Text className="text-gray-400 text-sm">Min T Level</Text>
           </View>
         </View>
