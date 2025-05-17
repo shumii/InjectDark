@@ -31,6 +31,10 @@ type TimePeriod = "week" | "month" | "year";
 
 const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>("week");
+  const [maxTestosterone, setMaxTestosterone] = useState(0);
+  const [minTestosterone, setMinTestosterone] = useState(0);
+  const [averageTestosterone, setAverageTestosterone] = useState(0);
+  
   const screenWidth = Dimensions.get("window").width - 32; // Account for padding
 
   // Get current date and calculate date ranges
@@ -58,10 +62,25 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
       const injectionDate = new Date(injection.dateTime);
       return injectionDate >= thirtyDaysAgo;
     }).length;
+
+    const filteredData = injectionData.filter(injection => {
+      const injectionDate = new Date(injection.dateTime);
+      return injectionDate >= thirtyDaysAgo;
+    });
+
+    const maxDosage = Math.max(...filteredData.map(injection => injection.dosage));
+    const minDosage = Math.min(...filteredData.map(injection => injection.dosage));
+    const averageDosage = filteredData.reduce((acc, injection) => acc + injection.dosage, 0) / filteredData.length;
+    const totalDosage = filteredData.reduce((acc, injection) => acc + injection.dosage, 0);
+    
     
     return {
       lastWeekCount,
-      lastThirtyDaysCount
+      lastThirtyDaysCount,
+      maxDosage,
+      minDosage,
+      averageDosage,
+      totalDosage
     };
   }, [injectionData, currentDate]);
 
@@ -127,13 +146,18 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
         // Process each day from injection date
         dateRange.forEach(date => {
           const currentDate = new Date(date);
+         
           // Set current date to end of day to include full day's levels
-          currentDate.setHours(23, 59, 59, 999);
+          //currentDate.setHours(23, 59, 59, 999);
+          console.log('Injection date:', injection.dateTime);
+          var injectionDate = new Date(injection.dateTime);
+          currentDate.setHours(injectionDate.getHours(), injectionDate.getMinutes(), injectionDate.getSeconds(), injectionDate.getMilliseconds());
           
           // Calculate minutes difference
           const minutesDiff = (currentDate.getTime() - injectionDate.getTime()) / (1000 * 60);
           
           if (minutesDiff >= 0) { // Only calculate for times after the injection
+            debugger;
             // Calculate remaining testosterone using half-life decay
             const halfLifePeriods = minutesDiff / halfLifeMinutes;
             const decayFactor = Math.pow(0.5, halfLifePeriods);
@@ -153,6 +177,14 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
         });
       }
     });
+
+    const maxTestosterone = Math.max(...Object.values(medicationMap).map(levels => Math.max(...Object.values(levels))));
+    const minTestosterone = Math.min(...Object.values(medicationMap).map(levels => Math.min(...Object.values(levels))));
+    const averageTestosterone = Object.values(medicationMap).reduce((acc, levels) => acc + Object.values(levels).reduce((acc, level) => acc + level, 0), 0) / Object.values(medicationMap).reduce((acc, levels) => acc + Object.values(levels).length, 0);    
+
+    setMaxTestosterone(maxTestosterone);
+    setMinTestosterone(minTestosterone);
+    setAverageTestosterone(averageTestosterone);    
 
     // Calculate Total T by summing up all testosterone medications for each date
     const totalTLevels: Record<string, number> = {};
@@ -320,7 +352,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
         <Text className="text-white text-lg font-semibold mb-2">
           Quick Stats
         </Text>
-        <View className="flex-row justify-between">
+        {/* <View className="flex-row justify-between">
           <View className="bg-gray-700 rounded-lg p-3 flex-1 mr-2 items-center">
             <Text className="text-2xl font-bold text-blue-400">{quickStats.lastWeekCount}</Text>
             <Text className="text-gray-400 text-sm">Last Week</Text>
@@ -328,6 +360,36 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
           <View className="bg-gray-700 rounded-lg p-3 flex-1 ml-2 items-center">
             <Text className="text-2xl font-bold text-purple-400">{quickStats.lastThirtyDaysCount}</Text>
             <Text className="text-gray-400 text-sm">Last 30 days</Text>
+          </View>
+        </View> */}
+        <View className="flex-row justify-between mt-4">
+          <View className="bg-gray-700 rounded-lg p-3 flex-1 mr-2 items-center">
+            <Text className="text-2xl font-bold text-blue-400">{quickStats.maxDosage}mg</Text>
+            <Text className="text-gray-400 text-sm">Max Dosage</Text>
+          </View>
+          <View className="bg-gray-700 rounded-lg p-3 flex-1 ml-2 items-center">
+            <Text className="text-2xl font-bold text-purple-400">{quickStats.minDosage}mg</Text>
+            <Text className="text-gray-400 text-sm">Min Dosage</Text>
+          </View>
+        </View>
+        <View className="flex-row justify-between mt-4">
+          <View className="bg-gray-700 rounded-lg p-3 flex-1 mr-2 items-center">
+            <Text className="text-2xl font-bold text-blue-400">{quickStats.averageDosage.toFixed(1)}mg</Text>
+            <Text className="text-gray-400 text-sm">Avg Dosage</Text>
+          </View>
+          <View className="bg-gray-700 rounded-lg p-3 flex-1 ml-2 items-center">
+            <Text className="text-2xl font-bold text-purple-400">{averageTestosterone.toFixed(1)}mg</Text>
+            <Text className="text-gray-400 text-sm">Avg T Level</Text>
+          </View>
+        </View>
+        <View className="flex-row justify-between mt-4">
+          <View className="bg-gray-700 rounded-lg p-3 flex-1 mr-2 items-center">
+            <Text className="text-2xl font-bold text-blue-400">{maxTestosterone.toFixed(1)}mg</Text>
+            <Text className="text-gray-400 text-sm">Max T Level</Text>
+          </View>
+          <View className="bg-gray-700 rounded-lg p-3 flex-1 ml-2 items-center">
+            <Text className="text-2xl font-bold text-purple-400">{minTestosterone}mg</Text>
+            <Text className="text-gray-400 text-sm">Min T Level</Text>
           </View>
         </View>
       </View>
