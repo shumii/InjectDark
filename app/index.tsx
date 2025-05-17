@@ -118,13 +118,15 @@ export default function HomeScreen() {
     try {
       setLoading(true);
       const storedInjections = await AsyncStorage.getItem("injections");
-
+debugger;
       if (storedInjections) {
         const parsedInjections: InjectionData[] =
           JSON.parse(storedInjections);
 
+        const sortedInjections = parsedInjections.sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());          
+
         // Format the data for display and take only the 3 most recent
-        const formattedInjections = parsedInjections
+        const formattedInjections = sortedInjections
           .slice(0, 3)
           .map((injection) => ({
             id: injection.id,
@@ -133,11 +135,12 @@ export default function HomeScreen() {
             dateDisplay: formatRelativeDateTime(injection.dateTime),
             date: injection.dateTime,
             site: injection.injectionSite,
-          }));
+          }))
+          //.sort((a, b) => b.date.getTime() - a.date.getTime()).reverse();
     
         setRecentInjections(formattedInjections);
-        setAllInjections(parsedInjections);
-        console.log('Loaded injections:', parsedInjections);
+        setAllInjections(sortedInjections);
+        console.log('Loaded injections:', sortedInjections);
       }
     } catch (error) {
       console.error("Error loading injections:", error);
