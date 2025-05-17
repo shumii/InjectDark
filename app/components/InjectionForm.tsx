@@ -8,7 +8,7 @@ import {
   Modal,
   FlatList,
 } from "react-native";
-import { Calendar, Clock, Check, ChevronDown } from "lucide-react-native";
+import { Calendar, Clock, Check, ChevronDown, Repeat } from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import StarRating from "./StarRating";
 
@@ -29,6 +29,7 @@ export interface InjectionData {
   injectionSite: string;
   halfLifeDescription?: string;
   halfLifeMinutes?:number;
+  concentration?: number;
   moodRating:number;
   sleepRating:number;
   libidoRating:number;
@@ -41,6 +42,7 @@ interface Medication {
   name: string;
   halfLifeDescription?: string;
   halfLifeMinutes?:number;
+  concentration: number;
 }
 
 // Placeholder component for BodyDiagram until the actual component is implemented
@@ -52,7 +54,6 @@ const PlaceholderBodyDiagram = ({
   selectedSite: string;
 }) => {
   const sites = [
-
     "Left Delt",
     "Right Delt",
     "Left Arm",
@@ -88,21 +89,12 @@ const InjectionForm = ({
   isOpen = true,
   lastInjection
 }: InjectionFormProps) => {
-  // List of medications with their half-lives
+  // List of medications with their half-lives and concentrations
   const medications: Medication[] = [
-    // { name: "Insulin Glargine", halfLifeDescription: "24 hours", halfLifeMinutes: 1440 },
-    // { name: "Insulin Lispro", halfLifeDescription: "1 hour",  halfLifeMinutes: 60},
-    // { name: "Insulin Aspart", halfLifeDescription: "81 minutes", halfLifeMinutes: 81},
-    
-    // { name: "Enoxaparin", halfLifeDescription: "4.5 hours", halfLifeMinutes: 1440 },
-    // { name: "Morphine", halfLifeDescription: "2-3 hours", halfLifeMinutes: 1440 },
-    // { name: "Epinephrine", halfLifeDescription: "2 minutes", halfLifeMinutes: 1440 },
-    // { name: "Methotrexate", halfLifeDescription: "3-10 hours", halfLifeMinutes: 1440 },
-    // { name: "Vitamin B12", halfLifeDescription: "6 days", halfLifeMinutes: 1440 },
-    { name: "Testosterone Enanthate 300", halfLifeDescription: "4 days", halfLifeMinutes: 1440 },
-    { name: "Testosterone Cypionate 200", halfLifeDescription: "5 days", halfLifeMinutes: 5760 },
-    { name: "Testosterone Cypionate 250", halfLifeDescription: "5 days", halfLifeMinutes: 7200 },
-    { name: "Growth Hormone", halfLifeDescription: "3.4 hours", halfLifeMinutes: 200 },
+    { name: "Testosterone Enanthate 300", halfLifeDescription: "4 days", halfLifeMinutes: 1440, concentration: 300 },
+    { name: "Testosterone Cypionate 200", halfLifeDescription: "5 days", halfLifeMinutes: 5760, concentration: 200 },
+    { name: "Testosterone Cypionate 250", halfLifeDescription: "5 days", halfLifeMinutes: 7200, concentration: 250 },
+    { name: "Growth Hormone", halfLifeDescription: "3.4 hours", halfLifeMinutes: 200, concentration: 10 }, // Assuming a concentration for GH
   ];
 
   console.log('Last Injection received:', lastInjection); // Debug log
@@ -126,6 +118,15 @@ const InjectionForm = ({
     console.log('Setting initial dosage:', lastInjection?.dosage); // Debug log
     return lastInjection?.dosage?.toString() || "";
   });
+  
+  // Unit state (mg or ml)
+  const [dosageUnit, setDosageUnit] = useState<'mg' | 'ml'>('mg');
+  
+  // Get the current medication's concentration for conversion
+  const getCurrentConcentration = () => {
+    return selectedMedication?.concentration || 100; // Default to 100mg/ml if not specified
+  };
+
   const [dateTime, setDateTime] = useState(new Date());
   const [injectionSite, setInjectionSite] = useState(() => {
     console.log('Setting initial injection site:', lastInjection?.injectionSite); // Debug log
@@ -152,6 +153,8 @@ const InjectionForm = ({
 
     if (!dosage.trim()) {
       newErrors.dosage = "Dosage is required";
+    } else if (isNaN(Number(dosage))) {
+      newErrors.dosage = "Dosage must be a number";
     }
 
     if (!injectionSite) {
@@ -164,19 +167,27 @@ const InjectionForm = ({
 
   const handleSubmit = () => {
     if (validateForm()) {
+      const concentration = getCurrentConcentration();
+      
+      // Convert dosage to mg if currently in ml
+      const dosageInMg = dosageUnit === 'ml' 
+        ? Number(dosage) * concentration 
+        : Number(dosage);
+      
       onSave({
         id: new Date().getTime().toString(),
         medicationName,
-        dosage:Number(dosage),
+        dosage: dosageInMg, // Save dosage in mg
         dateTime,
         injectionSite,
         halfLifeDescription: selectedMedication?.halfLifeDescription,
         halfLifeMinutes: selectedMedication?.halfLifeMinutes,
-        moodRating:selectedMoodRating,
-        sleepRating:selectedSleepRating,
-        libidoRating:selectedLibidoRating,
-        energyRating:selectedEnergyRating,
-        sidesRating:selectedSidesRating,
+        concentration: selectedMedication?.concentration, // Save the concentration
+        moodRating: selectedMoodRating,
+        sleepRating: selectedSleepRating,
+        libidoRating: selectedLibidoRating,
+        energyRating: selectedEnergyRating,
+        sidesRating: selectedSidesRating,
         notes
       });
 
@@ -184,6 +195,7 @@ const InjectionForm = ({
       setMedicationName("");
       setSelectedMedication(null);
       setDosage("");
+      setDosageUnit('mg'); // Reset to mg
       setDateTime(new Date());
       setInjectionSite("");         
 
@@ -197,6 +209,25 @@ const InjectionForm = ({
     }
   };
 
+  // Function to toggle between mg and ml
+  const toggleDosageUnit = () => {
+    const concentration = getCurrentConcentration();
+    
+    if (dosage && !isNaN(Number(dosage))) {
+      if (dosageUnit === 'mg') {
+        // Convert from mg to ml
+        setDosage((Number(dosage) / concentration).toFixed(2));
+        setDosageUnit('ml');
+      } else {
+        // Convert from ml to mg
+        setDosage(Math.round(Number(dosage) * concentration).toString());
+        setDosageUnit('mg');
+      }
+    } else {
+      setDosageUnit(prevUnit => prevUnit === 'mg' ? 'ml' : 'mg');
+    }
+  };
+
   const handleCancel = () => {
     onClose();
   }
@@ -205,6 +236,12 @@ const InjectionForm = ({
     setSelectedMedication(medication);
     setMedicationName(medication.name);
     setShowMedicationDropdown(false);
+    
+    // If currently in ml, recalculate dosage with new concentration
+    if (dosageUnit === 'ml' && dosage !== '') {
+      // Keep the same ml amount, but the mg equivalent will change based on new concentration
+      setDosage(dosage);
+    }
   };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
@@ -282,9 +319,11 @@ const InjectionForm = ({
             <ChevronDown size={20} color="#fff" />
           </TouchableOpacity>
           {selectedMedication && (
-            <Text className="text-gray-400 mt-1">
-              Half-life: {selectedMedication.halfLifeDescription}
-            </Text>
+            <View className="mt-1">
+              <Text className="text-gray-400">
+                Half-life: {selectedMedication.halfLifeDescription}
+              </Text>
+            </View>
           )}
           {errors.medicationName && (
             <Text className="text-red-500 mt-1">{errors.medicationName}</Text>
@@ -315,9 +354,14 @@ const InjectionForm = ({
                       onPress={() => handleSelectMedication(item)}
                     >
                       <Text className="text-white text-base">{item.name}</Text>
-                      <Text className="text-gray-400 text-sm">
-                        Half-life: {item.halfLifeDescription}
-                      </Text>
+                      <View className="flex-row justify-between mt-1">
+                        <Text className="text-gray-400 text-sm">
+                          Half-life: {item.halfLifeDescription}
+                        </Text>
+                        <Text className="text-gray-400 text-sm">
+                          {item.concentration}mg/ml
+                        </Text>
+                      </View>
                     </TouchableOpacity>
                   )}
                 />
@@ -328,19 +372,33 @@ const InjectionForm = ({
 
         <View className="mb-4">
           <Text className="text-white text-base mb-2">Dosage</Text>
-          <TextInput
-            className={`bg-gray-700 text-white p-3 rounded-md ${errors.dosage ? "border border-red-500" : ""}`}
-            placeholder="Enter dosage (e.g., 10mg)"
-            placeholderTextColor="#9ca3af"
-            value={dosage}
-            onChangeText={(value)=>{
-              setDosage(value.replace(/[^0-9]/g, ''));
-
-            }}            
-          />
+          <View className="flex-row items-center">
+            <TextInput
+              className={`flex-1 bg-gray-700 text-white p-3 rounded-l-md ${errors.dosage ? "border border-red-500" : ""}`}
+              placeholder={`Enter dosage (${dosageUnit})`}
+              placeholderTextColor="#9ca3af"
+              value={dosage}
+              keyboardType="numeric"
+              onChangeText={(value)=>{
+                setDosage(value.replace(/[^0-9.]/g, ''));
+              }}            
+            />
+            <TouchableOpacity
+              className="bg-blue-600 p-3 rounded-r-md flex-row items-center"
+              onPress={toggleDosageUnit}
+            >
+              <Repeat size={16} color="white" />
+              <Text className="text-white ml-2 font-bold">{dosageUnit}</Text>
+            </TouchableOpacity>
+          </View>
 
           {errors.dosage && (
             <Text className="text-red-500 mt-1">{errors.dosage}</Text>
+          )}
+          {dosageUnit === 'ml' && dosage && !isNaN(Number(dosage)) && selectedMedication && selectedMedication.concentration > 0 && (
+            <Text className="text-gray-400 text-xs">
+              Equivalent to {Math.round(parseFloat(dosage) * selectedMedication.concentration)}mg
+            </Text>
           )}
         </View>
 
