@@ -19,6 +19,7 @@ interface InjectionFormProps {
   onSubmit?: (data: InjectionData) => void;
   isOpen?: boolean;
   lastInjection?: InjectionData;
+  defaultDosageUnit?: 'mg' | 'ml';
 }
 
 export interface InjectionData {
@@ -87,7 +88,8 @@ const InjectionForm = ({
   onSave = (data:InjectionData) => {},
   onSubmit = () => { },
   isOpen = true,
-  lastInjection
+  lastInjection,
+  defaultDosageUnit = 'mg'
 }: InjectionFormProps) => {
   // List of medications with their half-lives and concentrations
   const medications: Medication[] = [
@@ -114,18 +116,25 @@ const InjectionForm = ({
   });
 
   const [showMedicationDropdown, setShowMedicationDropdown] = useState(false);
-  const [dosage, setDosage] = useState(() => {
-    console.log('Setting initial dosage:', lastInjection?.dosage); // Debug log
-    return lastInjection?.dosage?.toString() || "";
-  });
-  
-  // Unit state (mg or ml)
-  const [dosageUnit, setDosageUnit] = useState<'mg' | 'ml'>('mg');
+  const [dosageUnit, setDosageUnit] = useState<'mg' | 'ml'>(defaultDosageUnit);
   
   // Get the current medication's concentration for conversion
   const getCurrentConcentration = () => {
     return selectedMedication?.concentration || 100; // Default to 100mg/ml if not specified
   };
+
+  const [dosage, setDosage] = useState(() => {
+    console.log('Setting initial dosage:', lastInjection?.dosage); // Debug log
+    
+    // If default unit is ml and we have a dosage and medication, convert from mg to ml
+    if (defaultDosageUnit === 'ml' && lastInjection?.dosage && selectedMedication?.concentration) {
+      const mlValue = (lastInjection.dosage / selectedMedication.concentration).toFixed(2);
+      console.log('Converting initial dosage to ml:', mlValue);
+      return mlValue;
+    }
+    
+    return lastInjection?.dosage?.toString() || "";
+  });
 
   const [dateTime, setDateTime] = useState(new Date());
   const [injectionSite, setInjectionSite] = useState(() => {
@@ -195,7 +204,7 @@ const InjectionForm = ({
       setMedicationName("");
       setSelectedMedication(null);
       setDosage("");
-      setDosageUnit('mg'); // Reset to mg
+      setDosageUnit(defaultDosageUnit); // Reset to default
       setDateTime(new Date());
       setInjectionSite("");         
 

@@ -7,9 +7,10 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Alert,
+  Switch,
 } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Plus, Calendar, BarChart3, Settings, Trash2 } from "lucide-react-native";
+import { Plus, Calendar, BarChart3, Settings, Trash2, AlertCircle } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -70,6 +71,60 @@ export default function HomeScreen() {
   const [recentInjections, setRecentInjections] = useState<RecentInjection[]>([],);
   const [allInjections, setAllInjections] = useState<InjectionData[]>([],);
   const [loading, setLoading] = useState(true);
+  
+  // Settings state
+  const [defaultDosageUnit, setDefaultDosageUnit] = useState<'mg' | 'ml'>('mg');
+
+  // Load settings from AsyncStorage
+  const loadSettings = async () => {
+    try {
+      const storedDosageUnit = await AsyncStorage.getItem("defaultDosageUnit");
+      if (storedDosageUnit) {
+        setDefaultDosageUnit(storedDosageUnit as 'mg' | 'ml');
+      }
+    } catch (error) {
+      console.error("Error loading settings:", error);
+    }
+  };
+
+  // Save settings to AsyncStorage
+  const saveSettings = async (unit: 'mg' | 'ml') => {
+    try {
+      await AsyncStorage.setItem("defaultDosageUnit", unit);
+      setDefaultDosageUnit(unit);
+    } catch (error) {
+      console.error("Error saving settings:", error);
+    }
+  };
+
+  // Reset all injection data
+  const resetAllData = async () => {
+    Alert.alert(
+      "Reset All Data",
+      "Are you sure you want to delete all injection records? This action cannot be undone.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Reset",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem("injections");
+              setAllInjections([]);
+              setRecentInjections([]);
+              Alert.alert("Success", "All injection data has been deleted.");
+            } catch (error) {
+              console.error("Error resetting data:", error);
+              Alert.alert("Error", "Failed to reset data. Please try again.");
+            }
+          }
+        }
+      ]
+    );
+  };
 
   // Helper function to format date and time in a Facebook-style format
   const formatRelativeDateTime = (dateTime: Date | string) => {
@@ -152,6 +207,7 @@ export default function HomeScreen() {
   // Initial load
   useEffect(() => {
     loadInjections();
+    loadSettings();
   }, []);
 
   const handleShowInjectionForm = async () => {
@@ -310,6 +366,7 @@ export default function HomeScreen() {
             await loadInjections(); // Reload the data after saving
             setShowInjectionForm(false);
           }}
+          defaultDosageUnit={defaultDosageUnit}
         />
       );
     }
@@ -442,6 +499,75 @@ export default function HomeScreen() {
         return <InjectionHistory />;
       case "stats":
         return <StatisticsDashboard />;
+      case "settings":
+        return (
+          <ScrollView className="flex-1 px-4">
+            <View className="mt-4 mb-6">
+              <Text className="text-2xl font-bold text-white mb-1">
+                Settings
+              </Text>
+              <Text className="text-gray-400">
+                Customize your injection tracking experience
+              </Text>
+            </View>
+
+            {/* Default Dosage Unit Setting */}
+            <View className="mb-6 bg-gray-800 rounded-lg p-4">
+              <Text className="text-white text-lg font-semibold mb-4">
+                Default Dosage Unit
+              </Text>
+              <View className="flex-row justify-between items-center">
+                <Text className="text-white">Toggle between mg and ml</Text>
+                <View className="flex-row items-center">
+                  <Text className={`mr-2 ${defaultDosageUnit === 'mg' ? 'text-blue-400 font-bold' : 'text-gray-400'}`}>mg</Text>
+                  <Switch
+                    trackColor={{ false: "#3b82f6", true: "#3b82f6" }}
+                    thumbColor="#ffffff"
+                    ios_backgroundColor="#3b82f6"
+                    onValueChange={() => saveSettings(defaultDosageUnit === 'mg' ? 'ml' : 'mg')}
+                    value={defaultDosageUnit === 'ml'}
+                  />
+                  <Text className={`ml-2 ${defaultDosageUnit === 'ml' ? 'text-blue-400 font-bold' : 'text-gray-400'}`}>ml</Text>
+                </View>
+              </View>
+              <Text className="text-gray-400 mt-2 text-sm">
+                This will be the default unit when adding a new injection
+              </Text>
+            </View>
+            
+            {/* Data Management */}
+            <View className="mb-6 bg-gray-800 rounded-lg p-4">
+              <Text className="text-white text-lg font-semibold mb-4">
+                Data Management
+              </Text>
+              <TouchableOpacity
+                onPress={resetAllData}
+                className="bg-red-500/10 py-4 px-6 rounded-md flex-row items-center justify-center"
+              >
+                <AlertCircle size={20} color="#ef4444" className="mr-2" />
+                <Text className="text-red-500 font-bold">
+                  Reset All Injection Data
+                </Text>
+              </TouchableOpacity>
+              <Text className="text-gray-400 mt-2 text-sm">
+                Warning: This will permanently delete all your injection records
+              </Text>
+            </View>
+
+            {/* App Information */}
+            <View className="mb-6 bg-gray-800 rounded-lg p-4">
+              <Text className="text-white text-lg font-semibold mb-2">
+                App Information
+              </Text>
+              <Text className="text-gray-400 mb-1">
+                Version: 1.0.0
+              </Text>
+              <Text className="text-gray-400">
+                © 2023 InjectDark
+              </Text>
+            </View>
+          </ScrollView>
+        );
       default:
         return null;
     }
