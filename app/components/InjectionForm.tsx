@@ -267,8 +267,8 @@ const InjectionForm = ({
   };
 
   const handleTimeChange = (event: any, selectedTime?: Date) => {
-    setShowTimePicker(false);
-    
+    // Don't close the time picker automatically
+    // Only update the time if a time was selected
     if (selectedTime) {
       const currentDateTime = new Date(dateTime);
       currentDateTime.setHours(selectedTime.getHours());
