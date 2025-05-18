@@ -238,7 +238,7 @@ const InjectionHistory = ({
           </View>
           <View>
             <Text className="text-gray-400 text-sm">T Level at Injection</Text>
-            <Text className="text-white">{tLevel} mg</Text>
+            <Text className="text-white">{tLevel} <Text className="text-white">mg</Text></Text>
           </View>
         </View>
 

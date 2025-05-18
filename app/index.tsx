@@ -168,6 +168,54 @@ export default function HomeScreen() {
     }) + ` at ${timeString}`;
   };
 
+  // Helper function to format future dates
+  const formatFutureDateTime = (dateTime: Date | string) => {
+    const date = new Date(dateTime);
+    const now = new Date();
+    
+    // If date is in the past, use the past formatter
+    if (date.getTime() <= now.getTime()) {
+      return formatRelativeDateTime(dateTime);
+    }
+    
+    const diffInSeconds = Math.floor((date.getTime() - now.getTime()) / 1000);
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    const timeString = date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      hour12: false 
+    });
+
+    // Coming up in less than 1 minute
+    if (diffInSeconds < 60) {
+      return "Coming up now";
+    }
+    // Coming up in minutes: less than 1 hour
+    if (diffInMinutes < 60) {
+      return `In ${diffInMinutes}m`;
+    }
+    // Coming up in hours: less than 24 hours
+    if (diffInHours < 24) {
+      return `In ${diffInHours}h`;
+    }
+    // Tomorrow at TIME
+    if (diffInDays === 1) {
+      return `Tomorrow at ${timeString}`;
+    }
+    // Days in future (2-7 days): include time
+    if (diffInDays < 7) {
+      return `In ${diffInDays}d at ${timeString}`;
+    }
+    // Full date for further future
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    }) + ` at ${timeString}`;
+  };
+
   // Load injections from AsyncStorage
   const loadInjections = async () => {
     try {
@@ -420,14 +468,7 @@ export default function HomeScreen() {
                     <View className="flex-row justify-between mt-2">
                       <Text className="text-gray-400">{nextInjection.injectionSite}</Text>
                       <Text className="text-gray-400">
-                        {new Date(nextInjection.dateTime).toLocaleString('en-GB', {
-                          year: 'numeric',
-                          month: '2-digit',
-                          day: '2-digit',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: false
-                        })}
+                        {formatFutureDateTime(nextInjection.dateTime)}
                       </Text>
                     </View>
                   </View>
@@ -507,7 +548,7 @@ export default function HomeScreen() {
                 Settings
               </Text>
               <Text className="text-gray-400">
-                Customize your injection tracking experience
+                
               </Text>
             </View>
 
@@ -545,7 +586,7 @@ export default function HomeScreen() {
                 className="bg-red-500/10 py-4 px-6 rounded-md flex-row items-center justify-center"
               >
                 <AlertCircle size={20} color="#ef4444" className="mr-2" />
-                <Text className="text-red-500 font-bold">
+                <Text className="text-red-500 font-bold ml-2">
                   Reset All Injection Data
                 </Text>
               </TouchableOpacity>
@@ -563,7 +604,7 @@ export default function HomeScreen() {
                 Version: 1.0.0
               </Text>
               <Text className="text-gray-400">
-                © 2023 InjectDark
+                © 2025 TLevels
               </Text>
             </View>
           </ScrollView>
