@@ -449,51 +449,43 @@ if (Object.values(medicationMap).length > 0)
       )}
 
       {/* Quick Stats Section */}
-      <View className="mt-4 pt-4 border-t border-gray-700">
-        <Text className="text-white text-lg font-semibold mb-2">
-          Quick Stats
-        </Text>
-        {/* <View className="flex-row justify-between">
-          <View className="bg-gray-700 rounded-lg p-3 flex-1 mr-2 items-center">
-            <Text className="text-2xl font-bold text-blue-400">{quickStats.lastWeekCount}</Text>
-            <Text className="text-gray-400 text-sm">Last Week</Text>
+      {injectionData.length > 0 && (
+        <View className="mt-4 pt-4 border-t border-gray-700">
+          <Text className="text-white text-lg font-semibold mb-2">
+            Quick Stats
+          </Text>
+          <View className="flex-row justify-between mt-4">
+            <View className="bg-gray-700 rounded-lg p-3 flex-1 mr-2 items-center">
+              <Text className="text-2xl font-bold text-blue-400">{quickStats.maxDosage}mg</Text>
+              <Text className="text-gray-400 text-sm">Max Dosage</Text>
+            </View>
+            <View className="bg-gray-700 rounded-lg p-3 flex-1 ml-2 items-center">
+              <Text className="text-2xl font-bold text-purple-400">{quickStats.minDosage}mg</Text>
+              <Text className="text-gray-400 text-sm">Min Dosage</Text>
+            </View>
           </View>
-          <View className="bg-gray-700 rounded-lg p-3 flex-1 ml-2 items-center">
-            <Text className="text-2xl font-bold text-purple-400">{quickStats.lastThirtyDaysCount}</Text>
-            <Text className="text-gray-400 text-sm">Last 30 days</Text>
+          <View className="flex-row justify-between mt-4">
+            <View className="bg-gray-700 rounded-lg p-3 flex-1 mr-2 items-center">
+              <Text className="text-2xl font-bold text-blue-400">{quickStats.averageDosage.toFixed(1)}mg</Text>
+              <Text className="text-gray-400 text-sm">Avg Dosage</Text>
+            </View>
+            <View className="bg-gray-700 rounded-lg p-3 flex-1 ml-2 items-center">
+              <Text className="text-2xl font-bold text-purple-400">{averageTestosterone.toFixed(1)}mg</Text>
+              <Text className="text-gray-400 text-sm">Avg T Level</Text>
+            </View>
           </View>
-        </View> */}
-        <View className="flex-row justify-between mt-4">
-          <View className="bg-gray-700 rounded-lg p-3 flex-1 mr-2 items-center">
-            <Text className="text-2xl font-bold text-blue-400">{quickStats.maxDosage}mg</Text>
-            <Text className="text-gray-400 text-sm">Max Dosage</Text>
-          </View>
-          <View className="bg-gray-700 rounded-lg p-3 flex-1 ml-2 items-center">
-            <Text className="text-2xl font-bold text-purple-400">{quickStats.minDosage}mg</Text>
-            <Text className="text-gray-400 text-sm">Min Dosage</Text>
-          </View>
-        </View>
-        <View className="flex-row justify-between mt-4">
-          <View className="bg-gray-700 rounded-lg p-3 flex-1 mr-2 items-center">
-            <Text className="text-2xl font-bold text-blue-400">{quickStats.averageDosage.toFixed(1)}mg</Text>
-            <Text className="text-gray-400 text-sm">Avg Dosage</Text>
-          </View>
-          <View className="bg-gray-700 rounded-lg p-3 flex-1 ml-2 items-center">
-            <Text className="text-2xl font-bold text-purple-400">{averageTestosterone.toFixed(1)}mg</Text>
-            <Text className="text-gray-400 text-sm">Avg T Level</Text>
-          </View>
-        </View>
-        <View className="flex-row justify-between mt-4">
-          <View className="bg-gray-700 rounded-lg p-3 flex-1 mr-2 items-center">
-            <Text className="text-2xl font-bold text-blue-400">{maxTestosterone.toFixed(1)}mg</Text>
-            <Text className="text-gray-400 text-sm">Max T Level</Text>
-          </View>
-          <View className="bg-gray-700 rounded-lg p-3 flex-1 ml-2 items-center">
-            <Text className="text-2xl font-bold text-purple-400">{minTestosterone.toFixed(1)}mg</Text>
-            <Text className="text-gray-400 text-sm">Min T Level</Text>
+          <View className="flex-row justify-between mt-4">
+            <View className="bg-gray-700 rounded-lg p-3 flex-1 mr-2 items-center">
+              <Text className="text-2xl font-bold text-blue-400">{maxTestosterone.toFixed(1)}mg</Text>
+              <Text className="text-gray-400 text-sm">Max T Level</Text>
+            </View>
+            <View className="bg-gray-700 rounded-lg p-3 flex-1 ml-2 items-center">
+              <Text className="text-2xl font-bold text-purple-400">{minTestosterone.toFixed(1)}mg</Text>
+              <Text className="text-gray-400 text-sm">Min T Level</Text>
+            </View>
           </View>
         </View>
-      </View>
+      )}
     </View>
   );
 };
