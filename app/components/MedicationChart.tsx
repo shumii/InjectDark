@@ -96,7 +96,8 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
         // Process each day from injection date
         fullDateRange.forEach(date => {
           const currentDate = new Date(date);
-          currentDate.setHours(23, 59, 59, 999);
+          //currentDate.setHours(23, 59, 59, 999);
+          currentDate.setHours(injectionDate.getHours(), injectionDate.getMinutes(), injectionDate.getSeconds(), injectionDate.getMilliseconds());
 
           // Calculate minutes difference
           const minutesDiff = (currentDate.getTime() - injectionDate.getTime()) / (1000 * 60);
@@ -114,20 +115,20 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
       }
     });
 
-    // Calculate Total T by summing up all testosterone medications for each date
-    const fullTotalTLevels: Record<string, number> = {};
-    fullDateRange.forEach(date => {
-      fullTotalTLevels[date] = 0;
-      Object.entries(fullMedicationMap).forEach(([medicationName, levels]) => {
-        if (medicationName.toLowerCase().includes('testosterone')) {
-          fullTotalTLevels[date] += levels[date];
-        }
-      });
-    });
+    // // Calculate Total T by summing up all testosterone medications for each date
+    // const fullTotalTLevels: Record<string, number> = {};
+    // fullDateRange.forEach(date => {
+    //   fullTotalTLevels[date] = 0;
+    //   Object.entries(fullMedicationMap).forEach(([medicationName, levels]) => {
+    //     if (medicationName.toLowerCase().includes('testosterone')) {
+    //       fullTotalTLevels[date] += levels[date];
+    //     }
+    //   });
+    // });
 
     // Add Total T to the medication map
-    fullMedicationMap['Total T'] = fullTotalTLevels;
-    allMedications.add('Total T');
+    // fullMedicationMap['Total T'] = fullTotalTLevels;
+    // allMedications.add('Total T');
 
     console.log('Pre-filtered complete testosterone levels calculated');
 
@@ -138,6 +139,8 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
     };
   }, [injectionData]); // Only depend on injectionData, not the selected period
 
+  //console.log('Getting all test levels');
+  //console.log('All test levels ' + JSON.stringify(allTestosteroneLevels));
   // Calculate quick stats
   const quickStats = useMemo(() => {
     const oneWeekAgo = new Date();
@@ -189,11 +192,48 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
     });
   }, [injectionData, selectedPeriod]);
 
+  const filteredTLevels = useMemo(() => {
+    const periodDays = periodRanges[selectedPeriod];
+    const cutoffDate = new Date();
+    cutoffDate.setDate(currentDate.getDate() - periodDays);
+    const allTLevelsMap = allTestosteroneLevels.medicationMap;
+    const allDates = allTestosteroneLevels.dateRange;
+    const allMedications = allTestosteroneLevels.medications;
+
+    console.log('filtered data beig used and the periodDays is ' + periodDays);
+
+    const filteredTLevels: Record<string, Record<string, number>> = {};
+    allMedications.forEach((medication) => {
+      filteredTLevels[medication] = {};
+
+      allDates.forEach((date) => {
+        filteredTLevels[medication][date] = 0;
+      });
+    });
+
+    allMedications.forEach((medication) => {
+      allDates.forEach((date) => {
+        const dateObj = new Date(date);
+        if (dateObj >= cutoffDate) {
+
+          // need to add the medication here somehow
+          filteredTLevels[medication][date] = allTLevelsMap[medication][date];
+        }
+      });
+    });
+
+    //console.log('Filtered T Levels: ' + JSON.stringify(filteredTLevels));
+
+    return filteredTLevels;
+  }, [allTestosteroneLevels]);
+
   // Process data for chart
   const chartData = useMemo(() => {
     // Group injections by medication name and calculate daily testosterone levels
-    const medicationMap: Record<string, Record<string, number>> = {};
+    //const medicationMap: Record<string, Record<string, number>> = {};
     const medications = new Set<string>();
+
+    const periodDays = periodRanges[selectedPeriod];
 
     // Generate date range for x-axis first
     const dateRange: string[] = [];
@@ -209,66 +249,56 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
       dateRange.push(d.toISOString().split("T")[0]);
     }
 
-    // Initialize medication map with all dates
-    filteredData.forEach((injection) => {
-      const medicationName = injection.medicationName;
-      medications.add(medicationName);
-      if (!medicationMap[medicationName]) {
-        medicationMap[medicationName] = {};
-        // Initialize all dates with 0
-        dateRange.forEach(date => {
-          medicationMap[medicationName][date] = 0;
-        });
-      }
+
+    const medicationMap = filteredTLevels;
+
+    Object.keys(medicationMap).forEach((medication) => {
+      medications.add(medication);
     });
 
-    // Calculate testosterone levels for each day
-    filteredData.forEach((injection) => {
-      const medicationName = injection.medicationName;
-      const injectionDate = new Date(injection.dateTime);
-      const halfLifeMinutes = injection.halfLifeMinutes || 0;
+    //console.log('Getting chart data. Filtered T Levels: ' + JSON.stringify(filteredTLevels));
 
-      console.log('Processing injection:', {
-        medicationName,
-        injectionDate,
-        halfLifeMinutes,
-        dosage: injection.dosage
-      });
 
-      if (halfLifeMinutes > 0) {
-        // Process each day from injection date
-        dateRange.forEach(date => {
-          const currentDate = new Date(date);
+    // if only 1 we take quick stats from data, otherwise we take it from the total t
 
-          // Add this level to any existing level for this day
-          medicationMap[medicationName][date] += allTestosteroneLevels.medicationMap[medicationName][date];
-
-        });
-      }
-    });
-
-    const maxTestosterone = Math.max(...Object.values(medicationMap).map(levels => Math.max(...Object.values(levels))));
-    const minTestosterone = Math.min(...Object.values(medicationMap).map(levels => Math.min(...Object.values(levels))));
-    const averageTestosterone = Object.values(medicationMap).reduce((acc, levels) => acc + Object.values(levels).reduce((acc, level) => acc + level, 0), 0) / Object.values(medicationMap).reduce((acc, levels) => acc + Object.values(levels).length, 0);
+    var maxTestosterone = Math.max(...Object.values(medicationMap).map(levels => Math.max(...Object.values(levels))));
+    var minTestosterone = Math.min(...Object.values(medicationMap).map(levels => Math.min(...Object.values(levels))));
+    
+    var sumTLevels = Object.values(Object.values(medicationMap)[0]).reduce((sum, level) => sum + level, 0);
+    var averageTestosterone = sumTLevels / periodDays;
+    // var averageTestosterone = Object.values(medicationMap)[0] ? 
+    //   Object.values(Object.values(medicationMap)[0]).reduce((sum, level) => sum + level, 0) / Object.values(Object.values(medicationMap)[0]).length : 0;
 
     setMaxTestosterone(maxTestosterone);
     setMinTestosterone(minTestosterone);
     setAverageTestosterone(averageTestosterone);
 
-    // Calculate Total T by summing up all testosterone medications for each date
-    const totalTLevels: Record<string, number> = {};
-    dateRange.forEach(date => {
-      totalTLevels[date] = 0;
-      Object.entries(medicationMap).forEach(([medicationName, levels]) => {
-        if (medicationName.toLowerCase().includes('testosterone')) {
-          totalTLevels[date] += levels[date];
-        }
+    if (medications.size > 1) {
+      // Calculate Total T by summing up all testosterone medications for each date
+      const totalTLevels: Record<string, number> = {};
+      dateRange.forEach(date => {
+        totalTLevels[date] = 0;
+        Object.entries(medicationMap).forEach(([medicationName, levels]) => {
+          if (medicationName.toLowerCase().includes('testosterone')) {
+            totalTLevels[date] += levels[date];
+          }
+        });
       });
-    });
 
-    // Add Total T to the medication map
-    medicationMap['Total T'] = totalTLevels;
-    medications.add('Total T');
+      
+      var sumTotalTLevels = Object.values(totalTLevels).reduce((sum, level) => sum + level, 0);
+      var averageTotalTLevels = sumTotalTLevels / periodDays;
+      var maxTotalTLevels = Math.max(...Object.values(totalTLevels));
+      var minTotalTLevels = Math.min(...Object.values(totalTLevels));
+
+      setMaxTestosterone(maxTotalTLevels);
+      setMinTestosterone(minTotalTLevels);
+      setAverageTestosterone(averageTotalTLevels);
+
+      // Add Total T to the medication map
+      medicationMap['Total T'] = totalTLevels;
+      medications.add('Total T');
+    }
 
     // Log final data
     console.log('Final medication map:', medicationMap);
