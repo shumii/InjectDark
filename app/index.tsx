@@ -452,6 +452,8 @@ export default function HomeScreen() {
             setShowInjectionForm(false);
           }}
           defaultDosageUnit={defaultDosageUnit}
+          defaultInjectionTime={defaultInjectionTime}
+          useCurrentTime={useCurrentTime}
         />
       );
     }
@@ -726,7 +728,7 @@ export default function HomeScreen() {
                 Version: 1.0.0
               </Text>
               <Text className="text-gray-400">
-                © 2025 TLevels
+                © 2025 PINN
               </Text>
             </View>
           </ScrollView>

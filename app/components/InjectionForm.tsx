@@ -21,6 +21,8 @@ interface InjectionFormProps {
   isOpen?: boolean;
   lastInjection?: InjectionData;
   defaultDosageUnit?: 'mg' | 'ml';
+  defaultInjectionTime: Date;
+  useCurrentTime: boolean;
 }
 
 export interface InjectionData {
@@ -90,7 +92,9 @@ const InjectionForm = ({
   onSubmit = () => { },
   isOpen = true,
   lastInjection,
-  defaultDosageUnit = 'mg'
+  defaultDosageUnit = 'mg',
+  defaultInjectionTime,
+  useCurrentTime,
 }: InjectionFormProps) => {
   // List of medications with their half-lives and concentrations
   const medications: Medication[] = [
@@ -137,7 +141,13 @@ const InjectionForm = ({
     return lastInjection?.dosage?.toString() || "";
   });
 
-  const [dateTime, setDateTime] = useState(new Date());
+  const [dateTime, setDateTime] = useState(() => {
+    if (useCurrentTime) {
+      return new Date();
+    }
+    return defaultInjectionTime;
+  });
+
   const [injectionSite, setInjectionSite] = useState(() => {
     console.log('Setting initial injection site:', lastInjection?.injectionSite); // Debug log
     return lastInjection?.injectionSite || "";
