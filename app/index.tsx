@@ -103,6 +103,13 @@ export default function HomeScreen() {
           if (time) {
             setDefaultInjectionTime(new Date(time));
           }
+        } else {
+          // If no time settings are stored, set default to 09:00
+          const defaultTime = new Date();
+          defaultTime.setHours(9, 0, 0, 0);
+          setDefaultInjectionTime(defaultTime);
+          // Save the default time settings
+          saveDefaultTimeSettings(defaultTime, useCurrentTime);
         }
       } catch (error) {
         console.error('Error loading settings:', error);
