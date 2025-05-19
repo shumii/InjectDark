@@ -425,7 +425,7 @@ export default function HomeScreen() {
           <ScrollView className="flex-1 px-4">
             <View className="mt-4 mb-6">
               <Text className="text-2xl font-bold text-white mb-1">
-                T Diary
+                PINN
               </Text>
               <Text className="text-gray-400">
                 Track your testosterone injections easily

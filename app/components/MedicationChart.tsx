@@ -80,7 +80,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
     });
 
     // Calculate testosterone levels for each day using ALL injections
-    injectionData.forEach((injection) => {
+    injectionData.forEach((injection) => {      
       const medicationName = injection.medicationName;
       const injectionDate = new Date(injection.dateTime);
       const halfLifeMinutes = injection.halfLifeMinutes || 0;
@@ -260,7 +260,8 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
 
 
     // if only 1 we take quick stats from data, otherwise we take it from the total t
-
+if (Object.values(medicationMap).length > 0)
+{
     var maxTestosterone = Math.max(...Object.values(medicationMap).map(levels => Math.max(...Object.values(levels))));
     var minTestosterone = Math.min(...Object.values(medicationMap).map(levels => Math.min(...Object.values(levels))));
     
@@ -299,6 +300,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
       medicationMap['Total T'] = totalTLevels;
       medications.add('Total T');
     }
+  }
 
     // Log final data
     console.log('Final medication map:', medicationMap);
