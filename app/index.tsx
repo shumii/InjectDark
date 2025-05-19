@@ -8,11 +8,15 @@ import {
   ActivityIndicator,
   Alert,
   Switch,
+  Modal,
+  Platform,
 } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Plus, Calendar, BarChart3, Settings, Trash2, AlertCircle } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { Ionicons } from "@expo/vector-icons";
 
 // Import components
 import InjectionForm from "./components/InjectionForm";
@@ -74,26 +78,60 @@ export default function HomeScreen() {
   
   // Settings state
   const [defaultDosageUnit, setDefaultDosageUnit] = useState<'mg' | 'ml'>('mg');
+  const [useCurrentTime, setUseCurrentTime] = useState(true);
+  const [defaultInjectionTime, setDefaultInjectionTime] = useState(() => {
+    const defaultTime = new Date();
+    defaultTime.setHours(9, 0, 0, 0);
+    return defaultTime;
+  });
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   // Load settings from AsyncStorage
-  const loadSettings = async () => {
-    try {
-      const storedDosageUnit = await AsyncStorage.getItem("defaultDosageUnit");
-      if (storedDosageUnit) {
-        setDefaultDosageUnit(storedDosageUnit as 'mg' | 'ml');
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const storedUnit = await AsyncStorage.getItem('defaultDosageUnit');
+        if (storedUnit) {
+          setDefaultDosageUnit(storedUnit as 'mg' | 'ml');
+        }
+
+        const storedTimeSettings = await AsyncStorage.getItem('defaultTimeSettings');
+        if (storedTimeSettings) {
+          const { useCurrent, time } = JSON.parse(storedTimeSettings);
+          setUseCurrentTime(useCurrent);
+          if (time) {
+            setDefaultInjectionTime(new Date(time));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading settings:', error);
       }
+    };
+
+    loadSettings();
+  }, []);
+
+  const saveSettings = async (unit: 'mg' | 'ml') => {
+    try {
+      await AsyncStorage.setItem('defaultDosageUnit', unit);
+      setDefaultDosageUnit(unit);
     } catch (error) {
-      console.error("Error loading settings:", error);
+      console.error('Error saving dosage unit:', error);
     }
   };
 
-  // Save settings to AsyncStorage
-  const saveSettings = async (unit: 'mg' | 'ml') => {
+  const saveDefaultTimeSettings = async (time: Date, useCurrent: boolean) => {
     try {
-      await AsyncStorage.setItem("defaultDosageUnit", unit);
-      setDefaultDosageUnit(unit);
+      const timeSettings = {
+        useCurrent,
+        time: useCurrent ? null : time.toISOString()
+      };
+      await AsyncStorage.setItem('defaultTimeSettings', JSON.stringify(timeSettings));
+      setUseCurrentTime(useCurrent);
+      setDefaultInjectionTime(time);
     } catch (error) {
-      console.error("Error saving settings:", error);
+      console.error('Error saving time settings:', error);
     }
   };
 
@@ -255,7 +293,6 @@ export default function HomeScreen() {
   // Initial load
   useEffect(() => {
     loadInjections();
-    loadSettings();
   }, []);
 
   const handleShowInjectionForm = async () => {
@@ -573,6 +610,91 @@ export default function HomeScreen() {
               </View>
               <Text className="text-gray-400 mt-2 text-sm">
                 This will be the default unit when adding a new injection
+              </Text>
+            </View>
+
+            {/* Default Time Setting */}
+            <View className="mb-6 bg-gray-800 rounded-lg p-4">
+              <Text className="text-white text-lg font-semibold mb-4">
+                Default Injection Time
+              </Text>
+              <View className="flex-row justify-between items-center mb-4">
+                <Text className="text-white">Use Current Time</Text>
+                <TouchableOpacity
+                  onPress={() => saveDefaultTimeSettings(defaultInjectionTime, !useCurrentTime)}
+                  className={`w-12 h-6 rounded-full ${
+                    useCurrentTime ? 'bg-blue-500' : 'bg-gray-700'
+                  }`}
+                >
+                  <View
+                    className={`w-5 h-5 rounded-full bg-white absolute ${
+                      useCurrentTime ? 'right-1' : 'left-1'
+                    } top-0.5`}
+                  />
+                </TouchableOpacity>
+              </View>
+              
+              {!useCurrentTime && (
+                <TouchableOpacity
+                  onPress={() => setShowTimePicker(true)}
+                  className="bg-gray-700 p-3 rounded-lg"
+                >
+                  <Text className="text-white text-center">
+                    {defaultInjectionTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {showTimePicker && (
+                <Modal
+                  transparent={true}
+                  animationType="fade"
+                  visible={showTimePicker}
+                  onRequestClose={() => setShowTimePicker(false)}
+                >
+                  <View style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.5)'}}>
+                    <View style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      backgroundColor: 'white',
+                      borderTopLeftRadius: 10,
+                      borderTopRightRadius: 10,
+                      paddingBottom: 20,
+                    }}>
+                      <View style={{padding: 10, flexDirection: 'row', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#e5e5e5'}}>
+                        <TouchableOpacity onPress={() => setShowTimePicker(false)}>
+                          <Text style={{color: '#007AFF', fontSize: 16}}>Cancel</Text>
+                        </TouchableOpacity>
+                        <Text style={{fontWeight: 'bold', fontSize: 16}}>Select Time</Text>
+                        <TouchableOpacity onPress={() => setShowTimePicker(false)}>
+                          <Text style={{color: '#007AFF', fontSize: 16}}>Done</Text>
+                        </TouchableOpacity>
+                      </View>
+                      <View style={{width: '100%', alignItems: 'center', paddingVertical: 20}}>
+                        <DateTimePicker
+                          testID="timePicker"
+                          value={defaultInjectionTime}
+                          mode="time"
+                          display="spinner"
+                          onChange={(event: any, selectedTime?: Date) => {
+                            setShowTimePicker(Platform.OS === 'ios');
+                            if (selectedTime) {
+                              saveDefaultTimeSettings(selectedTime, useCurrentTime);
+                            }
+                          }}
+                          style={{
+                            width: '100%',
+                          }}
+                        />
+                      </View>
+                    </View>
+                  </View>
+                </Modal>
+              )}
+              <Text className="text-gray-400 mt-2 text-sm">
+                This will be the default time when adding a new injection
               </Text>
             </View>
             
