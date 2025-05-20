@@ -19,6 +19,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import * as DocumentPicker from 'expo-document-picker';
 
 // Import components
 import InjectionForm from "./components/InjectionForm";
@@ -440,6 +441,23 @@ export default function HomeScreen() {
     }
   };
 
+  // Import injection data from JSON
+  const importInjectionData = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({ type: 'application/json' });
+      if (result.type === 'success' && result.uri) {
+        const fileContent = await FileSystem.readAsStringAsync(result.uri, { encoding: FileSystem.EncodingType.UTF8 });
+        // Optionally validate JSON here
+        await AsyncStorage.setItem("injections", fileContent);
+        Alert.alert("Success", "Injection data imported successfully.");
+        // Optionally reload data in your app
+        loadInjections && loadInjections();
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to import data: " + (error instanceof Error ? error.message : String(error)));
+    }
+  };
+
   const renderContent = () => {
     if (showInjectionForm) {
       // Calculate the suggested site for the new injection
@@ -751,6 +769,12 @@ export default function HomeScreen() {
                 className="bg-blue-500 py-3 px-4 rounded-lg mt-4"
               >
                 <Text className="text-white text-center font-semibold">Export Injection Data</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={importInjectionData}
+                className="bg-blue-500 py-3 px-4 rounded-lg mt-2"
+              >
+                <Text className="text-white text-center font-semibold">Import Injection Data</Text>
               </TouchableOpacity>
             </View>
 
