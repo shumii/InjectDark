@@ -17,6 +17,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 
 // Import components
 import InjectionForm from "./components/InjectionForm";
@@ -418,6 +420,26 @@ export default function HomeScreen() {
     );
   };
 
+  // Export injection data as JSON
+  const exportInjectionData = async () => {
+    try {
+      const storedInjections = await AsyncStorage.getItem("injections");
+      if (!storedInjections) {
+        Alert.alert("No Data", "There is no injection data to export.");
+        return;
+      }
+      const fileUri = FileSystem.documentDirectory + "injections-export.json";
+      await FileSystem.writeAsStringAsync(fileUri, storedInjections, { encoding: FileSystem.EncodingType.UTF8 });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileUri);
+      } else {
+        Alert.alert("Exported", "File saved to: " + fileUri);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to export data: " + (error.message || error));
+    }
+  };
+
   const renderContent = () => {
     if (showInjectionForm) {
       // Calculate the suggested site for the new injection
@@ -724,6 +746,12 @@ export default function HomeScreen() {
               <Text className="text-gray-400 mt-2 text-sm">
                 Warning: This will permanently delete all your injection records
               </Text>
+              <TouchableOpacity
+                onPress={exportInjectionData}
+                className="bg-blue-500 py-3 px-4 rounded-lg mt-4"
+              >
+                <Text className="text-white text-center font-semibold">Export Injection Data</Text>
+              </TouchableOpacity>
             </View>
 
             {/* App Information */}
