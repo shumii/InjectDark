@@ -437,7 +437,7 @@ export default function HomeScreen() {
         Alert.alert("Exported", "File saved to: " + fileUri);
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to export data: " + (error.message || error));
+      Alert.alert("Error", "Failed to export data: " + (error instanceof Error ? error.message : String(error)));
     }
   };
 
@@ -445,16 +445,16 @@ export default function HomeScreen() {
   const importInjectionData = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({ type: 'application/json' });
-      if (result.type === 'success' && result.uri) {
-        const fileContent = await FileSystem.readAsStringAsync(result.uri, { encoding: FileSystem.EncodingType.UTF8 });
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const uri = result.assets[0].uri;
+        const fileContent = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.UTF8 });
         // Optionally validate JSON here
-        await AsyncStorage.setItem("injections", fileContent);
-        Alert.alert("Success", "Injection data imported successfully.");
-        // Optionally reload data in your app
-        loadInjections && loadInjections();
+        await AsyncStorage.setItem('injections', fileContent);
+        Alert.alert('Success', 'Injection data imported successfully!');
+        await loadInjections(); // Refresh data in app
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to import data: " + (error instanceof Error ? error.message : String(error)));
+      Alert.alert('Error', 'Failed to import data: ' + (error instanceof Error ? error.message : String(error)));
     }
   };
 
