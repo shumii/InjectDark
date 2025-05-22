@@ -179,7 +179,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
       averageDosage,
       totalDosage
     };
-  }, [injectionData, currentDate]);
+  }, [injectionData, currentDate, selectedPeriod]);
 
   // Filter data based on selected time period
   const filteredData = useMemo(() => {
