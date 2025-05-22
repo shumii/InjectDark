@@ -514,7 +514,7 @@ export default function HomeScreen() {
                 PINN
               </Text>
               <Text className="text-gray-400">
-                Track your testosterone injections easily
+                Track your testosterone replacement therapy 
               </Text>
             </View>
 

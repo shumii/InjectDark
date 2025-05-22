@@ -192,7 +192,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
     });
   }, [injectionData, selectedPeriod]);
 
-  const filteredTLevels = useMemo(() => {
+  const filteredTLevels = useMemo(() => {    
     const periodDays = periodRanges[selectedPeriod];
     const cutoffDate = new Date();
     cutoffDate.setDate(currentDate.getDate() - periodDays);
@@ -225,7 +225,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
     //console.log('Filtered T Levels: ' + JSON.stringify(filteredTLevels));
 
     return filteredTLevels;
-  }, [allTestosteroneLevels]);
+  }, [allTestosteroneLevels, selectedPeriod]);
 
   // Process data for chart
   const chartData = useMemo(() => {
