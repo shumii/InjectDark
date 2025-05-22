@@ -27,7 +27,7 @@ interface MedicationChartProps {
   }>;
 }
 
-type TimePeriod = "week" | "month" | "year";
+type TimePeriod = "week" | "month" | "quarter" | "year";
 
 const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>("week");
@@ -42,6 +42,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
   const periodRanges = {
     week: 7,
     month: 30,
+    quarter: 90,
     year: 365,
   };
 
@@ -328,7 +329,7 @@ if (Object.values(medicationMap).length > 0)
     const d = new Date(date);
     if (selectedPeriod === "week") {
       return d.toLocaleDateString(undefined, { weekday: "short" });
-    } else if (selectedPeriod === "month") {
+    } else if (selectedPeriod === "month" || selectedPeriod === "quarter") {
       return d.toLocaleDateString(undefined, {
         day: "numeric",
         month: "short",
@@ -355,13 +356,13 @@ if (Object.values(medicationMap).length > 0)
 
       {/* Period selection buttons */}
       <View className="flex-row justify-center mb-4">
-        {(["week", "month", "year"] as TimePeriod[]).map((period) => (
+        {(["week", "month", "quarter", "year"] as TimePeriod[]).map((period) => (
           <TouchableOpacity
             key={period}
             onPress={() => setSelectedPeriod(period)}
             className={`px-4 py-2 mx-1 rounded-full ${selectedPeriod === period ? "bg-purple-600" : "bg-gray-700"}`}
           >
-            <Text className="text-white capitalize">{period}</Text>
+            <Text className="text-white capitalize">{period === "quarter" ? "3M" : period}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -394,7 +395,9 @@ if (Object.values(medicationMap).length > 0)
                   ? 7
                   : selectedPeriod === "month"
                     ? 10
-                    : 12
+                    : selectedPeriod === "quarter"
+                      ? 10
+                      : 12
               }
             />
             <VictoryAxis
