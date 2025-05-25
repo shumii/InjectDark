@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  ScrollView,
 } from "react-native";
 import {
   VictoryChart,
@@ -324,7 +325,7 @@ if (Object.values(medicationMap).length > 0)
 
     console.log('Final chart data:', finalData);
     return finalData;
-  }, [filteredData, selectedPeriod]);
+  }, [filteredData, selectedPeriod, filteredTLevels]);
 
   // Generate colors for each medication line
   const colors = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#a4de6c", "#ff0000"]; // Added red color for Total T
@@ -375,61 +376,62 @@ if (Object.values(medicationMap).length > 0)
       {/* Chart */}
       <View style={{ height: 250 }}>
         {chartData.length > 0 ? (
-          <VictoryChart
-            width={screenWidth}
-            height={250}
-            theme={VictoryTheme.material}
-            domainPadding={{ y: 10 }}
-            padding={{ top: 10, bottom: 50, left: 30, right: 30 }}
-            minDomain={{ y: 0 }}
-          >
-            <VictoryAxis
-              tickFormat={formatXAxisLabel}
-              style={{
-                tickLabels: {
-                  fill: "white",
-                  fontSize: 8,
-                  angle: 45,
-                  textAnchor: "start",
-                },
-                grid: { stroke: "transparent" },
-                axis: { stroke: "transparent" },
-              }}
-              tickCount={
-                selectedPeriod === "week"
-                  ? 7
-                  : selectedPeriod === "month"
-                    ? 10
-                    : selectedPeriod === "quarter"
-                      ? 10
-                      : 12
-              }
-            />
-            <VictoryAxis
-              dependentAxis
-              tickFormat={(t) => Math.round(t)}
-              style={{
-                tickLabels: { fill: "white", fontSize: 10 },
-                ticks: { stroke: "transparent" },
-                grid: { stroke: "transparent" },
-                axis: { stroke: "transparent" },
-              }}
-              minDomain={{ y: 0 }}
-            />
-            {chartData.map((dataset, index) => (
-              <VictoryLine
-                key={dataset.medication}
-                data={dataset.data}
+          <ScrollView horizontal>
+            <VictoryChart
+              width={selectedPeriod === "year" ? screenWidth * 2 : screenWidth}
+              height={250}
+              theme={VictoryTheme.material}
+              domainPadding={{ y: 10 }}
+              padding={{ top: 10, bottom: 50, left: 35, right: 30 }}
+            >
+              <VictoryAxis
+                tickFormat={formatXAxisLabel}
                 style={{
-                  data: {
-                    stroke: colors[index % colors.length],
-                    strokeWidth: 2,
+                  tickLabels: {
+                    fill: "white",
+                    fontSize: 8,
+                    angle: 45,
+                    textAnchor: "start",
                   },
+                  grid: { stroke: "transparent" },
+                  axis: { stroke: "transparent" },
                 }}
-                interpolation="monotoneX"
+                tickCount={
+                  selectedPeriod === "week"
+                    ? 7
+                    : selectedPeriod === "month"
+                      ? 10
+                      : selectedPeriod === "quarter"
+                        ? 10
+                        : 12
+                }
               />
-            ))}
-          </VictoryChart>
+              <VictoryAxis
+                dependentAxis
+                tickFormat={(t) => Math.round(t)}
+                style={{
+                  tickLabels: { fill: "white", fontSize: 10 },
+                  ticks: { stroke: "transparent" },
+                  grid: { stroke: "transparent" },
+                  axis: { stroke: "transparent" },
+                }}
+                minDomain={{ y: 0 }}
+              />
+              {chartData.map((dataset, index) => (
+                <VictoryLine
+                  key={dataset.medication}
+                  data={dataset.data}
+                  style={{
+                    data: {
+                      stroke: colors[index % colors.length],
+                      strokeWidth: 2,
+                    },
+                  }}
+                  interpolation="monotoneX"
+                />
+              ))}
+            </VictoryChart>
+          </ScrollView>
         ) : (
           <View className="items-center justify-center h-full">
             <Text className="text-gray-400">
@@ -478,7 +480,7 @@ if (Object.values(medicationMap).length > 0)
           </View>
           <View className="flex-row justify-between mt-4">
             <View className="bg-gray-700 rounded-lg p-3 flex-1 mr-2 items-center">
-              <Text className="text-2xl font-bold text-green-400">
+              <Text className="text-2xl font-bold text-blue-400">
                 {quickStats.averageDosage === Infinity || quickStats.averageDosage === -Infinity || isNaN(quickStats.averageDosage) ? "" : `${quickStats.averageDosage.toFixed(1)}mg`}
               </Text>
               <Text className="text-gray-400 text-sm">Avg Dosage</Text>
