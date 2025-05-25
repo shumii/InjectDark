@@ -464,17 +464,23 @@ if (Object.values(medicationMap).length > 0)
           </Text>
           <View className="flex-row justify-between mt-4">
             <View className="bg-gray-700 rounded-lg p-3 flex-1 mr-2 items-center">
-              <Text className="text-2xl font-bold text-blue-400">{quickStats.maxDosage}mg</Text>
+              <Text className="text-2xl font-bold text-blue-400">
+                {quickStats.maxDosage === Infinity || quickStats.maxDosage === -Infinity || isNaN(quickStats.maxDosage) ? "" : `${quickStats.maxDosage}mg`}
+              </Text>
               <Text className="text-gray-400 text-sm">Max Dosage</Text>
             </View>
             <View className="bg-gray-700 rounded-lg p-3 flex-1 ml-2 items-center">
-              <Text className="text-2xl font-bold text-purple-400">{quickStats.minDosage}mg</Text>
+              <Text className="text-2xl font-bold text-purple-400">
+                {quickStats.minDosage === Infinity || quickStats.minDosage === -Infinity || isNaN(quickStats.minDosage) ? "" : `${quickStats.minDosage}mg`}
+              </Text>
               <Text className="text-gray-400 text-sm">Min Dosage</Text>
             </View>
           </View>
           <View className="flex-row justify-between mt-4">
             <View className="bg-gray-700 rounded-lg p-3 flex-1 mr-2 items-center">
-              <Text className="text-2xl font-bold text-blue-400">{quickStats.averageDosage.toFixed(1)}mg</Text>
+              <Text className="text-2xl font-bold text-green-400">
+                {quickStats.averageDosage === Infinity || quickStats.averageDosage === -Infinity || isNaN(quickStats.averageDosage) ? "" : `${quickStats.averageDosage.toFixed(1)}mg`}
+              </Text>
               <Text className="text-gray-400 text-sm">Avg Dosage</Text>
             </View>
             <View className="bg-gray-700 rounded-lg p-3 flex-1 ml-2 items-center">
