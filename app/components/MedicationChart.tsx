@@ -340,7 +340,7 @@ if (Object.values(medicationMap).length > 0)
         {chartData.length > 0 ? (
           <ScrollView horizontal>
             <VictoryChart
-              width={selectedPeriod === "year" ? screenWidth * 2 : screenWidth}
+              width={selectedPeriod === "year" ? screenWidth * 1.6 : screenWidth}
               height={250}
               theme={VictoryTheme.material}
               domainPadding={{ y: 10 }}
