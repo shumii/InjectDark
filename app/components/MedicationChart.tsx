@@ -142,44 +142,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
 
   //console.log('Getting all test levels');
   //console.log('All test levels ' + JSON.stringify(allTestosteroneLevels));
-  // Calculate quick stats
-  const quickStats = useMemo(() => {
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(currentDate.getDate() - 7);
-
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(currentDate.getDate() - 30);
-
-    const lastWeekCount = injectionData.filter(injection => {
-      const injectionDate = new Date(injection.dateTime);
-      return injectionDate >= oneWeekAgo;
-    }).length;
-
-    const lastThirtyDaysCount = injectionData.filter(injection => {
-      const injectionDate = new Date(injection.dateTime);
-      return injectionDate >= thirtyDaysAgo;
-    }).length;
-
-    const filteredData = injectionData.filter(injection => {
-      const injectionDate = new Date(injection.dateTime);
-      return injectionDate >= thirtyDaysAgo;
-    });
-
-    const maxDosage = Math.max(...filteredData.map(injection => injection.dosage));
-    const minDosage = Math.min(...filteredData.map(injection => injection.dosage));
-    const averageDosage = filteredData.reduce((acc, injection) => acc + injection.dosage, 0) / filteredData.length;
-    const totalDosage = filteredData.reduce((acc, injection) => acc + injection.dosage, 0);
-
-
-    return {
-      lastWeekCount,
-      lastThirtyDaysCount,
-      maxDosage,
-      minDosage,
-      averageDosage,
-      totalDosage
-    };
-  }, [injectionData, currentDate, selectedPeriod]);
+  
 
   // Filter data based on selected time period
   const filteredData = useMemo(() => {
@@ -223,10 +186,52 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
       });
     });
 
+    console.log("UPDATED FILTERED T LEVELS");
+
     //console.log('Filtered T Levels: ' + JSON.stringify(filteredTLevels));
 
     return filteredTLevels;
   }, [allTestosteroneLevels, selectedPeriod]);
+
+  // Calculate quick stats
+  const quickStats = useMemo(() => {
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(currentDate.getDate() - 7);
+
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(currentDate.getDate() - 30);
+
+    const lastWeekCount = injectionData.filter(injection => {
+      const injectionDate = new Date(injection.dateTime);
+      return injectionDate >= oneWeekAgo;
+    }).length;
+
+    const lastThirtyDaysCount = injectionData.filter(injection => {
+      const injectionDate = new Date(injection.dateTime);
+      return injectionDate >= thirtyDaysAgo;
+    }).length;
+
+    // const filteredData = injectionData.filter(injection => {
+    //   const injectionDate = new Date(injection.dateTime);
+    //   return injectionDate >= thirtyDaysAgo;
+    // });
+
+    const data = filteredData;
+    const maxDosage = Math.max(...data.map(injection => injection.dosage));
+    const minDosage = Math.min(...data.map(injection => injection.dosage));
+    const averageDosage = data.reduce((acc, injection) => acc + injection.dosage, 0) / data.length;
+    const totalDosage = data.reduce((acc, injection) => acc + injection.dosage, 0);
+console.log("UPDATED QUICK STATS");
+
+    return {
+      lastWeekCount,
+      lastThirtyDaysCount,
+      maxDosage,
+      minDosage,
+      averageDosage,
+      totalDosage
+    };
+  }, [injectionData, currentDate, selectedPeriod]);
 
   // Process data for chart
   const chartData = useMemo(() => {
