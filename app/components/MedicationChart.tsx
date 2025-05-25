@@ -13,6 +13,9 @@ import {
   VictoryAxis,
   VictoryLegend,
   VictoryTheme,
+  VictoryGroup,
+  VictoryScatter,
+  VictoryTooltip,
 } from "victory-native";
 import { Calendar } from "lucide-react-native";
 
@@ -381,17 +384,32 @@ if (Object.values(medicationMap).length > 0)
                 minDomain={{ y: 0 }}
               />
               {chartData.map((dataset, index) => (
-                <VictoryLine
-                  key={dataset.medication}
-                  data={dataset.data}
-                  style={{
-                    data: {
-                      stroke: colors[index % colors.length],
-                      strokeWidth: 2,
-                    },
-                  }}
-                  interpolation="monotoneX"
-                />
+                <VictoryGroup key={dataset.medication}>
+                  <VictoryLine
+                    data={dataset.data}
+                    style={{
+                      data: {
+                        stroke: colors[index % colors.length],
+                        strokeWidth: 2,
+                      },
+                    }}
+                    interpolation="monotoneX"
+                  />
+                  <VictoryScatter
+                    data={dataset.data.map(point => ({
+                      ...point,
+                      label: `${point.y}mg`
+                    }))}
+                    size={4}
+                    style={{
+                      data: {
+                        fill: colors[index % colors.length],
+                      },
+                    }}
+                    labels={({ datum }) => datum.label}
+                    labelComponent={<VictoryTooltip />}
+                  />
+                </VictoryGroup>
               ))}
             </VictoryChart>
           </ScrollView>
