@@ -141,11 +141,13 @@ const InjectionForm = ({
     return lastInjection?.dosage?.toString() || "";
   });
 
-  const [dateTime, setDateTime] = useState(() => {
+  const [dateTime, setDateTime] = useState(() => {    
     if (useCurrentTime) {
       return new Date();
     }
-    return defaultInjectionTime;
+    const currentDate = new Date();
+    currentDate.setHours(defaultInjectionTime.getHours(), defaultInjectionTime.getMinutes(), defaultInjectionTime.getSeconds(), defaultInjectionTime.getMilliseconds());
+    return currentDate;
   });
 
   const [injectionSite, setInjectionSite] = useState(() => {
