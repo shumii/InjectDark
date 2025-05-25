@@ -87,13 +87,6 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
       const injectionDate = new Date(injection.dateTime);
       const halfLifeMinutes = injection.halfLifeMinutes || 0;
 
-      console.log('Pre-calculation processing injection:', {
-        medicationName,
-        injectionDate,
-        halfLifeMinutes,
-        dosage: injection.dosage
-      });
-
       if (halfLifeMinutes > 0) {
         // Process each day from injection date
         fullDateRange.forEach(date => {
@@ -117,22 +110,9 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
       }
     });
 
-    // // Calculate Total T by summing up all testosterone medications for each date
-    // const fullTotalTLevels: Record<string, number> = {};
-    // fullDateRange.forEach(date => {
-    //   fullTotalTLevels[date] = 0;
-    //   Object.entries(fullMedicationMap).forEach(([medicationName, levels]) => {
-    //     if (medicationName.toLowerCase().includes('testosterone')) {
-    //       fullTotalTLevels[date] += levels[date];
-    //     }
-    //   });
-    // });
-
     // Add Total T to the medication map
     // fullMedicationMap['Total T'] = fullTotalTLevels;
     // allMedications.add('Total T');
-
-    console.log('Pre-filtered complete testosterone levels calculated');
 
     return {
       medicationMap: fullMedicationMap,
@@ -140,10 +120,6 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
       dateRange: fullDateRange
     };
   }, [injectionData]); // Only depend on injectionData, not the selected period
-
-  //console.log('Getting all test levels');
-  //console.log('All test levels ' + JSON.stringify(allTestosteroneLevels));
-  
 
   // Filter data based on selected time period
   const filteredData = useMemo(() => {
@@ -165,8 +141,6 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
     const allDates = allTestosteroneLevels.dateRange;
     const allMedications = allTestosteroneLevels.medications;
 
-    console.log('filtered data beig used and the periodDays is ' + periodDays);
-
     const filteredTLevels: Record<string, Record<string, number>> = {};
     allMedications.forEach((medication) => {
       filteredTLevels[medication] = {};
@@ -186,10 +160,6 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
         }
       });
     });
-
-    console.log("UPDATED FILTERED T LEVELS");
-
-    //console.log('Filtered T Levels: ' + JSON.stringify(filteredTLevels));
 
     return filteredTLevels;
   }, [allTestosteroneLevels, selectedPeriod]);
@@ -222,7 +192,6 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
     const minDosage = Math.min(...data.map(injection => injection.dosage));
     const averageDosage = data.reduce((acc, injection) => acc + injection.dosage, 0) / data.length;
     const totalDosage = data.reduce((acc, injection) => acc + injection.dosage, 0);
-console.log("UPDATED QUICK STATS");
 
     return {
       lastWeekCount,
@@ -246,8 +215,8 @@ console.log("UPDATED QUICK STATS");
     const dateRange: string[] = [];
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setDate(endDate.getDate() - periodRanges[selectedPeriod]);
-
+    //startDate.setDate(endDate.getDate() - periodRanges[selectedPeriod]);  // this statement used to work. commented out to try adding to make it 7 days not 8
+    startDate.setDate((endDate.getDate() - periodRanges[selectedPeriod])+1);
     for (
       let d = new Date(startDate);
       d <= endDate;
@@ -262,9 +231,6 @@ console.log("UPDATED QUICK STATS");
     Object.keys(medicationMap).forEach((medication) => {
       medications.add(medication);
     });
-
-    //console.log('Getting chart data. Filtered T Levels: ' + JSON.stringify(filteredTLevels));
-
 
     // if only 1 we take quick stats from data, otherwise we take it from the total t
 if (Object.values(medicationMap).length > 0)
@@ -309,9 +275,6 @@ if (Object.values(medicationMap).length > 0)
     }
   }
 
-    // Log final data
-    console.log('Final medication map:', medicationMap);
-
     // Create dataset for each medication
     const finalData = Array.from(medications).map((medication) => {
       return {
@@ -323,7 +286,7 @@ if (Object.values(medicationMap).length > 0)
       };
     });
 
-    console.log('Final chart data:', finalData);
+    console.log('Final chart data used:', finalData);
     return finalData;
   }, [filteredData, selectedPeriod, filteredTLevels]);
 
@@ -383,6 +346,7 @@ if (Object.values(medicationMap).length > 0)
               theme={VictoryTheme.material}
               domainPadding={{ y: 10 }}
               padding={{ top: 10, bottom: 50, left: 35, right: 30 }}
+              minDomain={{ y: 0 }}  
             >
               <VictoryAxis
                 tickFormat={formatXAxisLabel}
