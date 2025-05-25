@@ -215,8 +215,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
     const dateRange: string[] = [];
     const endDate = new Date();
     const startDate = new Date();
-    //startDate.setDate(endDate.getDate() - periodRanges[selectedPeriod]);  // this statement used to work. commented out to try adding to make it 7 days not 8
-    startDate.setDate((endDate.getDate() - periodRanges[selectedPeriod])+1);
+    startDate.setDate(endDate.getDate() - (periodRanges[selectedPeriod] - 1)); // Subtract (period - 1) to include today
     for (
       let d = new Date(startDate);
       d <= endDate;
