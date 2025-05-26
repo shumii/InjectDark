@@ -27,6 +27,7 @@ import InjectionHistory from "./components/InjectionHistory";
 import StatisticsDashboard from "./components/StatisticsDashboard";
 import MedicationChart from "./components/MedicationChart";
 import { InjectionData } from "./components/InjectionForm";
+import MedicationManagementScreen from "./components/MedicationManagementScreen";
 
 interface RecentInjection {
   id: string;
@@ -91,6 +92,8 @@ export default function HomeScreen() {
   const [showSettings, setShowSettings] = useState(false);
 
   const [selectedInjectionId, setSelectedInjectionId] = useState<string | null>(null);
+
+  const [showMedicationManagement, setShowMedicationManagement] = useState(false);
 
   // Load settings from AsyncStorage
   useEffect(() => {
@@ -784,6 +787,19 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
 
+            {/* Medication Management */}
+            <View className="mb-6 bg-gray-800 rounded-lg p-4">
+              <Text className="text-white text-lg font-semibold mb-4">
+                Medication Management
+              </Text>
+              <TouchableOpacity
+                className="bg-blue-600 py-3 px-4 rounded-lg mt-2"
+                onPress={() => setShowMedicationManagement(true)}
+              >
+                <Text className="text-white text-center font-semibold">Manage Medications</Text>
+              </TouchableOpacity>
+            </View>
+
             {/* App Information */}
             <View className="mb-6 bg-gray-800 rounded-lg p-4">
               <Text className="text-white text-lg font-semibold mb-2">
@@ -892,6 +908,17 @@ export default function HomeScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Medication Management Modal */}
+      <Modal visible={showMedicationManagement} animationType="slide">
+        <MedicationManagementScreen />
+        <TouchableOpacity
+          style={{ position: 'absolute', top: 40, right: 20, zIndex: 10 }}
+          onPress={() => setShowMedicationManagement(false)}
+        >
+          <Text style={{ color: '#fff', fontSize: 18, backgroundColor: '#222', padding: 10, borderRadius: 8 }}>Close</Text>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }

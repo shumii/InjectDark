@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
 import { Calendar, Clock, Check, ChevronDown, Repeat } from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import StarRating from "./StarRating";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
 interface InjectionFormProps {
@@ -96,13 +97,26 @@ const InjectionForm = ({
   defaultInjectionTime,
   useCurrentTime,
 }: InjectionFormProps) => {
-  // List of medications with their half-lives and concentrations
-  const medications: Medication[] = [
-    { name: "Testosterone Enanthate 300", halfLifeDescription: "4 days", halfLifeMinutes: 1440, concentration: 300 },
-    { name: "Testosterone Cypionate 200", halfLifeDescription: "5 days", halfLifeMinutes: 5760, concentration: 200 },
-    { name: "Testosterone Cypionate 250", halfLifeDescription: "5 days", halfLifeMinutes: 7200, concentration: 250 },
-    { name: "Growth Hormone", halfLifeDescription: "3.4 hours", halfLifeMinutes: 200, concentration: 10 }, // Assuming a concentration for GH
-  ];
+  const [medications, setMedications] = useState<Medication[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load medications from AsyncStorage
+  useEffect(() => {
+    const loadMedications = async () => {
+      try {
+        const stored = await AsyncStorage.getItem('medications');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          setMedications(parsed);
+        }
+      } catch (error) {
+        console.error('Error loading medications:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadMedications();
+  }, []);
 
   console.log('Last Injection received:', lastInjection); // Debug log
 
