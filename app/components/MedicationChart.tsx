@@ -400,7 +400,23 @@ if (Object.values(medicationMap).length > 0)
                       ...point,
                       label: `${point.y}mg`
                     }))}
-                    size={4}
+                    size={({ active }) =>
+                      active
+                        ? (
+                            selectedPeriod === 'year'
+                              ? 2
+                              : selectedPeriod === 'quarter'
+                                ? 4
+                                : 8
+                          )
+                        : (
+                            selectedPeriod === 'year'
+                              ? 1
+                              : selectedPeriod === 'quarter'
+                                ? 2
+                                : 4
+                          )
+                    }
                     style={{
                       data: {
                         fill: colors[index % colors.length],
