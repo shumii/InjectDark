@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -35,46 +35,70 @@ interface Injection {
 interface InjectionHistoryProps {
   injections?: Injection[];
   onSelectInjection?: (injection: Injection) => void;
+  selectedInjectionId?: string;
 }
 
 const InjectionHistory = ({
   injections: propInjections,
   onSelectInjection = () => {},
+  selectedInjectionId,
 }: InjectionHistoryProps) => {
   const [injections, setInjections] = useState<Injection[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
+  const flatListRef = useRef<FlatList<Injection>>(null);
 
-  const loadInjections = async () => {
-    try {
-      setLoading(true);
-      const storedInjections = await AsyncStorage.getItem("injections");
-      if (storedInjections) {
-        const parsedInjections = JSON.parse(storedInjections);
-        setInjections(
-          parsedInjections.map((item: any) => ({
-            ...item,
+    const loadInjections = async () => {
+      try {
+        setLoading(true);
+        const storedInjections = await AsyncStorage.getItem("injections");
+        if (storedInjections) {
+          const parsedInjections = JSON.parse(storedInjections);
+          setInjections(
+            parsedInjections.map((item: any) => ({
+              ...item,
             site: item.injectionSite || item.site,
-            dateTime:
-              typeof item.dateTime === "string"
-                ? item.dateTime
-                : new Date(item.dateTime).toISOString(),
-          })),
-        );
-      } else if (propInjections) {
-        setInjections(propInjections);
+              dateTime:
+                typeof item.dateTime === "string"
+                  ? item.dateTime
+                  : new Date(item.dateTime).toISOString(),
+            })),
+          );
+        } else if (propInjections) {
+          setInjections(propInjections);
+        }
+      } catch (error) {
+        console.error("Error loading injections:", error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error loading injections:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
   useEffect(() => {
     loadInjections();
   }, [propInjections]);
+
+  const filteredInjections = injections
+    .filter(injection => {
+      const query = searchQuery.toLowerCase();
+      return (
+        injection.medicationName.toLowerCase().includes(query) ||
+        injection.site?.toLowerCase().includes(query) ||
+        injection.dosage.toString().toLowerCase().includes(query) ||
+        injection.notes?.toLowerCase().includes(query)
+      );
+    })
+    .sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
+
+  useEffect(() => {
+    if (selectedInjectionId && filteredInjections.length > 0) {
+      const index = filteredInjections.findIndex(inj => inj.id === selectedInjectionId);
+      if (index !== -1 && flatListRef.current) {
+        flatListRef.current.scrollToIndex({ index, animated: true });
+      }
+    }
+  }, [selectedInjectionId, filteredInjections]);
 
   // Calculate testosterone level at a specific injection time
   const calculateTestosteroneLevel = (currentInjection: Injection) => {
@@ -111,18 +135,6 @@ const InjectionHistory = ({
     
     return Math.round(totalLevel);
   };
-
-  const filteredInjections = injections
-    .filter(injection => {
-      const query = searchQuery.toLowerCase();
-      return (
-        injection.medicationName.toLowerCase().includes(query) ||
-        injection.site?.toLowerCase().includes(query) ||
-        injection.dosage.toString().toLowerCase().includes(query) ||
-        injection.notes?.toLowerCase().includes(query)
-      );
-    })
-    .sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
 
   const handleDeleteInjection = async (id: string) => {
     Alert.alert(
@@ -175,14 +187,14 @@ const InjectionHistory = ({
   const renderListItem = ({ item }: { item: Injection }) => {
     // Calculate T level at this injection time
     const tLevel = calculateTestosteroneLevel(item);
-    
+    const isSelected = item.id === selectedInjectionId;
     return (
-    <View className="mb-4 bg-gray-800 rounded-lg overflow-hidden">
-      {/* Header Section */}
-      <View className="p-4 border-b border-gray-700">
-        <View className="flex-row justify-between items-center mb-2">
-          <Text className="text-white text-lg font-bold">{item.medicationName}</Text>
-          <TouchableOpacity 
+      <View className="mb-4 bg-gray-800 rounded-lg overflow-hidden">
+        {/* Header Section */}
+        <View className="p-4 border-b border-gray-700">
+          <View className="flex-row justify-between items-center mb-2">
+            <Text className="text-white text-lg font-bold">{item.medicationName}</Text>
+    <TouchableOpacity
             onPress={() => handleDeleteInjection(item.id)}
             className="bg-red-500/10 rounded-full p-2"
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -196,14 +208,14 @@ const InjectionHistory = ({
               <Calendar size={14} color="#60a5fa" />
             </View>
             <View>
-              <Text className="text-blue-400">
+          <Text className="text-blue-400">
                 {new Date(item.dateTime).toLocaleDateString()} • {" "}
                 <Text className="text-gray-400">
-                  {new Date(item.dateTime).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </Text>
+            {new Date(item.dateTime).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </Text>
               </Text>
             </View>
           </View>
@@ -290,7 +302,7 @@ const InjectionHistory = ({
         )}
       </View>
     </View>
-    );
+  );
   };
 
   const renderChartView = () => {
@@ -395,20 +407,24 @@ const InjectionHistory = ({
             </>
           ) : (
             <>
-              <Text className="text-white text-lg">No injection records found</Text>
-              <Text className="text-gray-400 mt-2">
-                Add your first injection to get started
-              </Text>
+          <Text className="text-white text-lg">No injection records found</Text>
+          <Text className="text-gray-400 mt-2">
+            Add your first injection to get started
+          </Text>
             </>
           )}
         </View>
       ) : (
-        <FlatList
+              <FlatList
+          ref={flatListRef}
           data={filteredInjections}
-          renderItem={renderListItem}
-          keyExtractor={(item) => item.id}
-          className="flex-1"
-        />
+                renderItem={renderListItem}
+                keyExtractor={(item) => item.id}
+                className="flex-1"
+                getItemLayout={(data, index) => (
+                  {length: 180, offset: 180 * index, index} // Approximate row height
+                )}
+              />
       )}
     </View>
   );

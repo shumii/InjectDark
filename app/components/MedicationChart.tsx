@@ -34,7 +34,7 @@ interface MedicationChartProps {
 type TimePeriod = "week" | "month" | "quarter" | "year";
 
 const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
-  const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>("week");
+  const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>("quarter");
   const [maxTestosterone, setMaxTestosterone] = useState(0);
   const [minTestosterone, setMinTestosterone] = useState(0);
   const [averageTestosterone, setAverageTestosterone] = useState(0);
@@ -333,7 +333,7 @@ if (Object.values(medicationMap).length > 0)
             onPress={() => setSelectedPeriod(period)}
             className={`px-4 py-2 mx-1 rounded-full ${selectedPeriod === period ? "bg-purple-600" : "bg-gray-700"}`}
           >
-            <Text className="text-white capitalize">{period === "quarter" ? "3M" : period}</Text>
+            <Text className="text-white capitalize">{period === "quarter" ? "90 Days" : period}</Text>
           </TouchableOpacity>
         ))}
       </View>

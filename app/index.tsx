@@ -90,6 +90,8 @@ export default function HomeScreen() {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
+  const [selectedInjectionId, setSelectedInjectionId] = useState<string | null>(null);
+
   // Load settings from AsyncStorage
   useEffect(() => {
     const loadSettings = async () => {
@@ -588,8 +590,12 @@ export default function HomeScreen() {
                 </View>
               ) : (
                 recentInjections.map((injection) => (
-                <View
-                   key={injection.id}
+                <TouchableOpacity
+                  key={injection.id}
+                  onPress={() => {
+                    setSelectedInjectionId(injection.id);
+                    setActiveTab("history");
+                  }}
                   className="bg-gray-800 rounded-lg p-4 mb-3"
                 >
                   <View className="flex-row justify-between">
@@ -602,7 +608,7 @@ export default function HomeScreen() {
                     <Text className="text-gray-400">{injection.site}</Text>
                     <Text className="text-gray-400">{injection.dateDisplay}</Text>
                   </View>
-                </View>
+                </TouchableOpacity>
               ))
             )}
             </View>
@@ -623,7 +629,7 @@ export default function HomeScreen() {
           </ScrollView>
         );
       case "history":
-        return <InjectionHistory />;
+        return <InjectionHistory selectedInjectionId={selectedInjectionId || undefined} />;
       case "stats":
         return <StatisticsDashboard />;
       case "settings":
