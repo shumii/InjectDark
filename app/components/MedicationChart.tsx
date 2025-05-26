@@ -407,7 +407,7 @@ if (Object.values(medicationMap).length > 0)
                       },
                     }}
                     labels={({ datum }) => datum.label}
-                    labelComponent={<VictoryTooltip />}
+                    labelComponent={<VictoryTooltip constrainToVisibleArea />}
                   />
                 </VictoryGroup>
               ))}
