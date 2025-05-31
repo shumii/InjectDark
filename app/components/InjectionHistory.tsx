@@ -69,6 +69,14 @@ const InjectionHistory = ({
                   : new Date(item.dateTime).toISOString(),
             })),
           );
+          parsedInjections.slice(0, 10).forEach((inj: any, idx: number) => {
+            console.log(`Injection ${idx + 1}:`, {
+              medicationName: inj.medicationName,
+              dosage: inj.dosage,
+              halfLifeMinutes: inj.halfLifeMinutes,
+              dateTime: inj.dateTime
+            });
+          });
         } else if (propInjections) {
           setInjections(propInjections);
         }
@@ -211,6 +219,14 @@ const InjectionHistory = ({
   const renderListItem = ({ item }: { item: Injection }) => {
     // Calculate T level at this injection time
     const tLevel = calculateTestosteroneLevel(item);
+
+    // Coerce all ratings to numbers
+    const mood = Number(item.moodRating) || 0;
+    const sleep = Number(item.sleepRating) || 0;
+    const libido = Number(item.libidoRating) || 0;
+    const energy = Number(item.energyRating) || 0;
+    const sides = Number(item.sidesRating) || 0;
+
     const isSelected = item.id === selectedInjectionId;
     return (
       <View className="mb-4 bg-gray-800 rounded-lg overflow-hidden">
@@ -288,38 +304,37 @@ const InjectionHistory = ({
           </View>
 
           {/* Ratings Section */}
-          {(item.moodRating || item.sleepRating || item.libidoRating || item.energyRating || item.sidesRating) && (
+          {(mood > 0 || sleep > 0 || libido > 0 || energy > 0 || sides > 0) && (
             <View className="mt-4 pt-4 border-t border-gray-700">
-              {/* <Text className="text-gray-400 text-sm mb-3"></Text> */}
               <View className="flex-row flex-wrap">
-                {item.moodRating && item.moodRating > 0 && (
+                {mood > 0 && (
                   <View className="bg-gray-700/50 rounded-lg p-2 mr-2 mb-2">
                     <Text className="text-gray-400 text-xs mb-1">Mood</Text>
-                    {renderRatingStars(item.moodRating)}
+                    {renderRatingStars(mood)}
                   </View>
                 )}
-                {item.sleepRating && item.sleepRating > 0 && (
+                {sleep > 0 && (
                   <View className="bg-gray-700/50 rounded-lg p-2 mr-2 mb-2">
                     <Text className="text-gray-400 text-xs mb-1">Sleep</Text>
-                    {renderRatingStars(item.sleepRating)}
+                    {renderRatingStars(sleep)}
                   </View>
                 )}
-                {item.libidoRating && item.libidoRating > 0 && (
+                {libido > 0 && (
                   <View className="bg-gray-700/50 rounded-lg p-2 mr-2 mb-2">
                     <Text className="text-gray-400 text-xs mb-1">Libido</Text>
-                    {renderRatingStars(item.libidoRating)}
+                    {renderRatingStars(libido)}
                   </View>
                 )}
-                {item.energyRating && item.energyRating > 0 && (
+                {energy > 0 && (
                   <View className="bg-gray-700/50 rounded-lg p-2 mr-2 mb-2">
                     <Text className="text-gray-400 text-xs mb-1">Energy</Text>
-                    {renderRatingStars(item.energyRating)}
+                    {renderRatingStars(energy)}
                   </View>
                 )}
-                {item.sidesRating && item.sidesRating > 0 && (
+                {sides > 0 && (
                   <View className="bg-gray-700/50 rounded-lg p-2 mr-2 mb-2">
                     <Text className="text-gray-400 text-xs mb-1">Side Effects</Text>
-                    {renderRatingStars(item.sidesRating)}
+                    {renderRatingStars(sides)}
                   </View>
                 )}
               </View>
