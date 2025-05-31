@@ -348,7 +348,7 @@ if (Object.values(medicationMap).length > 0)
                 height={250}
                 theme={VictoryTheme.material}
                 domainPadding={{ y: 10 }}
-                padding={{ top: 10, bottom: 50, left: 35, right: 30 }}
+                padding={{ top: 10, bottom: 60, left: 35, right: 30 }}
                 minDomain={{ y: 0 }}
               >
                 <VictoryAxis
@@ -356,7 +356,7 @@ if (Object.values(medicationMap).length > 0)
                   style={{
                     tickLabels: {
                       fill: "white",
-                      fontSize: 8,
+                      fontSize: 14,
                       angle: 45,
                       textAnchor: "start",
                     },
@@ -369,7 +369,7 @@ if (Object.values(medicationMap).length > 0)
                   dependentAxis
                   tickFormat={(t) => Math.round(t)}
                   style={{
-                    tickLabels: { fill: "white", fontSize: 10 },
+                    tickLabels: { fill: "white", fontSize: 14 },
                     ticks: { stroke: "transparent" },
                     grid: { stroke: "transparent" },
                     axis: { stroke: "transparent" },
@@ -412,7 +412,7 @@ if (Object.values(medicationMap).length > 0)
               height={250}
               theme={VictoryTheme.material}
               domainPadding={{ y: 10 }}
-              padding={{ top: 10, bottom: 50, left: 35, right: 30 }}
+              padding={{ top: 10, bottom: 60, left: 35, right: 30 }}
               minDomain={{ y: 0 }}
             >
               <VictoryAxis
@@ -420,7 +420,7 @@ if (Object.values(medicationMap).length > 0)
                 style={{
                   tickLabels: {
                     fill: "white",
-                    fontSize: 8,
+                    fontSize: 14,
                     angle: 45,
                     textAnchor: "start",
                   },
@@ -439,7 +439,7 @@ if (Object.values(medicationMap).length > 0)
                 dependentAxis
                 tickFormat={(t) => Math.round(t)}
                 style={{
-                  tickLabels: { fill: "white", fontSize: 10 },
+                  tickLabels: { fill: "white", fontSize: 14 },
                   ticks: { stroke: "transparent" },
                   grid: { stroke: "transparent" },
                   axis: { stroke: "transparent" },
@@ -508,7 +508,7 @@ if (Object.values(medicationMap).length > 0)
           orientation="horizontal"
           itemsPerRow={2}
           style={{
-            labels: { fill: "white", fontSize: 10 },
+            labels: { fill: "white", fontSize: 14 },
           }}
           data={legendData}
         />
