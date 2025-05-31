@@ -69,7 +69,7 @@ const InjectionHistory = ({
                   : new Date(item.dateTime).toISOString(),
             })),
           );
-          parsedInjections.slice(0, 10).forEach((inj: any, idx: number) => {
+          parsedInjections.forEach((inj: any, idx: number) => {
             console.log(`Injection ${idx + 1}:`, {
               medicationName: inj.medicationName,
               dosage: inj.dosage,

@@ -125,14 +125,16 @@ const InjectionForm = ({
     return lastInjection?.medicationName || "";
   });
 
-  const [selectedMedication, setSelectedMedication] = useState<Medication | null>(() => {
-    if (lastInjection?.medicationName) {
-      const found = medications.find(med => med.name === lastInjection.medicationName);
-      console.log('Found medication:', found); // Debug log
-      return found || null;
+  const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
+
+  useEffect(() => {
+    if (medicationName) {
+      const found = medications.find(med => med.name === medicationName);
+      setSelectedMedication(found || null);
+    } else {
+      setSelectedMedication(null);
     }
-    return null;
-  });
+  }, [medicationName, medications]);
 
   const [showMedicationDropdown, setShowMedicationDropdown] = useState(false);
   const [dosageUnit, setDosageUnit] = useState<'mg' | 'ml'>(defaultDosageUnit);
@@ -209,6 +211,13 @@ const InjectionForm = ({
       const dosageInMg = dosageUnit === 'ml' 
         ? Number(dosage) * concentration 
         : Number(dosage);
+
+      // Log selected medication and halfLifeMinutes at save time
+      console.log('Saving injection with:', {
+        medicationName,
+        selectedMedication,
+        halfLifeMinutes: selectedMedication?.halfLifeMinutes
+      });
       
       onSave({
         id: new Date().getTime().toString(),
