@@ -359,8 +359,8 @@ const InjectionForm = ({
           {selectedMedication && (
             <View className="mt-1">
               <Text className="text-gray-400">
-                Half-life: {selectedMedication.halfLifeDescription}
-              </Text>
+              Half-life: {selectedMedication.halfLifeDescription}
+            </Text>
             </View>
           )}
           {errors.medicationName && (
@@ -393,9 +393,9 @@ const InjectionForm = ({
                     >
                       <Text className="text-white text-base">{item.name}</Text>
                       <View className="flex-row justify-between mt-1">
-                        <Text className="text-gray-400 text-sm">
-                          Half-life: {item.halfLifeDescription}
-                        </Text>
+                      <Text className="text-gray-400 text-sm">
+                        Half-life: {item.halfLifeDescription}
+                      </Text>
                         <Text className="text-gray-400 text-sm">
                           {item.concentration}mg/ml
                         </Text>
@@ -411,16 +411,16 @@ const InjectionForm = ({
         <View className="mb-4">
           <Text className="text-white text-base mb-2">Dosage</Text>
           <View className="flex-row items-center">
-            <TextInput
+          <TextInput
               className={`flex-1 bg-gray-700 text-white p-3 rounded-l-md ${errors.dosage ? "border border-red-500" : ""}`}
               placeholder={`Enter dosage (${dosageUnit})`}
-              placeholderTextColor="#9ca3af"
-              value={dosage}
+            placeholderTextColor="#9ca3af"
+            value={dosage}
               keyboardType="numeric"
-              onChangeText={(value)=>{
+            onChangeText={(value)=>{
                 setDosage(value.replace(/[^0-9.]/g, ''));
-              }}            
-            />
+            }}            
+          />
             <TouchableOpacity
               className="bg-blue-600 p-3 rounded-r-md flex-row items-center"
               onPress={toggleDosageUnit}
@@ -488,18 +488,18 @@ const InjectionForm = ({
                     </TouchableOpacity>
                   </View>
                   <View style={{width: '100%', alignItems: 'center'}}>
-                    <DateTimePicker
+            <DateTimePicker
                       testID="datePicker"
-                      value={dateTime}
-                      mode="date"
+              value={dateTime}
+              mode="date"
                       display="inline"
-                      onChange={handleDateChange}
+              onChange={handleDateChange}
                       style={{
                         height: 350,
                         width: '100%',
                         marginHorizontal: -10,
                       }}
-                    />
+            />
                   </View>
                 </View>
               </View>
@@ -534,16 +534,16 @@ const InjectionForm = ({
                     </TouchableOpacity>
                   </View>
                   <View style={{width: '100%', alignItems: 'center', paddingVertical: 20}}>
-                    <DateTimePicker
+            <DateTimePicker
                       testID="timePicker"
-                      value={dateTime}
-                      mode="time"
+              value={dateTime}
+              mode="time"
                       display="spinner"
-                      onChange={handleTimeChange}
+              onChange={handleTimeChange}
                       style={{
                         width: '100%',
                       }}
-                    />
+            />
                   </View>
                 </View>
               </View>

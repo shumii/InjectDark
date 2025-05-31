@@ -79,7 +79,7 @@ export default function HomeScreen() {
   const [recentInjections, setRecentInjections] = useState<RecentInjection[]>([],);
   const [allInjections, setAllInjections] = useState<InjectionData[]>([],);
   const [loading, setLoading] = useState(true);
-  
+
   // Settings state
   const [defaultDosageUnit, setDefaultDosageUnit] = useState<'mg' | 'ml'>('mg');
   const [useCurrentTime, setUseCurrentTime] = useState(true);
@@ -270,40 +270,40 @@ export default function HomeScreen() {
   };
 
   // Load injections from AsyncStorage
-  const loadInjections = async () => {
-    try {
-      setLoading(true);
-      const storedInjections = await AsyncStorage.getItem("injections");
+    const loadInjections = async () => {
+      try {
+        setLoading(true);
+        const storedInjections = await AsyncStorage.getItem("injections");
 
-      if (storedInjections) {
-        const parsedInjections: InjectionData[] =
-          JSON.parse(storedInjections);
+        if (storedInjections) {
+          const parsedInjections: InjectionData[] =
+            JSON.parse(storedInjections);
 
         const sortedInjections = parsedInjections.sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());          
 
-        // Format the data for display and take only the 3 most recent
+          // Format the data for display and take only the 3 most recent
         const formattedInjections = sortedInjections
-          .slice(0, 3)
-          .map((injection) => ({
-            id: injection.id,
-            medication: injection.medicationName,
-            dosage: injection.dosage,
+            .slice(0, 3)
+            .map((injection) => ({
+              id: injection.id,
+              medication: injection.medicationName,
+              dosage: injection.dosage,
             dateDisplay: formatRelativeDateTime(injection.dateTime),
             date: injection.dateTime,
-            site: injection.injectionSite,
+              site: injection.injectionSite,
           }))
           //.sort((a, b) => b.date.getTime() - a.date.getTime()).reverse();
-    
-        setRecentInjections(formattedInjections);
+      
+          setRecentInjections(formattedInjections);
         setAllInjections(sortedInjections);
         console.log('Loaded injections:', sortedInjections);
+        }
+      } catch (error) {
+        console.error("Error loading injections:", error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error loading injections:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
   // Initial load
   useEffect(() => {
@@ -528,12 +528,12 @@ export default function HomeScreen() {
               onPress={handleShowInjectionForm}
               className="mb-6 rounded-md bg-blue-500"
             >
-              <View style={{ flexDirection: 'row' }} className="p-4">
-                <Plus size={24} color="white" />
-                <Text className="text-white text-lg font-semibold ml-2">
-                  Add Injection
-                </Text>
-              </View>
+                <View style={{ flexDirection: 'row' }} className="p-4">
+                  <Plus size={24} color="white" />
+                  <Text className="text-white text-lg font-semibold ml-2">
+                    Add Injection
+                  </Text>
+                </View>
             </TouchableOpacity>            
             
 
@@ -543,27 +543,27 @@ export default function HomeScreen() {
               if (!nextInjection) return null;
 
               return (
-                <View className="mb-6">
-                  <Text className="text-xl font-semibold text-white mb-3">
-                    Next Injection
-                  </Text>
-                  <View
-                    className="bg-gray-800 rounded-lg p-4 mb-3"
-                  >
-                    <View className="flex-row justify-between">
-                      <Text className="text-white font-semibold">
+            <View className="mb-6">
+              <Text className="text-xl font-semibold text-white mb-3">
+                Next Injection
+              </Text>
+              <View
+                className="bg-gray-800 rounded-lg p-4 mb-3"
+              >
+                <View className="flex-row justify-between">
+                  <Text className="text-white font-semibold">
                         {nextInjection.medicationName}
-                      </Text>
+                  </Text>
                       <Text className="text-gray-400">{nextInjection.dosage}mg</Text>
-                    </View>
-                    <View className="flex-row justify-between mt-2">
+                </View>
+                <View className="flex-row justify-between mt-2">
                       <Text className="text-gray-400">{nextInjection.injectionSite}</Text>
                       <Text className="text-gray-400">
                         {formatFutureDateTime(nextInjection.dateTime)}
                       </Text>
-                    </View>
-                  </View>
                 </View>
+              </View>
+            </View>
               );
             })()}
 
@@ -594,7 +594,7 @@ export default function HomeScreen() {
               ) : (
                 recentInjections.map((injection) => (
                 <TouchableOpacity
-                  key={injection.id}
+                   key={injection.id}
                   onPress={() => {
                     setSelectedInjectionId(injection.id);
                     setActiveTab("history");
@@ -645,7 +645,7 @@ export default function HomeScreen() {
               <Text className="text-gray-400">
                 
               </Text>
-            </View>
+                </View>
 
             {/* Default Dosage Unit Setting */}
             <View className="mb-6 bg-gray-800 rounded-lg p-4">

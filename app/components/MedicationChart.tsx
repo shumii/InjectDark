@@ -275,7 +275,7 @@ if (Object.values(medicationMap).length > 0)
       medicationMap['Total T'] = totalTLevels;
       medications.add('Total T');
     }
-  }
+    }
 
     // Create dataset for each medication
     const finalData = Array.from(medications).map((medication) => {
@@ -342,59 +342,59 @@ if (Object.values(medicationMap).length > 0)
       <View style={{ height: 250 }}>
         {chartData.length > 0 ? (
           <ScrollView horizontal>
-            <VictoryChart
+          <VictoryChart
               width={selectedPeriod === "year" ? screenWidth * 1.6 : screenWidth}
-              height={250}
-              theme={VictoryTheme.material}
-              domainPadding={{ y: 10 }}
+            height={250}
+            theme={VictoryTheme.material}
+            domainPadding={{ y: 10 }}
               padding={{ top: 10, bottom: 50, left: 35, right: 30 }}
               minDomain={{ y: 0 }}  
-            >
-              <VictoryAxis
-                tickFormat={formatXAxisLabel}
-                style={{
-                  tickLabels: {
-                    fill: "white",
-                    fontSize: 8,
-                    angle: 45,
-                    textAnchor: "start",
-                  },
-                  grid: { stroke: "transparent" },
-                  axis: { stroke: "transparent" },
-                }}
-                tickCount={
-                  selectedPeriod === "week"
-                    ? 7
-                    : selectedPeriod === "month"
+          >
+            <VictoryAxis
+              tickFormat={formatXAxisLabel}
+              style={{
+                tickLabels: {
+                  fill: "white",
+                  fontSize: 8,
+                  angle: 45,
+                  textAnchor: "start",
+                },
+                grid: { stroke: "transparent" },
+                axis: { stroke: "transparent" },
+              }}
+              tickCount={
+                selectedPeriod === "week"
+                  ? 7
+                  : selectedPeriod === "month"
                       ? 10
                       : selectedPeriod === "quarter"
-                        ? 10
-                        : 12
-                }
-              />
-              <VictoryAxis
-                dependentAxis
-                tickFormat={(t) => Math.round(t)}
-                style={{
-                  tickLabels: { fill: "white", fontSize: 10 },
+                    ? 10
+                    : 12
+              }
+            />
+            <VictoryAxis
+              dependentAxis
+              tickFormat={(t) => Math.round(t)}
+              style={{
+                tickLabels: { fill: "white", fontSize: 10 },
                   ticks: { stroke: "transparent" },
-                  grid: { stroke: "transparent" },
-                  axis: { stroke: "transparent" },
-                }}
+                grid: { stroke: "transparent" },
+                axis: { stroke: "transparent" },
+              }}
                 minDomain={{ y: 0 }}
-              />
-              {chartData.map((dataset, index) => (
+            />
+            {chartData.map((dataset, index) => (
                 <VictoryGroup key={dataset.medication}>
-                  <VictoryLine
-                    data={dataset.data}
-                    style={{
-                      data: {
-                        stroke: colors[index % colors.length],
-                        strokeWidth: 2,
-                      },
-                    }}
-                    interpolation="monotoneX"
-                  />
+              <VictoryLine
+                data={dataset.data}
+                style={{
+                  data: {
+                    stroke: colors[index % colors.length],
+                    strokeWidth: 2,
+                  },
+                }}
+                interpolation="monotoneX"
+              />
                   <VictoryScatter
                     data={dataset.data.map(point => ({
                       ...point,
@@ -426,8 +426,8 @@ if (Object.values(medicationMap).length > 0)
                     labelComponent={<VictoryTooltip constrainToVisibleArea />}
                   />
                 </VictoryGroup>
-              ))}
-            </VictoryChart>
+            ))}
+          </VictoryChart>
           </ScrollView>
         ) : (
           <View className="items-center justify-center h-full">

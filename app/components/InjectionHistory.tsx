@@ -226,7 +226,7 @@ const InjectionHistory = ({
               >
                 <Pencil size={16} color="#60a5fa" />
               </TouchableOpacity>
-              <TouchableOpacity
+    <TouchableOpacity
                 onPress={() => handleDeleteInjection(item.id)}
                 className="bg-red-500/10 rounded-full p-2"
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -240,15 +240,15 @@ const InjectionHistory = ({
               <View className="bg-blue-500/20 rounded-full p-2 mr-3">
                 <Calendar size={14} color="#60a5fa" />
               </View>
-              <View>
-            <Text className="text-blue-400">
+        <View>
+          <Text className="text-blue-400">
                   {new Date(item.dateTime).toLocaleDateString()} • {" "}
                   <Text className="text-gray-400">
-              {new Date(item.dateTime).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </Text>
+            {new Date(item.dateTime).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </Text>
                 </Text>
               </View>
             </View>
@@ -335,7 +335,7 @@ const InjectionHistory = ({
           )}
         </View>
       </View>
-    );
+  );
   };
 
   const renderChartView = () => {
@@ -458,7 +458,7 @@ const InjectionHistory = ({
                   {length: 180, offset: 180 * index, index} // Approximate row height
                 )}
               />
-      )}
+          )}
 
       {/* Render the InjectionForm for editing */}
       {showEditForm && editingInjection && (

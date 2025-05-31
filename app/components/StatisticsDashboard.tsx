@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, ScrollView, Dimensions } from "react-native";
 import { BarChart, LineChart } from "react-native-chart-kit";
-import { Calendar, Clock, Syringe, Activity } from "lucide-react-native";
+import { Calendar, Clock, Syringe, Activity, TrendingUp } from "lucide-react-native";
+import { InjectionData } from "./InjectionForm";
 
 interface StatisticsDashboardProps {
   injectionData?: Array<{
@@ -10,6 +11,7 @@ interface StatisticsDashboardProps {
     dosage: string;
     dateTime: string;
     site: string;
+    halfLifeMinutes?: number;
   }>;
 }
 
@@ -24,6 +26,7 @@ const StatisticsDashboard = ({
       dosage: "10 units",
       dateTime: "2023-05-01T08:00:00",
       site: "left_arm",
+      halfLifeMinutes: 0
     },
     {
       id: "2",
@@ -31,6 +34,7 @@ const StatisticsDashboard = ({
       dosage: "10 units",
       dateTime: "2023-05-02T08:00:00",
       site: "right_arm",
+      halfLifeMinutes: 0
     },
     {
       id: "3",
@@ -38,6 +42,7 @@ const StatisticsDashboard = ({
       dosage: "1000 mcg",
       dateTime: "2023-05-03T10:00:00",
       site: "left_thigh",
+      halfLifeMinutes: 0
     },
     {
       id: "4",
@@ -45,6 +50,7 @@ const StatisticsDashboard = ({
       dosage: "10 units",
       dateTime: "2023-05-04T08:00:00",
       site: "abdomen",
+      halfLifeMinutes: 0
     },
     {
       id: "5",
@@ -52,6 +58,7 @@ const StatisticsDashboard = ({
       dosage: "1000 mcg",
       dateTime: "2023-05-05T10:00:00",
       site: "right_thigh",
+      halfLifeMinutes: 0
     },
     {
       id: "6",
@@ -59,8 +66,13 @@ const StatisticsDashboard = ({
       dosage: "10 units",
       dateTime: "2023-05-06T08:00:00",
       site: "left_arm",
+      halfLifeMinutes: 0
     },
   ];
+
+  const GetStablizationDays = () => {
+    
+  }
 
   const data = injectionData.length > 0 ? injectionData : mockData;
 
@@ -130,6 +142,77 @@ const StatisticsDashboard = ({
     },
   };
 
+  // Calculate testosterone level at a specific time
+  const calculateTestosteroneLevel = (currentDate: Date, injections: typeof data) => {
+    let totalLevel = 0;
+    
+    injections.forEach(injection => {
+      const injectionDate = new Date(injection.dateTime);
+      const halfLifeMinutes = injection.halfLifeMinutes || 0;
+      
+      if (halfLifeMinutes > 0 && injection.medicationName.toLowerCase().includes('testosterone')) {
+        const minutesDiff = (currentDate.getTime() - injectionDate.getTime()) / (1000 * 60);
+        
+        if (minutesDiff >= 0) {
+          const halfLifePeriods = minutesDiff / halfLifeMinutes;
+          const decayFactor = Math.pow(0.5, halfLifePeriods);
+          const dosage = parseFloat(injection.dosage.toString());
+          const levelForThisInjection = dosage * decayFactor;
+          totalLevel += levelForThisInjection;
+        }
+      }
+    });
+    
+    return Math.round(totalLevel);
+  };
+
+  // Helper function to get opposite injection site
+  const getOppositeSite = (site: string): string => {
+    const oppositePairs: Record<string, string> = {
+      'Left Glute': 'Right Glute',
+      'Right Glute': 'Left Glute',
+      'Left Delt': 'Right Delt',
+      'Right Delt': 'Left Delt',
+      'Left Thigh': 'Right Thigh',
+      'Right Thigh': 'Left Thigh',
+      'Left Arm': 'Right Arm',
+      'Right Arm': 'Left Arm',
+      'Abdomen': 'Abdomen'
+    };
+    return oppositePairs[site] || site;
+  };
+
+  // Project future injections and their testosterone levels
+  const projectedInjections = useMemo(() => {
+    if (data.length < 2) return [];
+
+    const lastInjection = data[0];
+    const secondLastInjection = data[1];
+    
+    // Calculate time difference between last two injections
+    const lastDate = new Date(lastInjection.dateTime);
+    const secondLastDate = new Date(secondLastInjection.dateTime);
+    const diffInMinutes = Math.floor((lastDate.getTime() - secondLastDate.getTime()) / (1000 * 60));
+    
+    // Project next 30 injections
+    const projections = [];
+    let currentDate = new Date(lastDate);
+    
+    for (let i = 0; i < 30; i++) {
+      currentDate = new Date(currentDate.getTime() + diffInMinutes * 60 * 1000);
+      const tLevel = calculateTestosteroneLevel(currentDate, data);
+      
+      projections.push({
+        date: new Date(currentDate),
+        tLevel,
+        dosage: lastInjection.dosage,
+        site: i % 2 === 0 ? lastInjection.site : getOppositeSite(lastInjection.site)
+      });
+    }
+    
+    return projections;
+  }, [data]);
+
   return (
     <ScrollView className="flex-1 bg-gray-900 p-4">
       <View className="mb-6">
@@ -177,6 +260,7 @@ const StatisticsDashboard = ({
           width={screenWidth}
           height={220}
           yAxisLabel=""
+          yAxisSuffix=""
           chartConfig={chartConfig}
           verticalLabelRotation={30}
           fromZero
@@ -198,6 +282,36 @@ const StatisticsDashboard = ({
           chartConfig={chartConfig}
           bezier={true}
         />
+      </View>
+
+      {/* Projected Injections and T-Levels */}
+      <View className="bg-gray-800 rounded-lg p-4 mb-6">
+        <View className="flex-row items-center mb-4">
+          <TrendingUp size={20} color="#8884d8" />
+          <Text className="text-white text-lg font-semibold ml-2">
+            Projected Injections & T-Levels
+          </Text>
+        </View>
+        
+        <View className="space-y-4">
+          {projectedInjections.slice(0, 5).map((projection, index) => (
+            <View key={index} className="bg-gray-700 rounded-lg p-3">
+              <Text className="text-white font-semibold">
+                {projection.date.toLocaleDateString()}
+              </Text>
+              <View className="flex-row justify-between mt-2">
+                <Text className="text-gray-400">T-Level: {projection.tLevel} mg</Text>
+                <Text className="text-gray-400">Site: {projection.site}</Text>
+              </View>
+            </View>
+          ))}
+          
+          {projectedInjections.length > 5 && (
+            <Text className="text-gray-400 text-center">
+              +{projectedInjections.length - 5} more projections
+            </Text>
+          )}
+        </View>
       </View>
 
       {/* Summary Stats */}
