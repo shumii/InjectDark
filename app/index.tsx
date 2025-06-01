@@ -186,9 +186,7 @@ export default function HomeScreen() {
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
     const diffInMinutes = Math.floor(diffInSeconds / 60);
     const diffInHours = Math.floor(diffInMinutes / 60);
-    // Use calendar date difference for days
-    const getDateOnly = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-    const diffInDays = Math.floor((getDateOnly(now).getTime() - getDateOnly(date).getTime()) / (1000 * 60 * 60 * 24));
+    const diffInDays = Math.floor(diffInHours / 24);
 
     const timeString = date.toLocaleTimeString('en-US', { 
       hour: '2-digit', 
@@ -205,7 +203,7 @@ export default function HomeScreen() {
       return `${diffInMinutes}m ago`;
     }
     // Hours ago: less than 24 hours ago
-    if (diffInHours < 24 && diffInDays === 0) {
+    if (diffInHours < 24) {
       return `${diffInHours}h ago`;
     }
     // Yesterday at TIME
