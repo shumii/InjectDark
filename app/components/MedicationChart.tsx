@@ -40,8 +40,8 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
   const [minTestosterone, setMinTestosterone] = useState(0);
   const [averageTestosterone, setAverageTestosterone] = useState(0);
   const [hoveredPoint, setHoveredPoint] = useState<any>(null);
-
   const screenWidth = Dimensions.get("window").width - 32; // Account for padding
+  const chartWidth = selectedPeriod === 'year' ? screenWidth * 1.6 : screenWidth;
 
   // Get current date and calculate date ranges
   const currentDate = new Date();
@@ -323,16 +323,19 @@ if (Object.values(medicationMap).length > 0)
     const minX = Math.min(...chartData.flatMap(d => d.data.map(p => new Date(p.x).getTime())));
     const maxX = Math.max(...chartData.flatMap(d => d.data.map(p => new Date(p.x).getTime())));
     const xMs = new Date(x).getTime();
-    if (maxX === minX) return screenWidth / 2;
-    return ((xMs - minX) / (maxX - minX)) * screenWidth;
+    if (maxX === minX) return chartWidth / 2;
+    return ((xMs - minX) / (maxX - minX)) * chartWidth;
   }
 
   // PanResponder for overlay (recreated on every render for fresh chartData)
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onPanResponderMove: (evt, gestureState) => {
-      const x = gestureState.moveX - 35;
-      console.log('moveX:', gestureState.moveX, 'adjusted x:', x);
+      // Get the x position relative to the overlay (which matches the chart width)
+      // gestureState.x0 is the initial touch, gestureState.moveX is the absolute screen x
+      // evt.nativeEvent.locationX is the x within the overlay
+      const x = evt.nativeEvent.locationX;
+      console.log('moveX:', gestureState.moveX, 'overlay x:', x);
       if (chartData.length > 0) {
         const allPoints = chartData.flatMap((dataset, idx) =>
           dataset.data.map(point => ({
@@ -340,7 +343,7 @@ if (Object.values(medicationMap).length > 0)
             medication: dataset.medication,
             color: colors[idx % colors.length],
             xPx: chartXToPixel(point.x),
-            label: `${point.y}mg`,
+            label: `${point.y}mg`, // Add label for tooltip
           }))
         );
         console.log('allPoints:', allPoints);
@@ -354,7 +357,7 @@ if (Object.values(medicationMap).length > 0)
           }
         }
         console.log('closest:', closest);
-        setHoveredPoint(closest);
+        setHoveredPoint(closest); // Always show the closest point
       }
     },
     onPanResponderRelease: () => setHoveredPoint(null),
@@ -384,12 +387,12 @@ if (Object.values(medicationMap).length > 0)
       </View>
 
       {/* Chart */}
-      <View style={{ position: "relative", width: screenWidth, height: 250 }} pointerEvents="box-none">
-        {chartData.length > 0 ? (
-          selectedPeriod === 'year' ? (
-            <ScrollView horizontal>
+      {chartData.length > 0 ? (
+        selectedPeriod === 'year' ? (
+          <ScrollView horizontal style={{ position: 'relative' }}>
+            <View style={{ position: "relative", width: chartWidth, height: 250 }} pointerEvents="box-none">
               <VictoryChart
-                width={screenWidth * 1.6}
+                width={chartWidth}
                 height={250}
                 theme={VictoryTheme.material}
                 domainPadding={{ y: 10 }}
@@ -450,10 +453,68 @@ if (Object.values(medicationMap).length > 0)
                   </VictoryGroup>
                 ))}
               </VictoryChart>
-            </ScrollView>
-          ) : (
+              {/* Custom overlay for glide tooltip */}
+              <View
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  width: chartWidth,
+                  height: 250,
+                }}
+                {...panResponder.panHandlers}
+                pointerEvents="auto"
+                onStartShouldSetResponder={() => { console.log('Responder!'); return true; }}
+              >
+                {hoveredPoint && (
+                  <>
+                    {/* Vertical line */}
+                    <View
+                      style={{
+                        position: "absolute",
+                        left: hoveredPoint.xPx - 1,
+                        top: 0,
+                        width: 2,
+                        height: 250,
+                        backgroundColor: hoveredPoint.color,
+                        opacity: 0.5,
+                      }}
+                    />
+                    {/* Tooltip */}
+                    <View
+                      style={{
+                        position: "absolute",
+                        left: Math.max(0, Math.min(chartWidth - 140, hoveredPoint.xPx + 8)),
+                        top: 40,
+                        backgroundColor: "#222",
+                        padding: 10,
+                        borderRadius: 10,
+                        minWidth: 120,
+                        borderWidth: 2,
+                        borderColor: "#60a5fa",
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.2,
+                        shadowRadius: 4,
+                        elevation: 4,
+                        zIndex: 100,
+                      }}
+                    >
+                      <Text style={{ color: "#60a5fa", fontWeight: "bold", fontSize: 13 }}>
+                        {hoveredPoint.x ? new Date(hoveredPoint.x).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                      </Text>
+                      <Text style={{ color: "#fff", fontWeight: "bold" }}>{hoveredPoint.medication || 'No medication'}</Text>
+                      <Text style={{ color: "#fff" }}>{hoveredPoint.label || 'No label'}</Text>
+                    </View>
+                  </>
+                )}
+              </View>
+            </View>
+          </ScrollView>
+        ) : (
+          <View style={{ position: "relative", width: chartWidth, height: 250 }} pointerEvents="box-none">
             <VictoryChart
-              width={screenWidth}
+              width={chartWidth}
               height={250}
               theme={VictoryTheme.material}
               domainPadding={{ y: 10 }}
@@ -532,72 +593,71 @@ if (Object.values(medicationMap).length > 0)
                 </VictoryGroup>
               ))}
             </VictoryChart>
-          )
-        ) : (
-          <View className="items-center justify-center h-full">
-            <Text className="text-gray-400">
-              No data available for this period
-            </Text>
+            {/* Custom overlay for glide tooltip */}
+            <View
+              style={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                width: chartWidth,
+                height: 250,
+              }}
+              {...panResponder.panHandlers}
+              pointerEvents="auto"
+              onStartShouldSetResponder={() => { console.log('Responder!'); return true; }}
+            >
+              {hoveredPoint && (
+                <>
+                  {/* Vertical line */}
+                  <View
+                    style={{
+                      position: "absolute",
+                      left: hoveredPoint.xPx - 1,
+                      top: 0,
+                      width: 2,
+                      height: 250,
+                      backgroundColor: hoveredPoint.color,
+                      opacity: 0.5,
+                    }}
+                  />
+                  {/* Tooltip */}
+                  <View
+                    style={{
+                      position: "absolute",
+                      left: Math.max(0, Math.min(chartWidth - 140, hoveredPoint.xPx + 8)),
+                      top: 40,
+                      backgroundColor: "#222",
+                      padding: 10,
+                      borderRadius: 10,
+                      minWidth: 120,
+                      borderWidth: 2,
+                      borderColor: "#60a5fa",
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.2,
+                      shadowRadius: 4,
+                      elevation: 4,
+                      zIndex: 100,
+                    }}
+                  >
+                    <Text style={{ color: "#60a5fa", fontWeight: "bold", fontSize: 13 }}>
+                      {hoveredPoint.x ? new Date(hoveredPoint.x).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                    </Text>
+                    <Text style={{ color: "#fff", fontWeight: "bold" }}>{hoveredPoint.medication || 'No medication'}</Text>
+                    <Text style={{ color: "#fff" }}>{hoveredPoint.label || 'No label'}</Text>
+                  </View>
+                </>
+              )}
+            </View>
           </View>
-        )}
-        {/* Custom overlay for glide tooltip */}
-        <View
-          style={{
-            position: "absolute",
-            left: 0,
-            top: 0,
-            width: screenWidth,
-            height: 250,
-          }}
-          {...panResponder.panHandlers}
-          pointerEvents="auto"
-          onStartShouldSetResponder={() => { console.log('Responder!'); return true; }}
-        >
-          {/* Add debug log for hoveredPoint before rendering */}
-          {hoveredPoint && (
-            <>
-              {/* Vertical line */}
-              <View
-                style={{
-                  position: "absolute",
-                  left: hoveredPoint.xPx - 1,
-                  top: 0,
-                  width: 2,
-                  height: 250,
-                  backgroundColor: hoveredPoint.color,
-                  opacity: 0.5,
-                }}
-              />
-              {/* Tooltip */}
-              <View
-                style={{
-                  position: "absolute",
-                  left: Math.max(0, Math.min(screenWidth - 140, hoveredPoint.xPx + 8)),
-                  top: 40,
-                  backgroundColor: "#222",
-                  padding: 10,
-                  borderRadius: 10,
-                  minWidth: 120,
-                  borderWidth: 2,
-                  borderColor: "#60a5fa",
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.2,
-                  shadowRadius: 4,
-                  elevation: 4,
-                  zIndex: 100,
-                }}
-              >
-                <Text style={{ color: "#60a5fa", fontWeight: "bold", fontSize: 13 }}>
-                  {hoveredPoint.x ? new Date(hoveredPoint.x).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
-                </Text>
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>{hoveredPoint.medication || 'No medication'}</Text>
-                <Text style={{ color: "#fff" }}>{hoveredPoint.label || 'No label'}</Text>
-              </View>
-            </>
-          )}
+        )
+      ) : (
+        <View className="items-center justify-center h-full">
+          <Text className="text-gray-400">
+            No data available for this period
+          </Text>
         </View>
-      </View>
+      )}
 
       {/* Legend */}
       {chartData.length > 0 && (
