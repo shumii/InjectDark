@@ -240,7 +240,9 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
 if (Object.values(medicationMap).length > 0)
 {
     var maxTestosterone = Math.max(...Object.values(medicationMap).map(levels => Math.max(...Object.values(levels))));
-    var minTestosterone = Math.min(...Object.values(medicationMap).map(levels => Math.min(...Object.values(levels))));
+    var minTestosterone = Math.min(...Object.values(medicationMap).map(levels => 
+      Math.min(...Object.values(levels).filter(val => val > 0))
+    ));
     
     var sumTLevels = Object.values(Object.values(medicationMap)[0]).reduce((sum, level) => sum + level, 0);
     var averageTestosterone = sumTLevels / periodDays;
@@ -699,9 +701,9 @@ if (Object.values(medicationMap).length > 0)
           <View className="flex-row justify-between mt-4">
             <View className="bg-gray-700 rounded-lg p-3 flex-1 mr-2 items-center">
               <Text className="text-2xl font-bold text-blue-400">
-                {quickStats.averageDosage === Infinity || quickStats.averageDosage === -Infinity || isNaN(quickStats.averageDosage) ? "" : `${quickStats.averageDosage.toFixed(1)}mg`}
+                {quickStats.totalDosage === Infinity || quickStats.totalDosage === -Infinity || isNaN(quickStats.totalDosage) ? "" : `${quickStats.totalDosage.toFixed(1)}mg`}
               </Text>
-              <Text className="text-gray-400 text-sm">Avg Dosage</Text>
+              <Text className="text-gray-400 text-sm">Total Dosage</Text>
             </View>
             <View className="bg-gray-700 rounded-lg p-3 flex-1 ml-2 items-center">
               <Text className="text-2xl font-bold text-purple-400">{averageTestosterone.toFixed(1)}mg</Text>
