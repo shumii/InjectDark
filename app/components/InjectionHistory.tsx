@@ -10,7 +10,7 @@ import {
   TextInput,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Calendar, ChevronDown, List, BarChart, Trash2, Search, Pencil } from "lucide-react-native";
+import { Calendar, ChevronDown, List, BarChart, Trash2, Search, Pencil, Plus } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from '@expo/vector-icons';
 import InjectionForm from "./InjectionForm";
@@ -52,6 +52,7 @@ const InjectionHistory = ({
   const flatListRef = useRef<FlatList<Injection>>(null);
   const [editingInjection, setEditingInjection] = useState<Injection | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
 
     const loadInjections = async () => {
       try {
@@ -197,6 +198,20 @@ const InjectionHistory = ({
     setShowEditForm(false);
     setEditingInjection(null);
     loadInjections();
+  };
+
+  const handleAddInjection = async (newInjection: any) => {
+    try {
+      const storedInjections = await AsyncStorage.getItem("injections");
+      let injections = storedInjections ? JSON.parse(storedInjections) : [];
+      injections = [...injections, newInjection];
+      await AsyncStorage.setItem("injections", JSON.stringify(injections));
+      setShowAddForm(false);
+      loadInjections();
+    } catch (error) {
+      console.error("Error adding injection:", error);
+      Alert.alert("Error", "Failed to add injection. Please try again.");
+    }
   };
 
   const renderRatingStars = (rating: number | undefined) => {
@@ -439,6 +454,19 @@ const InjectionHistory = ({
         )}
       </View>
 
+      {/* Add Injection Button - match HomeScreen style */}
+      <TouchableOpacity
+        onPress={() => setShowAddForm(true)}
+        className="mb-6 rounded-md bg-blue-500"
+      >
+        <View style={{ flexDirection: 'row' }} className="p-4">
+          <Plus size={24} color="white" />
+          <Text className="text-white text-lg font-semibold ml-2">
+            Add Injection
+          </Text>
+        </View>
+      </TouchableOpacity>
+
       {loading ? (
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#60a5fa" />
@@ -493,6 +521,32 @@ const InjectionHistory = ({
             notes: editingInjection.notes ?? "",
           }}
         />
+      )}
+
+      {/* Render the InjectionForm for adding new injection as an overlay */}
+      {showAddForm && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 100,
+          }}
+        >
+          <View style={{ width: '96%', maxWidth: 500, borderRadius: 20, overflow: 'hidden', backgroundColor: '#232b36', padding: 0 }}>
+            <InjectionForm
+              onClose={() => setShowAddForm(false)}
+              onSave={handleAddInjection}
+              defaultInjectionTime={new Date()}
+              useCurrentTime={true}
+            />
+          </View>
+        </View>
       )}
     </View>
   );
