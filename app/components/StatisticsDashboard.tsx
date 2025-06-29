@@ -1,8 +1,8 @@
-import React, { useMemo } from "react";
-import { View, Text, ScrollView, Dimensions } from "react-native";
-import { BarChart, LineChart } from "react-native-chart-kit";
-import { Calendar, Clock, Syringe, Activity, TrendingUp } from "lucide-react-native";
-import { InjectionData } from "./InjectionForm";
+import React, { useMemo, useEffect, useState } from "react";
+import { View, Text, Dimensions, ScrollView } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { VictoryChart, VictoryLine, VictoryAxis, VictoryTheme, VictoryTooltip, VictoryScatter } from "victory-native";
+import { getOppositeSite } from '../utils/injectionUtils';
 
 interface StatisticsDashboardProps {
   injectionData?: Array<{
@@ -15,336 +15,171 @@ interface StatisticsDashboardProps {
   }>;
 }
 
-const StatisticsDashboard = ({
-  injectionData = [],
-}: StatisticsDashboardProps) => {
-  // Default mock data if no data is provided
-  const mockData = [
-    {
-      id: "1",
-      medicationName: "Insulin",
-      dosage: "10 units",
-      dateTime: "2023-05-01T08:00:00",
-      site: "left_arm",
-      halfLifeMinutes: 0
-    },
-    {
-      id: "2",
-      medicationName: "Insulin",
-      dosage: "10 units",
-      dateTime: "2023-05-02T08:00:00",
-      site: "right_arm",
-      halfLifeMinutes: 0
-    },
-    {
-      id: "3",
-      medicationName: "Vitamin B12",
-      dosage: "1000 mcg",
-      dateTime: "2023-05-03T10:00:00",
-      site: "left_thigh",
-      halfLifeMinutes: 0
-    },
-    {
-      id: "4",
-      medicationName: "Insulin",
-      dosage: "10 units",
-      dateTime: "2023-05-04T08:00:00",
-      site: "abdomen",
-      halfLifeMinutes: 0
-    },
-    {
-      id: "5",
-      medicationName: "Vitamin B12",
-      dosage: "1000 mcg",
-      dateTime: "2023-05-05T10:00:00",
-      site: "right_thigh",
-      halfLifeMinutes: 0
-    },
-    {
-      id: "6",
-      medicationName: "Insulin",
-      dosage: "10 units",
-      dateTime: "2023-05-06T08:00:00",
-      site: "left_arm",
-      halfLifeMinutes: 0
-    },
-  ];
+const StatisticsDashboard = () => {
+  const [data, setData] = useState<any[]>([]);
 
-  const GetStablizationDays = () => {
-    
-  }
-
-  const data = injectionData.length > 0 ? injectionData : mockData;
-
-  // Process data for charts
-  const medicationCounts: Record<string, number> = {};
-  const siteCounts: Record<string, number> = {};
-  const dateData: Record<string, number> = {};
-
-  data.forEach((injection) => {
-    // Count medications
-    medicationCounts[injection.medicationName] =
-      (medicationCounts[injection.medicationName] || 0) + 1;
-
-    // Count sites
-    siteCounts[injection.site] = (siteCounts[injection.site] || 0) + 1;
-
-    // Group by date for timeline
-    const date = injection.dateTime.split("T")[0];
-    dateData[date] = (dateData[date] || 0) + 1;
-  });
-
-  // Prepare data for bar chart
-  const medicationChartData = {
-    labels: Object.keys(medicationCounts),
-    datasets: [
-      {
-        data: Object.values(medicationCounts),
-      },
-    ],
-  };
-
-  // Prepare data for line chart
-  const dates = Object.keys(dateData).sort();
-  const lineChartData = {
-    labels: dates.map((date) => date.substring(5)), // Show only MM-DD
-    datasets: [
-      {
-        data: dates.map((date) => dateData[date]),
-        color: () => "#8884d8",
-        strokeWidth: 2,
-      },
-    ],
-    legend: ["Injections"],
-  };
-
-  // Prepare site frequency data for body diagram visualization
-  const siteFrequencyData = Object.entries(siteCounts).map(([site, count]) => ({
-    site,
-    frequency: count,
-  }));
-
-  const screenWidth = Dimensions.get("window").width - 32; // Account for padding
-
-  const chartConfig = {
-    backgroundGradientFrom: "#1E1E1E",
-    backgroundGradientTo: "#1E1E1E",
-    decimalPlaces: 0,
-    color: (opacity = 1) => `rgba(134, 65, 244, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-    style: {
-      borderRadius: 16,
-    },
-    propsForDots: {
-      r: "6",
-      strokeWidth: "2",
-      stroke: "#8884d8",
-    },
-  };
-
-  // Calculate testosterone level at a specific time
-  const calculateTestosteroneLevel = (currentDate: Date, injections: typeof data) => {
-    let totalLevel = 0;
-    
-    injections.forEach(injection => {
-      const injectionDate = new Date(injection.dateTime);
-      const halfLifeMinutes = injection.halfLifeMinutes || 0;
-      
-      if (halfLifeMinutes > 0 && injection.medicationName.toLowerCase().includes('testosterone')) {
-        const minutesDiff = (currentDate.getTime() - injectionDate.getTime()) / (1000 * 60);
-        
-        if (minutesDiff >= 0) {
-          const halfLifePeriods = minutesDiff / halfLifeMinutes;
-          const decayFactor = Math.pow(0.5, halfLifePeriods);
-          const dosage = parseFloat(injection.dosage.toString());
-          const levelForThisInjection = dosage * decayFactor;
-          totalLevel += levelForThisInjection;
+  useEffect(() => {
+    const loadInjections = async () => {
+      try {
+        const storedInjections = await AsyncStorage.getItem("injections");
+        if (storedInjections) {
+          const parsed = JSON.parse(storedInjections);
+          setData(parsed);
+        } else {
+          setData([]);
         }
+      } catch (e) {
+        setData([]);
       }
+    };
+    loadInjections();
+  }, []);
+
+  // Calculate daily T-levels for the input data (like MedicationChart)
+  const tLevelTimeSeries = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    // Get date range from first to last injection
+    const sorted = [...data].sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
+    const startDate = new Date(sorted[0].dateTime);
+    const endDate = new Date(sorted[sorted.length - 1].dateTime);
+    const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const dateRange: string[] = [];
+    for (let i = 0; i <= days; i++) {
+      const d = new Date(startDate);
+      d.setDate(startDate.getDate() + i);
+      dateRange.push(d.toISOString().split('T')[0]);
+    }
+    // For each day, sum decayed T from all previous injections
+    return dateRange.map(dateStr => {
+      const currentDate = new Date(dateStr + 'T23:59:59');
+      let tLevel = 0;
+      data.forEach(injection => {
+        const injectionDate = new Date(injection.dateTime);
+        const halfLifeMinutes = injection.halfLifeMinutes || 0;
+        if (halfLifeMinutes > 0 && injection.medicationName.toLowerCase().includes('testosterone')) {
+          const minutesDiff = (currentDate.getTime() - injectionDate.getTime()) / (1000 * 60);
+          if (minutesDiff >= 0) {
+            const halfLifePeriods = minutesDiff / halfLifeMinutes;
+            const decayFactor = Math.pow(0.5, halfLifePeriods);
+            const dosage = parseFloat(injection.dosage.toString());
+            const partial = dosage * decayFactor;
+            tLevel += partial;
+            console.log(`TLevelTS: date=${dateStr}, injDate=${injection.dateTime}, minDiff=${minutesDiff}, decay=${decayFactor}, partial=${partial}, tLevel=${tLevel}`);
+          }
+        }
+      });
+      return { x: new Date(currentDate), y: Math.round(tLevel) };
     });
-    
-    return Math.round(totalLevel);
-  };
+  }, [data]);
 
-  // Project future injections and their testosterone levels
-  const projectedInjections = useMemo(() => {
-    if (data.length < 2) return [];
-
+  // Project 90 days of future injections and T-levels, starting from last real day
+  const projectedData = useMemo(() => {
+    if (data.length < 2 || tLevelTimeSeries.length === 0) return [];
     const lastInjection = data[0];
     const secondLastInjection = data[1];
-    
-    // Calculate time difference between last two injections
     const lastDate = new Date(lastInjection.dateTime);
     const secondLastDate = new Date(secondLastInjection.dateTime);
     const diffInMinutes = Math.floor((lastDate.getTime() - secondLastDate.getTime()) / (1000 * 60));
-    
-    // Project next 30 injections
+    // Start from the day after the last day in the time series
+    let currentDate = new Date(tLevelTimeSeries[tLevelTimeSeries.length - 1].x);
+    currentDate.setDate(currentDate.getDate() + 1);
+    let injections = [...data];
     const projections = [];
-    let currentDate = new Date(lastDate);
-    
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 90; i++) {
+      // Project next injection
       currentDate = new Date(currentDate.getTime() + diffInMinutes * 60 * 1000);
-      const tLevel = calculateTestosteroneLevel(currentDate, data);
-      
-      projections.push({
-        date: new Date(currentDate),
-        tLevel,
-        dosage: lastInjection.dosage,
-        site: i % 2 === 0 ? lastInjection.site : getOppositeSite(lastInjection.site)
+      const site = i % 2 === 0 ? lastInjection.site : getOppositeSite(lastInjection.site);
+      injections = [
+        {
+          ...lastInjection,
+          dateTime: currentDate.toISOString(),
+          site,
+        },
+        ...injections,
+      ];
+      // Calculate T-level for this day
+      let tLevel = 0;
+      injections.forEach(injection => {
+        const injectionDate = new Date(injection.dateTime);
+        const halfLifeMinutes = injection.halfLifeMinutes || 0;
+        if (halfLifeMinutes > 0 && injection.medicationName.toLowerCase().includes('testosterone')) {
+          const minutesDiff = (currentDate.getTime() - injectionDate.getTime()) / (1000 * 60);
+          if (minutesDiff >= 0) {
+            const halfLifePeriods = minutesDiff / halfLifeMinutes;
+            const decayFactor = Math.pow(0.5, halfLifePeriods);
+            const dosage = parseFloat(injection.dosage.toString());
+            tLevel += dosage * decayFactor;
+          }
+        }
       });
+      projections.push({ x: new Date(currentDate), y: Math.round(tLevel) });
     }
-    
+    // Only return projections (future 90 days)
+    console.log('StatisticsDashboard projectedData:', projections);
+    console.log('StatisticsDashboard tLevelTimeSeries:', tLevelTimeSeries);
+    console.log('StatisticsDashboard input data:', data);
     return projections;
-  }, [data]);
+  }, [data, tLevelTimeSeries]);
 
-  // Helper function to get opposite injection site
-  const getOppositeSite = (site: string): string => {
-    const oppositePairs: Record<string, string> = {
-      'Left Glute': 'Right Glute',
-      'Right Glute': 'Left Glute',
-      'Left Delt': 'Right Delt',
-      'Right Delt': 'Left Delt',
-      'Left Thigh': 'Right Thigh',
-      'Right Thigh': 'Left Thigh',
-      'Left Arm': 'Right Arm',
-      'Right Arm': 'Left Arm',
-      'Abdomen': 'Abdomen'
-    };
-    return oppositePairs[site] || site;
-  };
+  const screenWidth = Dimensions.get("window").width - 32;
 
   return (
     <ScrollView className="flex-1 bg-gray-900 p-4">
-      <View className="mb-6">
-        <View className="flex-row items-center mb-2">
-          <Activity size={24} color="#8884d8" />
-          <Text className="text-white text-xl font-bold ml-2">
-            Statistics Dashboard
-          </Text>
-        </View>
-        <Text className="text-gray-400">
-          View insights about your injection patterns
-        </Text>
-      </View>
-
-      {/* Injection Site Heatmap */}
-      <View className="bg-gray-800 rounded-lg p-4 mb-6">
-        <Text className="text-white text-lg font-semibold mb-4">
-          Injection Site Frequency
-        </Text>
-        <View className="items-center">
-          {/* Body diagram visualization placeholder */}
-          <View className="w-64 h-80 bg-gray-700 rounded-lg items-center justify-center">
-            <Text className="text-white text-center">
-              Body Diagram Visualization
-            </Text>
-            <Text className="text-gray-400 text-center mt-2">
-              {Object.entries(siteCounts)
-                .map(([site, count]) => `${site}: ${count}`)
-                .join(", ")}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Medication Usage Chart */}
-      <View className="bg-gray-800 rounded-lg p-4 mb-6">
-        <View className="flex-row items-center mb-4">
-          <Syringe size={20} color="#8884d8" />
-          <Text className="text-white text-lg font-semibold ml-2">
-            Medication Usage
-          </Text>
-        </View>
-        <BarChart
-          data={medicationChartData}
+      <Text className="text-white text-2xl font-bold mb-6">Projected Testosterone Levels (90 Days)</Text>
+      <View style={{ backgroundColor: '#232b36', borderRadius: 16, padding: 8 }}>
+        <VictoryChart
           width={screenWidth}
-          height={220}
-          yAxisLabel=""
-          yAxisSuffix=""
-          chartConfig={chartConfig}
-          verticalLabelRotation={30}
-          fromZero
-        />
-      </View>
-
-      {/* Injection Timeline */}
-      <View className="bg-gray-800 rounded-lg p-4 mb-6">
-        <View className="flex-row items-center mb-4">
-          <Calendar size={20} color="#8884d8" />
-          <Text className="text-white text-lg font-semibold ml-2">
-            Injection Timeline
-          </Text>
-        </View>
-        <LineChart
-          data={lineChartData}
-          width={screenWidth}
-          height={220}
-          chartConfig={chartConfig}
-          bezier={true}
-        />
-      </View>
-
-      {/* Projected Injections and T-Levels */}
-      <View className="bg-gray-800 rounded-lg p-4 mb-6">
-        <View className="flex-row items-center mb-4">
-          <TrendingUp size={20} color="#8884d8" />
-          <Text className="text-white text-lg font-semibold ml-2">
-            Projected Injections & T-Levels
-          </Text>
-        </View>
-        
-        <View className="space-y-4">
-          {projectedInjections.slice(0, 5).map((projection, index) => (
-            <View key={index} className="bg-gray-700 rounded-lg p-3">
-              <Text className="text-white font-semibold">
-                {projection.date.toLocaleDateString()}
-              </Text>
-              <View className="flex-row justify-between mt-2">
-                <Text className="text-gray-400">T-Level: {projection.tLevel} mg</Text>
-                <Text className="text-gray-400">Site: {projection.site}</Text>
-              </View>
-            </View>
-          ))}
-          
-          {projectedInjections.length > 5 && (
-            <Text className="text-gray-400 text-center">
-              +{projectedInjections.length - 5} more projections
-            </Text>
-          )}
-        </View>
-      </View>
-
-      {/* Summary Stats */}
-      <View className="bg-gray-800 rounded-lg p-4 mb-6">
-        <Text className="text-white text-lg font-semibold mb-4">Summary</Text>
-        <View className="flex-row justify-between">
-          <View className="items-center p-3 bg-gray-700 rounded-lg flex-1 mr-2">
-            <Text className="text-gray-400 mb-1">Total Injections</Text>
-            <Text className="text-white text-xl font-bold">{data.length}</Text>
-          </View>
-          <View className="items-center p-3 bg-gray-700 rounded-lg flex-1 ml-2">
-            <Text className="text-gray-400 mb-1">Medications</Text>
-            <Text className="text-white text-xl font-bold">
-              {Object.keys(medicationCounts).length}
-            </Text>
-          </View>
-        </View>
-        <View className="flex-row justify-between mt-4">
-          <View className="items-center p-3 bg-gray-700 rounded-lg flex-1 mr-2">
-            <Text className="text-gray-400 mb-1">Sites Used</Text>
-            <Text className="text-white text-xl font-bold">
-              {Object.keys(siteCounts).length}
-            </Text>
-          </View>
-          <View className="items-center p-3 bg-gray-700 rounded-lg flex-1 ml-2">
-            <Text className="text-gray-400 mb-1">Last Injection</Text>
-            <Text className="text-white text-xl font-bold">
-              {data.length > 0
-                ? new Date(data[data.length - 1].dateTime).toLocaleDateString()
-                : "N/A"}
-            </Text>
-          </View>
-        </View>
+          height={250}
+          theme={VictoryTheme.material}
+          padding={{ top: 10, bottom: 60, left: 35, right: 30 }}
+          domainPadding={{ y: 10 }}
+        >
+          <VictoryAxis
+            tickFormat={(date) => {
+              const d = new Date(date);
+              return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            }}
+            style={{
+              tickLabels: {
+                fill: "white",
+                fontSize: 12,
+                angle: 45,
+                textAnchor: "start",
+              },
+              grid: { stroke: "transparent" },
+              axis: { stroke: "transparent" },
+            }}
+            tickCount={10}
+          />
+          <VictoryAxis
+            dependentAxis
+            tickFormat={(t) => Math.round(t)}
+            style={{
+              tickLabels: { fill: "white", fontSize: 12 },
+              ticks: { stroke: "transparent" },
+              grid: { stroke: "transparent" },
+              axis: { stroke: "transparent" },
+            }}
+            minDomain={{ y: 0 }}
+          />
+          <VictoryLine
+            data={projectedData}
+            style={{
+              data: {
+                stroke: "#60a5fa",
+                strokeWidth: 2,
+              },
+            }}
+            interpolation="monotoneX"
+          />
+          <VictoryScatter
+            data={projectedData}
+            size={2}
+            style={{ data: { fill: "#60a5fa" } }}
+            labels={({ datum }) => `${datum.y}mg`}
+            labelComponent={<VictoryTooltip constrainToVisibleArea />}
+          />
+        </VictoryChart>
       </View>
     </ScrollView>
   );

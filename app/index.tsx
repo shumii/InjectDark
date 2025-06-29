@@ -20,6 +20,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
+import { getOppositeSite } from './utils/injectionUtils';
 
 // Import components
 import InjectionForm from "./components/InjectionForm";
@@ -313,22 +314,6 @@ export default function HomeScreen() {
   const handleShowInjectionForm = async () => {
     await loadInjections(); // Reload injections before showing form
     setShowInjectionForm(true);
-  };
-
-  // Helper function to get the opposite site
-  const getOppositeSite = (site: string): string => {
-    const oppositePairs = {
-      'Left Glute': 'Right Glute',
-      'Right Glute': 'Left Glute',
-      'Left Delt': 'Right Delt',
-      'Right Delt': 'Left Delt',
-      'Left Thigh': 'Right Thigh',
-      'Right Thigh': 'Left Thigh',
-      'Left Arm': 'Right Arm',
-      'Right Arm': 'Left Arm',
-      'Abdomen': 'Abdomen'
-    };
-    return oppositePairs[site as keyof typeof oppositePairs] || site;
   };
 
   // Function to detect site rotation pattern
