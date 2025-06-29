@@ -172,12 +172,12 @@ const InjectionForm = ({
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [selectedMoodRating, setSelectedMoodRating] = useState(lastInjection?.moodRating || 0);
-  const [selectedSleepRating, setSelectedSleepRating] = useState(lastInjection?.sleepRating || 0);
-  const [selectedLibidoRating, setSelectedLibidoRating] = useState(lastInjection?.libidoRating || 0);
-  const [selectedEnergyRating, setSelectedEnergyRating] = useState(lastInjection?.energyRating || 0);
-  const [selectedSidesRating, setSelectedSidesRating] = useState(lastInjection?.sidesRating || 0);
-  const [notes, setNotes] = useState(lastInjection?.notes || "");
+  const [selectedMoodRating, setSelectedMoodRating] = useState(0);
+  const [selectedSleepRating, setSelectedSleepRating] = useState(0);
+  const [selectedLibidoRating, setSelectedLibidoRating] = useState();
+  const [selectedEnergyRating, setSelectedEnergyRating] = useState();
+  const [selectedSidesRating, setSelectedSidesRating] = useState();
+  const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   if (!isOpen) return null;
