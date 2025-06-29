@@ -172,12 +172,12 @@ const InjectionForm = ({
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [selectedMoodRating, setSelectedMoodRating] = useState(0);
-  const [selectedSleepRating, setSelectedSleepRating] = useState(0);
-  const [selectedLibidoRating, setSelectedLibidoRating] = useState(0);
-  const [selectedEnergyRating, setSelectedEnergyRating] = useState(0);
-  const [selectedSidesRating, setSelectedSidesRating] = useState(0);
-  const [notes, setNotes] = useState("");
+  const [selectedMoodRating, setSelectedMoodRating] = useState(lastInjection?.moodRating || 0);
+  const [selectedSleepRating, setSelectedSleepRating] = useState(lastInjection?.sleepRating || 0);
+  const [selectedLibidoRating, setSelectedLibidoRating] = useState(lastInjection?.libidoRating || 0);
+  const [selectedEnergyRating, setSelectedEnergyRating] = useState(lastInjection?.energyRating || 0);
+  const [selectedSidesRating, setSelectedSidesRating] = useState(lastInjection?.sidesRating || 0);
+  const [notes, setNotes] = useState(lastInjection?.notes || "");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   if (!isOpen) return null;
@@ -595,7 +595,15 @@ const InjectionForm = ({
 
         <View className="mb-7">
         <Text className="text-white text-base mb-2">Notes</Text>
-          <TextInput multiline={true} className={'bg-gray-700 text-white p-3 rounded-md'} style={{height:80}}></TextInput>
+          <TextInput 
+            multiline={true} 
+            className={'bg-gray-700 text-white p-3 rounded-md'} 
+            style={{height:80}}
+            value={notes}
+            onChangeText={setNotes}
+            placeholder="Add any notes about this injection..."
+            placeholderTextColor="#6B7280"
+          ></TextInput>
         </View>
 
 

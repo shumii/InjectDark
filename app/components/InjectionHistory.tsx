@@ -60,24 +60,17 @@ const InjectionHistory = ({
         const storedInjections = await AsyncStorage.getItem("injections");
         if (storedInjections) {
           const parsedInjections = JSON.parse(storedInjections);
-          setInjections(
-            parsedInjections.map((item: any) => ({
-              ...item,
+          
+          const mappedInjections = parsedInjections.map((item: any) => ({
+            ...item,
             site: item.injectionSite || item.site,
-              dateTime:
-                typeof item.dateTime === "string"
-                  ? item.dateTime
-                  : new Date(item.dateTime).toISOString(),
-            })),
-          );
-          parsedInjections.forEach((inj: any, idx: number) => {
-            console.log(`Injection ${idx + 1}:`, {
-              medicationName: inj.medicationName,
-              dosage: inj.dosage,
-              halfLifeMinutes: inj.halfLifeMinutes,
-              dateTime: inj.dateTime
-            });
-          });
+            dateTime:
+              typeof item.dateTime === "string"
+                ? item.dateTime
+                : new Date(item.dateTime).toISOString(),
+          }));
+          
+          setInjections(mappedInjections);
         } else if (propInjections) {
           setInjections(propInjections);
         }
