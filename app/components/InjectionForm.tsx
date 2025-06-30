@@ -174,9 +174,9 @@ const InjectionForm = ({
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [selectedMoodRating, setSelectedMoodRating] = useState(0);
   const [selectedSleepRating, setSelectedSleepRating] = useState(0);
-  const [selectedLibidoRating, setSelectedLibidoRating] = useState();
-  const [selectedEnergyRating, setSelectedEnergyRating] = useState();
-  const [selectedSidesRating, setSelectedSidesRating] = useState();
+  const [selectedLibidoRating, setSelectedLibidoRating] = useState(0);
+  const [selectedEnergyRating, setSelectedEnergyRating] = useState(0);
+  const [selectedSidesRating, setSelectedSidesRating] = useState(0);
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -219,7 +219,7 @@ const InjectionForm = ({
         halfLifeMinutes: selectedMedication?.halfLifeMinutes
       });
       
-      onSave({
+      const injectionData = {
         id: new Date().getTime().toString(),
         medicationName,
         dosage: dosageInMg, // Save dosage in mg
@@ -234,7 +234,20 @@ const InjectionForm = ({
         energyRating: selectedEnergyRating,
         sidesRating: selectedSidesRating,
         notes
-      });
+      };
+      
+      console.log('=== DEBUG: InjectionForm handleSubmit ===');
+      console.log('About to call onSave with data:', injectionData);
+      console.log('Notes value:', injectionData.notes);
+      console.log('Notes type:', typeof injectionData.notes);
+      console.log('Notes length:', injectionData.notes ? injectionData.notes.length : 0);
+      console.log('Mood rating:', injectionData.moodRating);
+      console.log('Sleep rating:', injectionData.sleepRating);
+      console.log('Libido rating:', injectionData.libidoRating);
+      console.log('Energy rating:', injectionData.energyRating);
+      console.log('Sides rating:', injectionData.sidesRating);
+      
+      onSave(injectionData);
 
       // Reset form
       setMedicationName("");

@@ -195,10 +195,29 @@ const InjectionHistory = ({
 
   const handleAddInjection = async (newInjection: any) => {
     try {
+      console.log('=== DEBUG: Adding injection from InjectionHistory ===');
+      console.log('Received newInjection object:', newInjection);
+      console.log('newInjection type:', typeof newInjection);
+      console.log('newInjection keys:', Object.keys(newInjection));
+      console.log('Notes value:', newInjection.notes);
+      console.log('Notes type:', typeof newInjection.notes);
+      console.log('Notes length:', newInjection.notes ? newInjection.notes.length : 0);
+      console.log('Mood rating:', newInjection.moodRating);
+      console.log('Sleep rating:', newInjection.sleepRating);
+      console.log('Libido rating:', newInjection.libidoRating);
+      console.log('Energy rating:', newInjection.energyRating);
+      console.log('Sides rating:', newInjection.sidesRating);
+      
       const storedInjections = await AsyncStorage.getItem("injections");
       let injections = storedInjections ? JSON.parse(storedInjections) : [];
+      console.log('Existing injections count:', injections.length);
+      
       injections = [...injections, newInjection];
+      console.log('After adding, total injections count:', injections.length);
+      
       await AsyncStorage.setItem("injections", JSON.stringify(injections));
+      console.log('Successfully saved to AsyncStorage');
+      
       setShowAddForm(false);
       loadInjections();
     } catch (error) {
@@ -537,6 +556,18 @@ const InjectionHistory = ({
               onSave={handleAddInjection}
               defaultInjectionTime={new Date()}
               useCurrentTime={true}
+              lastInjection={injections.length > 0 ? {
+                ...injections[0],
+                dosage: Number(injections[0].dosage),
+                dateTime: new Date(injections[0].dateTime),
+                injectionSite: injections[0].injectionSite || injections[0].site || "",
+                moodRating: injections[0].moodRating ?? 0,
+                sleepRating: injections[0].sleepRating ?? 0,
+                libidoRating: injections[0].libidoRating ?? 0,
+                energyRating: injections[0].energyRating ?? 0,
+                sidesRating: injections[0].sidesRating ?? 0,
+                notes: injections[0].notes ?? "",
+              } : undefined}
             />
           </View>
         </View>
