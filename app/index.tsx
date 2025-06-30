@@ -155,27 +155,89 @@ export default function HomeScreen() {
   const resetAllData = async () => {
     Alert.alert(
       "Reset All Data",
-      "Are you sure you want to delete all injection records? This action cannot be undone.",
+      "Are you sure you want to delete all injection data? This action cannot be undone.",
       [
+        { text: "Cancel", style: "cancel" },
         {
-          text: "Cancel",
-          style: "cancel"
-        },
-        {
-          text: "Reset",
+          text: "Delete All",
           style: "destructive",
           onPress: async () => {
             try {
-              await AsyncStorage.removeItem("injections");
+              await AsyncStorage.removeItem('injections');
               setAllInjections([]);
               setRecentInjections([]);
               Alert.alert("Success", "All injection data has been deleted.");
             } catch (error) {
-              console.error("Error resetting data:", error);
-              Alert.alert("Error", "Failed to reset data. Please try again.");
+              console.error('Error resetting data:', error);
+              Alert.alert("Error", "Failed to reset data.");
             }
-          }
-        }
+          },
+        },
+      ]
+    );
+  };
+
+  const updateHistoricHalfLife = async () => {
+    Alert.alert(
+      "Update Historic Half-Life",
+      "This will update the half-life values for all historic testosterone cypionate injections to the new value. This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Update",
+          style: "default",
+          onPress: async () => {
+            try {
+              // Get current injections
+              const storedInjections = await AsyncStorage.getItem('injections');
+              if (!storedInjections) {
+                Alert.alert("No Data", "No injection data found to update.");
+                return;
+              }
+
+              const injections = JSON.parse(storedInjections);
+              let updatedCount = 0;
+
+              // Update half-life for testosterone cypionate injections
+              const updatedInjections = injections.map((injection: any) => {
+                if (injection.medicationName && 
+                    injection.medicationName.toLowerCase().includes('testosterone cypionate')) {
+                  // Update to new half-life value (you can adjust this value as needed)
+                  const updatedInjection = {
+                    ...injection,
+                    halfLifeDescription: "8 days", // Updated half-life description
+                    halfLifeMinutes: 11520 // 8 days in minutes (8 * 24 * 60)
+                  };
+                  updatedCount++;
+                  return updatedInjection;
+                }
+                return injection;
+              });
+
+              // Save updated injections
+              await AsyncStorage.setItem('injections', JSON.stringify(updatedInjections));
+              
+              // Update state
+              setAllInjections(updatedInjections);
+              setRecentInjections(updatedInjections.slice(0, 5).map(injection => ({
+                id: injection.id,
+                medication: injection.medicationName,
+                dosage: injection.dosage,
+                dateDisplay: new Date(injection.dateTime).toLocaleDateString(),
+                date: new Date(injection.dateTime),
+                site: injection.injectionSite || injection.site || ""
+              })));
+
+              Alert.alert(
+                "Success", 
+                `Updated half-life for ${updatedCount} testosterone cypionate injection(s).`
+              );
+            } catch (error) {
+              console.error('Error updating historic half-life:', error);
+              Alert.alert("Error", "Failed to update historic half-life values.");
+            }
+          },
+        },
       ]
     );
   };
@@ -758,6 +820,20 @@ export default function HomeScreen() {
               <Text className="text-gray-400 mt-2 text-sm">
                 Warning: This will permanently delete all your injection records
               </Text>
+              
+              <TouchableOpacity
+                onPress={updateHistoricHalfLife}
+                className="bg-orange-500/10 py-4 px-6 rounded-md flex-row items-center justify-center mt-4"
+              >
+                <AlertCircle size={20} color="#f97316" className="mr-2" />
+                <Text className="text-orange-500 font-bold ml-2">
+                  Update Historic Half-Life
+                </Text>
+              </TouchableOpacity>
+              <Text className="text-gray-400 mt-2 text-sm">
+                Update half-life values for all historic testosterone cypionate injections
+              </Text>
+              
               <TouchableOpacity
                 onPress={exportInjectionData}
                 className="bg-blue-500 py-3 px-4 rounded-lg mt-4"
