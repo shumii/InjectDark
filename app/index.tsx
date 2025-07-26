@@ -373,6 +373,13 @@ export default function HomeScreen() {
     loadInjections();
   }, []);
 
+  // Refresh data when Home tab becomes active
+  useEffect(() => {
+    if (activeTab === "home" && !showInjectionForm) {
+      loadInjections();
+    }
+  }, [activeTab, showInjectionForm]);
+
   const handleShowInjectionForm = async () => {
     await loadInjections(); // Reload injections before showing form
     setShowInjectionForm(true);
