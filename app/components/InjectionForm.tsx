@@ -104,10 +104,17 @@ const InjectionForm = ({
   useEffect(() => {
     const loadMedications = async () => {
       try {
+        console.log('=== INJECTION FORM: Loading medications ===');
         const stored = await AsyncStorage.getItem('medications');
+        console.log('Stored medications:', stored);
         if (stored) {
           const parsed = JSON.parse(stored);
+          console.log('Parsed medications:', parsed);
+          console.log('Number of medications loaded:', parsed.length);
           setMedications(parsed);
+        } else {
+          console.log('No medications found in storage');
+          setMedications([]);
         }
       } catch (error) {
         console.error('Error loading medications:', error);
@@ -213,11 +220,12 @@ const InjectionForm = ({
         : Number(dosage);
 
       // Log selected medication and halfLifeMinutes at save time
-      console.log('Saving injection with:', {
-        medicationName,
-        selectedMedication,
-        halfLifeMinutes: selectedMedication?.halfLifeMinutes
-      });
+      console.log('=== INJECTION FORM: Saving injection ===');
+      console.log('Medication name:', medicationName);
+      console.log('Selected medication object:', selectedMedication);
+      console.log('Half-life description:', selectedMedication?.halfLifeDescription);
+      console.log('Half-life minutes:', selectedMedication?.halfLifeMinutes);
+      console.log('Concentration:', selectedMedication?.concentration);
       
       const injectionData = {
         id: new Date().getTime().toString(),
@@ -291,6 +299,12 @@ const InjectionForm = ({
   }
 
   const handleSelectMedication = (medication: Medication) => {
+    console.log('=== INJECTION FORM: Selecting medication ===');
+    console.log('Selected medication:', medication);
+    console.log('Medication half-life description:', medication.halfLifeDescription);
+    console.log('Medication half-life minutes:', medication.halfLifeMinutes);
+    console.log('Medication concentration:', medication.concentration);
+    
     setSelectedMedication(medication);
     setMedicationName(medication.name);
     setShowMedicationDropdown(false);
