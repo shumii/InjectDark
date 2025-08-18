@@ -55,7 +55,7 @@ const StorageService = {
     try {
       await AsyncStorage.setItem(key, value)
     } catch (e) {
-      console.log('error saving ' + e);
+      // Error saving data
     }
 
   },
@@ -64,7 +64,7 @@ const StorageService = {
     try {
       await AsyncStorage.removeItem(key)
     } catch (e) {
-      console.log('error removing ' + e);
+      // Error removing data
     }
 
   }
@@ -337,15 +337,17 @@ export default function HomeScreen() {
       try {
         setLoading(true);
         const storedInjections = await AsyncStorage.getItem("injections");
+        
+        console.log("*****"+storedInjections);
 
         if (storedInjections) {
           const parsedInjections: InjectionData[] =
             JSON.parse(storedInjections);
 
-        const sortedInjections = parsedInjections.sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());          
+          const sortedInjections = parsedInjections.sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());          
 
           // Format the data for display and take only the 3 most recent
-        const formattedInjections = sortedInjections
+          const formattedInjections = sortedInjections
             .slice(0, 3)
             .map((injection) => ({
               id: injection.id,
@@ -358,8 +360,7 @@ export default function HomeScreen() {
           //.sort((a, b) => b.date.getTime() - a.date.getTime()).reverse();
       
           setRecentInjections(formattedInjections);
-        setAllInjections(sortedInjections);
-        console.log('Loaded injections:', sortedInjections);
+          setAllInjections(sortedInjections);
         }
       } catch (error) {
         console.error("Error loading injections:", error);
@@ -540,7 +541,6 @@ export default function HomeScreen() {
           } : undefined}
           onSave={async(data) => {
             // Handle saving injection data
-            console.log("Saving injection data:", data);            
 
             var injectionsListString = await StorageService.Get("injections"); 
 

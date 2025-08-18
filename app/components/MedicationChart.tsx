@@ -241,6 +241,8 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
     console.log('Date range:', dateRange);
     console.log('Medications:', Array.from(medications));
     console.log('MedicationMap:', medicationMap);
+    
+
 
     // if only 1 we take quick stats from data, otherwise we take it from the total t
     if (Object.values(medicationMap).length > 0)
@@ -265,6 +267,11 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
           });
         });
 
+            // Debug: Check raw values for precision
+    Object.entries(totalTLevels).forEach(([medication, levels]) => {
+      console.log(`Raw values for ${medication}:`, Object.entries(levels).slice(0, 50)); // Show first 5 entries
+    });
+
         var sumTotalTLevels = Object.values(totalTLevels).reduce((sum, level) => sum + level, 0);
         var averageTotalTLevels = sumTotalTLevels / periodDays;
         var maxTotalTLevels = Math.max(...Object.values(totalTLevels));
@@ -286,12 +293,18 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
         medication,
         data: dateRange.map((date) => ({
           x: date,
-          y: Math.round(medicationMap[medication]?.[date] || 0),
+          y: medicationMap[medication]?.[date] || 0,
         })),
       };
     });
 
     console.log('Final chart data:', finalData);
+    
+    // Debug: Check final data precision
+    finalData.forEach(dataset => {
+      console.log(`Final data for ${dataset.medication}:`, dataset.data.slice(0, 90)); // Show first 3 points
+    });
+    
     console.log('--- End MedicationChart Calculation ---');
     return finalData;
   }, [filteredData, selectedPeriod, filteredTLevels]);
@@ -379,12 +392,23 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
   }));
 
   // Helper to convert x (date) to pixel
-  function chartXToPixel(x: Date | string) {
+  function chartXToPixel(x: Date | string) {    
     const minX = Math.min(...chartData.flatMap(d => d.data.map(p => new Date(p.x).getTime())));
     const maxX = Math.max(...chartData.flatMap(d => d.data.map(p => new Date(p.x).getTime())));
     const xMs = new Date(x).getTime();
-    if (maxX === minX) return chartWidth / 2;
-    return ((xMs - minX) / (maxX - minX)) * chartWidth;
+
+    console.log("chartXToPixelLog");
+    console.log("date: " + x);
+    console.log("minX: " + minX);
+    console.log("maxX: " + maxX);
+    console.log("xMs: " + xMs);
+
+    if (maxX === minX) return (chartWidth - 35 - 30) / 2; // Center in data area
+    
+    // Calculate position relative to data area width
+    const dataAreaWidth = chartWidth - 35 - 30;
+    const relativePosition = (xMs - minX) / (maxX - minX);
+    return relativePosition * dataAreaWidth;
   }
 
   // PanResponder for overlay (recreated on every render for fresh chartData)
@@ -396,7 +420,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
       // evt.nativeEvent.locationX is the x within the overlay
       const x = evt.nativeEvent.locationX;
       console.log('moveX:', gestureState.moveX, 'overlay x:', x);
-      if (chartData.length > 0) {
+      if (chartData.length > 0) {        
         const allPoints = chartData.flatMap((dataset, idx) =>
           dataset.data.map(point => ({
             ...point,
@@ -406,17 +430,22 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
             label: `${point.y}mg`, // Add label for tooltip
           }))
         );
-        console.log('allPoints:', allPoints);
         let closest = null;
         let minDiff = Infinity;
         for (const pt of allPoints) {
+          // x is now relative to the data area (no need to subtract padding)
           const diff = Math.abs(pt.xPx - x);
           if (diff < minDiff) {
             minDiff = diff;
             closest = pt;
           }
         }
-        console.log('closest:', closest);
+        console.log('Tooltip data:', {
+          date: closest?.x,
+          medication: closest?.medication,
+          value: closest?.y,
+          label: closest?.label
+        });
         setHoveredPoint(closest); // Always show the closest point
       }
     },
@@ -517,9 +546,9 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
               <View
                 style={{
                   position: "absolute",
-                  left: 0,
+                  left: 35, // Match chart left padding
                   top: 0,
-                  width: chartWidth,
+                  width: chartWidth - 35 - 30, // Match chart data area width
                   height: 250,
                 }}
                 {...panResponder.panHandlers}
@@ -544,7 +573,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
                     <View
                       style={{
                         position: "absolute",
-                        left: Math.max(0, Math.min(chartWidth - 140, hoveredPoint.xPx + 8)),
+                        left: Math.max(0, Math.min(chartWidth, hoveredPoint.xPx + 8)),
                         top: 40,
                         backgroundColor: "#222",
                         padding: 10,
@@ -657,9 +686,9 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
             <View
               style={{
                 position: "absolute",
-                left: 0,
+                left: 35, // Match chart left padding
                 top: 0,
-                width: chartWidth,
+                width: chartWidth - 35 - 30, // Match chart data area width
                 height: 250,
               }}
               {...panResponder.panHandlers}
