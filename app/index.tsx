@@ -10,6 +10,7 @@ import {
   Switch,
   Modal,
   Platform,
+  AppState,
 } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Plus, Calendar, BarChart3, Settings, Trash2, AlertCircle } from "lucide-react-native";
@@ -380,6 +381,20 @@ export default function HomeScreen() {
       loadInjections();
     }
   }, [activeTab, showInjectionForm]);
+
+  // Refresh data when app comes to focus
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: string) => {
+      if (nextAppState === 'active') {
+        // App came to foreground - refresh data
+        console.log('App came to focus - refreshing data');
+        loadInjections();
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => subscription?.remove();
+  }, []);
 
   const handleShowInjectionForm = async () => {
     await loadInjections(); // Reload injections before showing form
