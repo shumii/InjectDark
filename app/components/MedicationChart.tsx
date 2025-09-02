@@ -397,11 +397,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
     const maxX = Math.max(...chartData.flatMap(d => d.data.map(p => new Date(p.x).getTime())));
     const xMs = new Date(x).getTime();
 
-    console.log("chartXToPixelLog");
-    console.log("date: " + x);
-    console.log("minX: " + minX);
-    console.log("maxX: " + maxX);
-    console.log("xMs: " + xMs);
+   
 
     if (maxX === minX) return (chartWidth - 35 - 30) / 2; // Center in data area
     
@@ -419,7 +415,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
       // gestureState.x0 is the initial touch, gestureState.moveX is the absolute screen x
       // evt.nativeEvent.locationX is the x within the overlay
       const x = evt.nativeEvent.locationX;
-      console.log('moveX:', gestureState.moveX, 'overlay x:', x);
+      //console.log('moveX:', gestureState.moveX, 'overlay x:', x);
       if (chartData.length > 0) {        
         const allPoints = chartData.flatMap((dataset, idx) =>
           dataset.data.map(point => ({
@@ -440,12 +436,18 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
             closest = pt;
           }
         }
+        
         console.log('Tooltip data:', {
           date: closest?.x,
           medication: closest?.medication,
           value: closest?.y,
           label: closest?.label
         });
+
+        if (closest) {
+          closest.y = Number(Number(closest.y).toFixed(0));
+          closest.label = closest.y.toString();
+        }
         setHoveredPoint(closest); // Always show the closest point
       }
     },
