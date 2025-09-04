@@ -628,7 +628,27 @@ export default function HomeScreen() {
                 <View className="flex-row justify-between mt-2">
                       <Text className="text-gray-400">{nextInjection.injectionSite}</Text>
                       <Text className="text-gray-400">
-                        {formatFutureDateTime(nextInjection.dateTime)}
+                        {(() => {
+                          const now = new Date();
+                          const injectionTime = new Date(nextInjection.dateTime);
+                          const diffInMinutes = Math.floor((injectionTime.getTime() - now.getTime()) / (1000 * 60));
+                          
+                          if (diffInMinutes < 60) {
+                            return `in ${diffInMinutes} mins`;
+                          } else if (diffInMinutes < 1440) { // 24 hours = 1440 minutes
+                            const hours = Math.floor(diffInMinutes / 60);
+                            return `in ${hours} hours`;
+                          } else {
+                                                         return `${injectionTime.toLocaleDateString('en-US', {
+                               month: 'short',
+                               day: 'numeric'
+                             })} at ${injectionTime.toLocaleTimeString('en-US', {
+                               hour: '2-digit',
+                               minute: '2-digit',
+                               hour12: false
+                             })}`;
+                          }
+                        })()}
                       </Text>
                 </View>
               </View>
@@ -678,7 +698,16 @@ export default function HomeScreen() {
                   </View>
                   <View className="flex-row justify-between mt-2">
                     <Text className="text-gray-400">{injection.injectionSite}</Text>
-                    <Text className="text-gray-400">{injection.dateDisplay}</Text>
+                    <Text className="text-gray-400">
+                      {new Date(injection.date).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric'
+                      })} at {new Date(injection.date).toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                      })}
+                    </Text>
                   </View>
                 </TouchableOpacity>
               ))
