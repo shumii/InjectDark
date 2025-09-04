@@ -22,7 +22,6 @@ interface Injection {
   dosage: string;
   dateTime: string | Date;
   injectionSite?: string;
-  site?: string;
   halfLife?: string;
   halfLifeMinutes?: number;
   moodRating: number | undefined;
@@ -67,7 +66,6 @@ const InjectionHistory = ({
           
           const mappedInjections = parsedInjections.map((item: any) => ({
             ...item,
-            site: item.injectionSite || item.site,
             dateTime:
               typeof item.dateTime === "string"
                 ? item.dateTime
@@ -94,7 +92,7 @@ const InjectionHistory = ({
       const query = searchQuery.toLowerCase();
       return (
         injection.medicationName.toLowerCase().includes(query) ||
-        injection.site?.toLowerCase().includes(query) ||
+        injection.injectionSite?.toLowerCase().includes(query) ||
         injection.dosage.toString().toLowerCase().includes(query) ||
         injection.notes?.toLowerCase().includes(query)
       );
@@ -306,7 +304,7 @@ const InjectionHistory = ({
             </View>
             <View>
               <Text className="text-gray-400 text-sm">Injection Site</Text>
-              <Text className="text-white">{item.site}</Text>
+              <Text className="text-white">{item.injectionSite}</Text>
             </View>
           </View>
           
@@ -514,7 +512,7 @@ const InjectionHistory = ({
             ...editingInjection,
             dosage: Number(editingInjection.dosage),
             dateTime: new Date(editingInjection.dateTime),
-            injectionSite: editingInjection.injectionSite || editingInjection.site || "",
+            injectionSite: editingInjection.injectionSite || "",
             moodRating: editingInjection.moodRating ?? 0,
             sleepRating: editingInjection.sleepRating ?? 0,
             libidoRating: editingInjection.libidoRating ?? 0,
@@ -550,7 +548,7 @@ const InjectionHistory = ({
                 ...injections[0],
                 dosage: Number(injections[0].dosage),
                 dateTime: new Date(injections[0].dateTime),
-                injectionSite: injections[0].injectionSite || injections[0].site || "",
+                injectionSite: injections[0].injectionSite || "",
                 moodRating: injections[0].moodRating ?? 0,
                 sleepRating: injections[0].sleepRating ?? 0,
                 libidoRating: injections[0].libidoRating ?? 0,

@@ -37,7 +37,7 @@ interface RecentInjection {
   dosage: number;
   dateDisplay: string;
   date: Date;
-  site: string;
+  injectionSite: string;
 }
 
 const StorageService = {
@@ -220,13 +220,13 @@ export default function HomeScreen() {
               
               // Update state
               setAllInjections(updatedInjections);
-              setRecentInjections(updatedInjections.slice(0, 5).map(injection => ({
+              setRecentInjections(updatedInjections.slice(0, 5).map((injection: InjectionData) => ({
                 id: injection.id,
                 medication: injection.medicationName,
                 dosage: injection.dosage,
                 dateDisplay: new Date(injection.dateTime).toLocaleDateString(),
                 date: new Date(injection.dateTime),
-                site: injection.injectionSite || injection.site || ""
+                injectionSite: injection.injectionSite
               })));
 
               Alert.alert(
@@ -350,13 +350,13 @@ export default function HomeScreen() {
           // Format the data for display and take only the 3 most recent
           const formattedInjections = sortedInjections
             .slice(0, 3)
-            .map((injection) => ({
+            .map((injection: InjectionData) => ({
               id: injection.id,
               medication: injection.medicationName,
               dosage: injection.dosage,
             dateDisplay: formatRelativeDateTime(injection.dateTime),
             date: injection.dateTime,
-              site: injection.injectionSite,
+              injectionSite: injection.injectionSite,
           }))
           //.sort((a, b) => b.date.getTime() - a.date.getTime()).reverse();
       
@@ -677,7 +677,7 @@ export default function HomeScreen() {
                     <Text className="text-gray-400">{injection.dosage}mg</Text>
                   </View>
                   <View className="flex-row justify-between mt-2">
-                    <Text className="text-gray-400">{injection.site}</Text>
+                    <Text className="text-gray-400">{injection.injectionSite}</Text>
                     <Text className="text-gray-400">{injection.dateDisplay}</Text>
                   </View>
                 </TouchableOpacity>
