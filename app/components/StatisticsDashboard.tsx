@@ -1,5 +1,5 @@
-import React, { useMemo, useEffect, useState } from "react";
-import { View, Text, Dimensions, ScrollView } from "react-native";
+import React, { useMemo, useEffect, useState, useRef } from "react";
+import { View, Text, Dimensions, ScrollView, PanResponder } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { VictoryChart, VictoryLine, VictoryAxis, VictoryTheme, VictoryTooltip, VictoryScatter, VictoryBar } from "victory-native";
 import { getOppositeSite } from '../utils/injectionUtils';
@@ -17,6 +17,8 @@ interface StatisticsDashboardProps {
 
 const StatisticsDashboard = () => {
   const [data, setData] = useState<any[]>([]);
+  const [hoveredPoint, setHoveredPoint] = useState<any>(null);
+  const screenWidth = Dimensions.get("window").width - 32;
 
   useEffect(() => {
     const loadInjections = async () => {
@@ -159,65 +161,173 @@ const StatisticsDashboard = () => {
     }));
   }, [data]);
 
-  const screenWidth = Dimensions.get("window").width - 32;
+  // Helper to convert x (date) to pixel
+  function chartXToPixel(x: Date | string) {    
+    if (!projectedData || projectedData.length === 0) return 0;
+    
+    const minX = Math.min(...projectedData.map(p => p.x.getTime()));
+    const maxX = Math.max(...projectedData.map(p => p.x.getTime()));
+    const xMs = new Date(x).getTime();
+
+    if (maxX === minX) return (screenWidth - 35 - 30) / 2; // Center in data area
+    
+    // Calculate position relative to data area width
+    const dataAreaWidth = screenWidth - 35 - 30;
+    const relativePosition = (xMs - minX) / (maxX - minX);
+    return relativePosition * dataAreaWidth;
+  }
+
+  // PanResponder for overlay (recreated on every render for fresh chartData)
+  const panResponder = PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onPanResponderMove: (evt, gestureState) => {
+      // Get the x position relative to the overlay (which matches the chart width)
+      const x = evt.nativeEvent.locationX;
+      
+      if (projectedData && projectedData.length > 0) {        
+        const allPoints = projectedData.map(point => ({
+          ...point,
+          xPx: chartXToPixel(point.x),
+          label: `${point.y}mg`,
+        }));
+        
+        let closest = null;
+        let minDiff = Infinity;
+        for (const pt of allPoints) {
+          const diff = Math.abs(pt.xPx - x);
+          if (diff < minDiff) {
+            minDiff = diff;
+            closest = pt;
+          }
+        }
+        
+        if (closest) {
+          closest.y = Number(Number(closest.y).toFixed(0));
+          closest.label = closest.y.toString();
+        }
+        setHoveredPoint(closest);
+      }
+    },
+    onPanResponderRelease: () => setHoveredPoint(null),
+    onPanResponderTerminate: () => setHoveredPoint(null),
+  });
 
   return (
     <ScrollView className="flex-1 bg-gray-900 p-4">
       <Text className="text-white text-2xl font-bold mb-6">Projected Testosterone Levels (90 Days)</Text>
       <View style={{ backgroundColor: '#232b36', borderRadius: 16, padding: 8, marginBottom: 20 }}>
-        <VictoryChart
-          width={screenWidth}
-          height={250}
-          theme={VictoryTheme.material}
-          padding={{ top: 10, bottom: 60, left: 35, right: 30 }}
-          domainPadding={{ y: 10 }}
-        >
-          <VictoryAxis
-            tickFormat={(date) => {
-              const d = new Date(date);
-              return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-            }}
+        <View style={{ position: "relative", width: screenWidth, height: 250 }} pointerEvents="box-none">
+          <VictoryChart
+            width={screenWidth}
+            height={250}
+            theme={VictoryTheme.material}
+            padding={{ top: 10, bottom: 60, left: 35, right: 30 }}
+            domainPadding={{ y: 10 }}
+          >
+            <VictoryAxis
+              tickFormat={(date) => {
+                const d = new Date(date);
+                return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+              }}
+              style={{
+                tickLabels: {
+                  fill: "white",
+                  fontSize: 12,
+                  angle: 45,
+                  textAnchor: "start",
+                },
+                grid: { stroke: "transparent" },
+                axis: { stroke: "transparent" },
+              }}
+              tickCount={10}
+            />
+            <VictoryAxis
+              dependentAxis
+              tickFormat={(t) => Math.round(t)}
+              style={{
+                tickLabels: { fill: "white", fontSize: 12 },
+                ticks: { stroke: "transparent" },
+                grid: { stroke: "transparent" },
+                axis: { stroke: "transparent" },
+              }}
+              minDomain={{ y: 0 }}
+            />
+            <VictoryLine
+              data={projectedData}
+              style={{
+                data: {
+                  stroke: "#60a5fa",
+                  strokeWidth: 2,
+                },
+              }}
+              interpolation="monotoneX"
+            />
+            <VictoryScatter
+              data={projectedData}
+              size={2}
+              style={{ data: { fill: "#60a5fa" } }}
+              labels={({ datum }) => `${datum.y}mg`}
+              labelComponent={<VictoryTooltip constrainToVisibleArea />}
+            />
+          </VictoryChart>
+          
+          {/* Custom overlay for glide tooltip */}
+          <View
             style={{
-              tickLabels: {
-                fill: "white",
-                fontSize: 12,
-                angle: 45,
-                textAnchor: "start",
-              },
-              grid: { stroke: "transparent" },
-              axis: { stroke: "transparent" },
+              position: "absolute",
+              left: 35, // Match chart left padding
+              top: 0,
+              width: screenWidth - 35 - 30, // Match chart data area width
+              height: 250,
             }}
-            tickCount={10}
-          />
-          <VictoryAxis
-            dependentAxis
-            tickFormat={(t) => Math.round(t)}
-            style={{
-              tickLabels: { fill: "white", fontSize: 12 },
-              ticks: { stroke: "transparent" },
-              grid: { stroke: "transparent" },
-              axis: { stroke: "transparent" },
-            }}
-            minDomain={{ y: 0 }}
-          />
-          <VictoryLine
-            data={projectedData}
-            style={{
-              data: {
-                stroke: "#60a5fa",
-                strokeWidth: 2,
-              },
-            }}
-            interpolation="monotoneX"
-          />
-          <VictoryScatter
-            data={projectedData}
-            size={2}
-            style={{ data: { fill: "#60a5fa" } }}
-            labels={({ datum }) => `${datum.y}mg`}
-            labelComponent={<VictoryTooltip constrainToVisibleArea />}
-          />
-        </VictoryChart>
+            {...panResponder.panHandlers}
+            pointerEvents="auto"
+            onStartShouldSetResponder={() => true}
+          >
+            {hoveredPoint && (
+              <>
+                {/* Vertical line */}
+                <View
+                  style={{
+                    position: "absolute",
+                    left: hoveredPoint.xPx - 1,
+                    top: 0,
+                    width: 2,
+                    height: 250,
+                    backgroundColor: "#60a5fa",
+                    opacity: 0.5,
+                  }}
+                />
+                {/* Tooltip */}
+                <View
+                  style={{
+                    position: "absolute",
+                    left: Math.max(0, Math.min(screenWidth - 140, hoveredPoint.xPx + 8)),
+                    top: 40,
+                    backgroundColor: "#222",
+                    padding: 10,
+                    borderRadius: 10,
+                    minWidth: 120,
+                    borderWidth: 2,
+                    borderColor: "#60a5fa",
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 4,
+                    elevation: 4,
+                    zIndex: 100,
+                  }}
+                >
+                  <Text style={{ color: "#60a5fa", fontWeight: "bold", fontSize: 13 }}>
+                    {hoveredPoint.x ? new Date(hoveredPoint.x).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                  </Text>
+                  <Text style={{ color: "#fff", fontWeight: "bold" }}>Projected T Level</Text>
+                  <Text style={{ color: "#fff" }}>{hoveredPoint.label || 'No label'}</Text>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
       </View>
 
       <Text className="text-white text-2xl font-bold mb-6">Injection Site Frequency</Text>
