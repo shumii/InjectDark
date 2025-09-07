@@ -61,8 +61,6 @@ const InjectionHistory = ({
         
         if (storedInjections) {
           const parsedInjections = JSON.parse(storedInjections);
-
-          console.log("storedInjections", parsedInjections);
           
           const mappedInjections = parsedInjections.map((item: any) => ({
             ...item,

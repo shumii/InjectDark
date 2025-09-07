@@ -235,12 +235,6 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
       medications.add(medication);
     });
 
-    // Debug logging for chart calculation
-    console.log('--- MedicationChart Calculation ---');
-    console.log('Selected period:', selectedPeriod);
-    console.log('Date range:', dateRange);
-    console.log('Medications:', Array.from(medications));
-    console.log('MedicationMap:', medicationMap);
     
 
 
@@ -267,10 +261,6 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
           });
         });
 
-            // Debug: Check raw values for precision
-    Object.entries(totalTLevels).forEach(([medication, levels]) => {
-      console.log(`Raw values for ${medication}:`, Object.entries(levels).slice(0, 50)); // Show first 5 entries
-    });
 
         var sumTotalTLevels = Object.values(totalTLevels).reduce((sum, level) => sum + level, 0);
         var averageTotalTLevels = sumTotalTLevels / periodDays;
@@ -298,14 +288,6 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
       };
     });
 
-    console.log('Final chart data:', finalData);
-    
-    // Debug: Check final data precision
-    finalData.forEach(dataset => {
-      console.log(`Final data for ${dataset.medication}:`, dataset.data.slice(0, 90)); // Show first 3 points
-    });
-    
-    console.log('--- End MedicationChart Calculation ---');
     return finalData;
   }, [filteredData, selectedPeriod, filteredTLevels]);
 
@@ -415,7 +397,6 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
       // gestureState.x0 is the initial touch, gestureState.moveX is the absolute screen x
       // evt.nativeEvent.locationX is the x within the overlay
       const x = evt.nativeEvent.locationX;
-      //console.log('moveX:', gestureState.moveX, 'overlay x:', x);
       if (chartData.length > 0) {        
         const allPoints = chartData.flatMap((dataset, idx) =>
           dataset.data.map(point => ({
@@ -436,13 +417,6 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
             closest = pt;
           }
         }
-        
-        console.log('Tooltip data:', {
-          date: closest?.x,
-          medication: closest?.medication,
-          value: closest?.y,
-          label: closest?.label
-        });
 
         if (closest) {
           closest.y = Number(Number(closest.y).toFixed(0));
@@ -555,7 +529,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
                 }}
                 {...panResponder.panHandlers}
                 pointerEvents="auto"
-                onStartShouldSetResponder={() => { console.log('Responder!'); return true; }}
+                onStartShouldSetResponder={() => true}
               >
                 {hoveredPoint && (
                   <>
@@ -695,7 +669,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
               }}
               {...panResponder.panHandlers}
               pointerEvents="auto"
-              onStartShouldSetResponder={() => { console.log('Responder!'); return true; }}
+              onStartShouldSetResponder={() => true}
             >
               {hoveredPoint && (
                 <>

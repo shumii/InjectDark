@@ -34,10 +34,8 @@ export default function RootLayout() {
         const stored = await AsyncStorage.getItem('medications');
         if (!stored) {
           await AsyncStorage.setItem('medications', JSON.stringify(defaultMedications));
-          console.log('Default medications initialized');
         }
       } catch (error) {
-        console.error('Error initializing medications:', error);
       }
     };
     initializeMedications();

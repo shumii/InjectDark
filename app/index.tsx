@@ -338,8 +338,6 @@ export default function HomeScreen() {
       try {
         setLoading(true);
         const storedInjections = await AsyncStorage.getItem("injections");
-        
-        console.log("*****"+storedInjections);
 
         if (storedInjections) {
           const parsedInjections: InjectionData[] =
@@ -387,7 +385,6 @@ export default function HomeScreen() {
     const handleAppStateChange = (nextAppState: string) => {
       if (nextAppState === 'active') {
         // App came to foreground - refresh data
-        console.log('App came to focus - refreshing data');
         loadInjections();
       }
     };

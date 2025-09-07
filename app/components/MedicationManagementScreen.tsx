@@ -35,19 +35,16 @@ const MedicationManagementScreen = () => {
 
   const saveMedications = async (newMeds: Medication[]) => {
     try {
-      console.log('Saving medications:', newMeds);
       setMedications(newMeds);
       await AsyncStorage.setItem('medications', JSON.stringify(newMeds));
-      console.log('Medications saved successfully');
     } catch (error) {
-      console.error('Error saving medications:', error);
+      // Error saving medications
     }
   };
 
   // Add Medication
   const handleAddMedication = (med: Omit<Medication, 'id'>) => {
     const newMed: Medication = { ...med, id: Date.now().toString() };
-    console.log('Adding new medication:', newMed);
     const newMeds = [...medications, newMed];
     saveMedications(newMeds);
     setShowAddModal(false);
@@ -55,7 +52,6 @@ const MedicationManagementScreen = () => {
 
   // Edit Medication
   const handleEditMedication = (med: Medication) => {
-    console.log('Editing medication:', med);
     const newMeds = medications.map(m => m.id === med.id ? med : m);
     saveMedications(newMeds);
     setShowEditModal(false);

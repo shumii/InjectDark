@@ -104,20 +104,14 @@ const InjectionForm = ({
   useEffect(() => {
     const loadMedications = async () => {
       try {
-        console.log('=== INJECTION FORM: Loading medications ===');
         const stored = await AsyncStorage.getItem('medications');
-        console.log('Stored medications:', stored);
         if (stored) {
           const parsed = JSON.parse(stored);
-          console.log('Parsed medications:', parsed);
-          console.log('Number of medications loaded:', parsed.length);
           setMedications(parsed);
         } else {
-          console.log('No medications found in storage');
           setMedications([]);
         }
       } catch (error) {
-        console.error('Error loading medications:', error);
       } finally {
         setLoading(false);
       }
@@ -125,10 +119,8 @@ const InjectionForm = ({
     loadMedications();
   }, []);
 
-  console.log('Last Injection received:', lastInjection); // Debug log
 
   const [medicationName, setMedicationName] = useState(() => {
-    console.log('Setting initial medication name:', lastInjection?.medicationName); // Debug log
     return lastInjection?.medicationName || "";
   });
 
@@ -152,12 +144,10 @@ const InjectionForm = ({
   };
 
   const [dosage, setDosage] = useState(() => {
-    console.log('Setting initial dosage:', lastInjection?.dosage); // Debug log
     
     // If default unit is ml and we have a dosage and medication, convert from mg to ml
     if (defaultDosageUnit === 'ml' && lastInjection?.dosage && selectedMedication?.concentration) {
       const mlValue = (lastInjection.dosage / selectedMedication.concentration).toFixed(2);
-      console.log('Converting initial dosage to ml:', mlValue);
       return mlValue;
     }
     
@@ -174,7 +164,6 @@ const InjectionForm = ({
   });
 
   const [injectionSite, setInjectionSite] = useState(() => {
-    console.log('Setting initial injection site:', lastInjection?.injectionSite); // Debug log
     return lastInjection?.injectionSite || "";
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -219,13 +208,6 @@ const InjectionForm = ({
         ? Number(dosage) * concentration 
         : Number(dosage);
 
-      // Log selected medication and halfLifeMinutes at save time
-      console.log('=== INJECTION FORM: Saving injection ===');
-      console.log('Medication name:', medicationName);
-      console.log('Selected medication object:', selectedMedication);
-      console.log('Half-life description:', selectedMedication?.halfLifeDescription);
-      console.log('Half-life minutes:', selectedMedication?.halfLifeMinutes);
-      console.log('Concentration:', selectedMedication?.concentration);
       
       const injectionData = {
         id: new Date().getTime().toString(),
@@ -244,16 +226,6 @@ const InjectionForm = ({
         notes
       };
       
-      console.log('=== DEBUG: InjectionForm handleSubmit ===');
-      console.log('About to call onSave with data:', injectionData);
-      console.log('Notes value:', injectionData.notes);
-      console.log('Notes type:', typeof injectionData.notes);
-      console.log('Notes length:', injectionData.notes ? injectionData.notes.length : 0);
-      console.log('Mood rating:', injectionData.moodRating);
-      console.log('Sleep rating:', injectionData.sleepRating);
-      console.log('Libido rating:', injectionData.libidoRating);
-      console.log('Energy rating:', injectionData.energyRating);
-      console.log('Sides rating:', injectionData.sidesRating);
       
       onSave(injectionData);
 
@@ -299,11 +271,6 @@ const InjectionForm = ({
   }
 
   const handleSelectMedication = (medication: Medication) => {
-    console.log('=== INJECTION FORM: Selecting medication ===');
-    console.log('Selected medication:', medication);
-    console.log('Medication half-life description:', medication.halfLifeDescription);
-    console.log('Medication half-life minutes:', medication.halfLifeMinutes);
-    console.log('Medication concentration:', medication.concentration);
     
     setSelectedMedication(medication);
     setMedicationName(medication.name);

@@ -41,7 +41,6 @@ const StatisticsDashboard = () => {
           
           // If we made changes, save the cleaned data back to storage
           if (JSON.stringify(cleanedData) !== storedInjections) {
-            console.log('StatisticsDashboard: Data cleaned, saving back to storage');
             await AsyncStorage.setItem("injections", JSON.stringify(cleanedData));
           }
           
@@ -59,21 +58,42 @@ const StatisticsDashboard = () => {
   // Calculate daily T-levels for the input data (like MedicationChart)
   const tLevelTimeSeries = useMemo(() => {
     if (!data || data.length === 0) return [];
+    
+    console.log('=== VERIFICATION: HISTORICAL T-LEVEL CALCULATION ===');
+    console.log('Input data:', data.length, 'injections');
+    
     // Get date range from first to last injection
     const sorted = [...data].sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
     const startDate = new Date(sorted[0].dateTime);
     const endDate = new Date(sorted[sorted.length - 1].dateTime);
     const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    console.log('Date range:', {
+      start: startDate.toISOString().split('T')[0],
+      end: endDate.toISOString().split('T')[0],
+      days: days
+    });
+    
     const dateRange: string[] = [];
     for (let i = 0; i <= days; i++) {
       const d = new Date(startDate);
       d.setDate(startDate.getDate() + i);
       dateRange.push(d.toISOString().split('T')[0]);
     }
+    
     // For each day, sum decayed T from all previous injections
-    return dateRange.map(dateStr => {
+    const timeSeries = dateRange.map(dateStr => {
       const currentDate = new Date(dateStr + 'T23:59:59');
       let tLevel = 0;
+      const dailyContributions: Array<{
+        injectionDate: string;
+        dosage: number;
+        minutesDiff: number;
+        halfLifePeriods: number;
+        decayFactor: number;
+        contribution: number;
+      }> = [];
+      
       data.forEach(injection => {
         const injectionDate = new Date(injection.dateTime);
         const halfLifeMinutes = injection.halfLifeMinutes || 0;
@@ -85,40 +105,88 @@ const StatisticsDashboard = () => {
             const dosage = parseFloat(injection.dosage.toString());
             const partial = dosage * decayFactor;
             tLevel += partial;
+            
+            dailyContributions.push({
+              injectionDate: injection.dateTime,
+              dosage: dosage,
+              minutesDiff: minutesDiff,
+              halfLifePeriods: halfLifePeriods,
+              decayFactor: decayFactor,
+              contribution: partial
+            });
           }
         }
       });
-      return { x: new Date(currentDate), y: Math.round(tLevel) };
+      
+      const roundedTLevel = Math.round(tLevel);
+      
+      // Log September 4th specifically for verification
+      if (dateStr === '2025-09-04') {
+        console.log('September 4th, 2025 T-level calculation:', {
+          date: dateStr,
+          totalTLevel: roundedTLevel,
+          rawTLevel: tLevel,
+          contributions: dailyContributions
+        });
+      }
+      
+      return { x: new Date(currentDate), y: roundedTLevel };
     });
+    
+    console.log('=== END HISTORICAL VERIFICATION ===');
+    return timeSeries;
   }, [data]);
 
   // Project 90 days of future injections and T-levels, starting from last real day
   const projectedData = useMemo(() => {
     if (data.length < 2 || tLevelTimeSeries.length === 0) return [];
+    
     const lastInjection = data[0];
     const secondLastInjection = data[1];
     const lastDate = new Date(lastInjection.dateTime);
     const secondLastDate = new Date(secondLastInjection.dateTime);
     const diffInMinutes = Math.floor((lastDate.getTime() - secondLastDate.getTime()) / (1000 * 60));
-    // Start from the day after the last day in the time series
-    let currentDate = new Date(tLevelTimeSeries[tLevelTimeSeries.length - 1].x);
-    currentDate.setDate(currentDate.getDate() + 1);
+    
+    console.log('=== VERIFICATION: T-LEVEL CALCULATION ===');
+    console.log('Last injection:', {
+      date: lastInjection.dateTime,
+      dosage: lastInjection.dosage,
+      medication: lastInjection.medicationName,
+      halfLifeMinutes: lastInjection.halfLifeMinutes
+    });
+    console.log('Injection interval (days):', diffInMinutes / (24 * 60));
+    
+    // Start from the last injection date and add the interval to get the next injection
+    // This ensures projections start from the next scheduled injection date
+    let currentDate = new Date(lastDate);
     let injections = [...data];
     const projections = [];
+    
     for (let i = 0; i < 90; i++) {
-              // Project next injection
-        currentDate = new Date(currentDate.getTime() + diffInMinutes * 60 * 1000);
-        const site = i % 2 === 0 ? lastInjection.injectionSite : getOppositeSite(lastInjection.injectionSite);
-      injections = [
-        {
-          ...lastInjection,
-          dateTime: currentDate.toISOString(),
-          injectionSite: site,
-        },
-        ...injections,
-      ];
+      // Project next injection
+      currentDate = new Date(currentDate.getTime() + diffInMinutes * 60 * 1000);
+      const site = i % 2 === 0 ? lastInjection.injectionSite : getOppositeSite(lastInjection.injectionSite);
+      
+      const projectedInjection = {
+        ...lastInjection,
+        dateTime: currentDate.toISOString(),
+        injectionSite: site,
+      };
+      
+      injections = [projectedInjection, ...injections];
+      
       // Calculate T-level for this day
       let tLevel = 0;
+      const contributions: Array<{
+        date: string;
+        dosage: number;
+        minutesDiff: number;
+        halfLifePeriods: number;
+        decayFactor: number;
+        contribution: number;
+        isProjected: boolean;
+      }> = [];
+      
       injections.forEach(injection => {
         const injectionDate = new Date(injection.dateTime);
         const halfLifeMinutes = injection.halfLifeMinutes || 0;
@@ -128,12 +196,37 @@ const StatisticsDashboard = () => {
             const halfLifePeriods = minutesDiff / halfLifeMinutes;
             const decayFactor = Math.pow(0.5, halfLifePeriods);
             const dosage = parseFloat(injection.dosage.toString());
-            tLevel += dosage * decayFactor;
+            const contribution = dosage * decayFactor;
+            tLevel += contribution;
+            
+            contributions.push({
+              date: injection.dateTime,
+              dosage: dosage,
+              minutesDiff: minutesDiff,
+              halfLifePeriods: halfLifePeriods,
+              decayFactor: decayFactor,
+              contribution: contribution,
+              isProjected: injection === projectedInjection
+            });
           }
         }
       });
-      projections.push({ x: new Date(currentDate), y: Math.round(tLevel) });
+      
+      const roundedTLevel = Math.round(tLevel);
+      projections.push({ x: new Date(currentDate), y: roundedTLevel });
+      
+      // Log detailed info for first few projections to verify calculation
+      if (i < 3) {
+        console.log(`Projection ${i + 1} (${currentDate.toISOString().split('T')[0]}):`, {
+          totalTLevel: roundedTLevel,
+          rawTLevel: tLevel,
+          contributions: contributions.slice(0, 5) // Show first 5 contributions
+        });
+      }
     }
+    
+    console.log('=== END VERIFICATION ===');
+    
     // Only return projections (future 90 days)
     return projections;
   }, [data, tLevelTimeSeries]);
