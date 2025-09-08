@@ -15,6 +15,113 @@ interface StatisticsDashboardProps {
   }>;
 }
 
+// Helper function to find the stabilized date
+const findStabilizedDate = (projections: any[], data: any[], lastInjection: any, diffInMinutes: number) => {
+  // Find all injection dates (real + projected)
+  const injectionDates: Date[] = [];
+  const realInjectionDates = data.map(inj => new Date(inj.dateTime));
+  console.log('All real injection dates:', realInjectionDates.map(d => d.toISOString().split('T')[0]));
+  
+  // Only include real injection dates up to and including the last injection date
+  const lastInjectionDate = new Date(lastInjection.dateTime);
+  const filteredRealDates = realInjectionDates.filter(date => date.getTime() <= lastInjectionDate.getTime());
+  console.log('Filtered real injection dates (up to last injection):', filteredRealDates.map(d => d.toISOString().split('T')[0]));
+  injectionDates.push(...filteredRealDates);
+  
+  // Add projected injection dates starting from the last injection date
+  let currentInjectionDate = new Date(lastInjection.dateTime);
+  console.log('Starting projected dates from:', currentInjectionDate.toISOString().split('T')[0]);
+  const projectedDates: Date[] = [];
+  for (let i = 0; i < 10; i++) { // Check up to 10 projected injections
+    currentInjectionDate = new Date(currentInjectionDate.getTime() + diffInMinutes * 60 * 1000);
+    projectedDates.push(new Date(currentInjectionDate));
+  }
+  console.log('Projected injection dates:', projectedDates.map(d => d.toISOString().split('T')[0]));
+  injectionDates.push(...projectedDates);
+  
+  // Sort injection dates
+  injectionDates.sort((a, b) => a.getTime() - b.getTime());
+  
+  // Debug: Check for duplicates in injectionDates
+  const dateCounts = {};
+  injectionDates.forEach(date => {
+    const dateStr = date.toISOString().split('T')[0];
+    dateCounts[dateStr] = (dateCounts[dateStr] || 0) + 1;
+  });
+  console.log('Duplicate dates in injectionDates:', Object.entries(dateCounts).filter(([date, count]) => count > 1));
+  
+  // Find T-levels at each injection point
+  const injectionTLevels: { date: Date, tLevel: number }[] = [];
+  
+  injectionDates.forEach(injectionDate => {
+    // Find the projection data point closest to this injection date
+    const closestProjection = projections.find(proj => {
+      const projDate = new Date(proj.x);
+      return Math.abs(projDate.getTime() - injectionDate.getTime()) < 24 * 60 * 60 * 1000; // Within 1 day
+    });
+    
+    if (closestProjection) {
+      injectionTLevels.push({
+        date: injectionDate,
+        tLevel: closestProjection.y
+      });
+    }
+  });
+  
+  
+  // Look for 3 consecutive injections with T-levels within 2 of each other
+  let consecutiveCount = 0;
+  let stabilizedDate: Date | null = null;
+  
+  for (let i = 1; i < injectionTLevels.length; i++) {
+    const currentTLevel = injectionTLevels[i].tLevel;
+    const previousTLevel = injectionTLevels[i - 1].tLevel;
+    const difference = Math.abs(currentTLevel - previousTLevel);
+    
+    if (difference <= 2) {
+      consecutiveCount++;
+      
+      if (consecutiveCount === 3) {
+        stabilizedDate = injectionTLevels[i].date;
+        break;
+      }
+    } else {
+      consecutiveCount = 0; // Reset counter if T-levels are too different
+    }
+  }
+  
+  return stabilizedDate;
+};
+
+// Helper function to filter projections after stabilization
+const filterProjectionsAfterStabilization = (projections: any[], stabilizedDate: Date | null, lastInjectionDate: Date) => {
+  if (!stabilizedDate) {
+    console.log('No stabilized date found, returning all projections');
+    return projections;
+  }
+  
+  // Calculate minimum days (30 days from last injection)
+  const minDays = 30;
+  const minDate = new Date(lastInjectionDate);
+  minDate.setDate(minDate.getDate() + minDays);
+  
+  console.log('Minimum date (30 days from last injection):', minDate.toISOString().split('T')[0]);
+  console.log('Stabilized date:', stabilizedDate.toISOString().split('T')[0]);
+  
+  // Use the later of stabilized date or minimum date
+  const cutoffDate = stabilizedDate > minDate ? stabilizedDate : minDate;
+  console.log('Cutoff date:', cutoffDate.toISOString().split('T')[0]);
+  
+  // Filter projections to only include data up to cutoff date
+  const filtered = projections.filter(proj => {
+    const projDate = new Date(proj.x);
+    return projDate <= cutoffDate;
+  });
+  
+  console.log(`Filtered ${projections.length} projections down to ${filtered.length} projections`);
+  return filtered;
+};
+
 const StatisticsDashboard = () => {
   const [data, setData] = useState<any[]>([]);
   const [hoveredPoint, setHoveredPoint] = useState<any>(null);
@@ -237,8 +344,81 @@ const StatisticsDashboard = () => {
     
     console.log('=== END VERIFICATION ===');
     
-    // Return all projections (daily decay + projected injections)
-    return projections;
+    // Filter projections to remove data after stabilized date (unless less than 30 days)
+    const filteredProjections = filterProjectionsAfterStabilization(projections, null, lastDate);
+    console.log('Filtered projections count:', filteredProjections.length);
+    
+    return filteredProjections;
+  }, [data, tLevelTimeSeries]);
+
+  // Calculate stabilization date separately
+  const stabilizedDate = useMemo(() => {
+    console.log('StabilizedDate useMemo - data.length:', data.length, 'tLevelTimeSeries.length:', tLevelTimeSeries.length);
+    
+    if (data.length < 2 || tLevelTimeSeries.length === 0) {
+      console.log('Early return: insufficient data');
+      return null;
+    }
+    
+    const lastInjection = data[0];
+    const secondLastInjection = data[1];
+    
+    console.log('Last injection full object:', lastInjection);
+    console.log('Last injection medication:', lastInjection.medication);
+    
+    // Skip if last injection doesn't have medication data
+    if (!lastInjection.halfLifeMinutes) {
+      console.log('Early return: no medication data');
+      return null;
+    }
+    
+    const diffInMinutes = (new Date(lastInjection.dateTime).getTime() - new Date(secondLastInjection.dateTime).getTime()) / (1000 * 60);
+    
+    // Create projections array for stabilization calculation
+    const projections = [];
+    const lastDate = new Date(lastInjection.dateTime);
+    
+    // Add daily T-levels for 90 days
+    for (let day = 1; day <= 90; day++) {
+      const dailyDate = new Date(lastDate.getTime() + day * 24 * 60 * 60 * 1000);
+      let totalTLevel = 0;
+      
+      // Calculate T-level from all injections
+      for (const injection of data) {
+        if (!injection.halfLifeMinutes) continue; // Skip injections without medication data
+        
+        const injectionDate = new Date(injection.dateTime);
+        const daysSinceInjection = (dailyDate.getTime() - injectionDate.getTime()) / (1000 * 60 * 60 * 24);
+        
+        if (daysSinceInjection >= 0) {
+          const halfLifePeriods = daysSinceInjection / (injection.halfLifeMinutes / (24 * 60));
+          const remainingDosage = injection.dosage * Math.pow(0.5, halfLifePeriods);
+          totalTLevel += remainingDosage;
+        }
+      }
+      
+      // Add projected injections
+      let currentInjectionDate = new Date(lastDate);
+      for (let i = 0; i < 10; i++) {
+        currentInjectionDate = new Date(currentInjectionDate.getTime() + diffInMinutes * 60 * 1000);
+        const daysSinceProjectedInjection = (dailyDate.getTime() - currentInjectionDate.getTime()) / (1000 * 60 * 60 * 24);
+        
+        if (daysSinceProjectedInjection >= 0) {
+          const halfLifePeriods = daysSinceProjectedInjection / (lastInjection.halfLifeMinutes / (24 * 60));
+          const remainingDosage = lastInjection.dosage * Math.pow(0.5, halfLifePeriods);
+          totalTLevel += remainingDosage;
+        }
+      }
+      
+      projections.push({
+        x: dailyDate,
+        y: Math.round(totalTLevel)
+      });
+    }
+    
+    const result = findStabilizedDate(projections, data, lastInjection, diffInMinutes);
+    console.log('Stabilization date result:', result);
+    return result;
   }, [data, tLevelTimeSeries]);
 
   // Calculate injection site frequency
@@ -317,8 +497,9 @@ const StatisticsDashboard = () => {
 
   return (
     <ScrollView className="flex-1 bg-gray-900 p-4">
-      <Text className="text-white text-2xl font-bold mb-6">Projected Testosterone Levels (90 Days)</Text>
+      <Text className="text-white text-2xl font-bold mb-6">Analysis</Text>
       <View style={{ backgroundColor: '#232b36', borderRadius: 16, padding: 8, marginBottom: 20 }}>
+        <Text className="text-white text-lg font-semibold mb-4 px-2">Projected Testosterone Levels (90 Days)</Text>
         <View style={{ position: "relative", width: screenWidth, height: 250 }} pointerEvents="box-none">
           <VictoryChart
             width={screenWidth}
@@ -433,8 +614,30 @@ const StatisticsDashboard = () => {
         </View>
       </View>
 
-      <Text className="text-white text-2xl font-bold mb-6">Injection Site Frequency</Text>
+      {/* Stabilization explanation */}
+      {data.length >= 2 && (() => {
+        const lastInjection = data[0];
+        const secondLastInjection = data[1];
+        const lastDate = new Date(lastInjection.dateTime);
+        const secondLastDate = new Date(secondLastInjection.dateTime);
+        const diffInMinutes = Math.floor((lastDate.getTime() - secondLastDate.getTime()) / (1000 * 60));
+        const intervalDays = Math.round(diffInMinutes / (24 * 60));
+        
+        // Use the stabilization date from the useMemo
+        const stabilizationDate = stabilizedDate;
+        console.log('Using stabilizationDate in JSX:', stabilizationDate);
+        
+        return (
+          <View style={{ backgroundColor: '#1f2937', borderRadius: 12, padding: 16, marginBottom: 20 }}>
+            <Text className="text-white text-sm leading-6">
+              If you continue to inject <Text className="font-semibold text-blue-400">{lastInjection.dosage}mg</Text> every <Text className="font-semibold text-blue-400">{intervalDays}</Text> days then your testosterone levels will stabilize on <Text className="font-semibold text-green-400">{stabilizationDate ? stabilizationDate.toLocaleDateString() : 'TBD'}</Text>.
+            </Text>
+          </View>
+        );
+      })()}
+
       <View style={{ backgroundColor: '#232b36', borderRadius: 16, padding: 8 }}>
+        <Text className="text-white text-lg font-semibold mb-4 px-2">Injection Site Frequency</Text>
         <VictoryChart
           width={screenWidth}
           height={250}
@@ -461,6 +664,12 @@ const StatisticsDashboard = () => {
               axis: { stroke: "transparent" },
             }}
             minDomain={{ y: 0 }}
+            tickFormat={(t) => Math.round(t)}
+            tickValues={(() => {
+              const maxValue = Math.max(...siteFrequencyData.map(d => d.y), 0);
+              const tickCount = maxValue + 1;
+              return Array.from({ length: tickCount }, (_, i) => i);
+            })()}
           />
           <VictoryBar
             data={siteFrequencyData}
