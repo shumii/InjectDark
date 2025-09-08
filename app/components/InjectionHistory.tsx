@@ -144,6 +144,17 @@ const InjectionHistory = ({
     return Math.round(totalLevel);
   };
 
+  // Calculate testosterone levels before and after injection
+  const calculateTestosteroneLevels = (currentInjection: Injection) => {
+    const beforeInjection = calculateTestosteroneLevel(currentInjection);
+    const afterInjection = beforeInjection + Number(currentInjection.dosage);
+    
+    return {
+      before: beforeInjection,
+      after: afterInjection
+    };
+  };
+
   const handleDeleteInjection = async (id: string) => {
     Alert.alert(
       "Delete Injection",
@@ -230,8 +241,8 @@ const InjectionHistory = ({
   };
 
   const renderListItem = ({ item }: { item: Injection }) => {
-    // Calculate T level at this injection time
-    const tLevel = calculateTestosteroneLevel(item);
+    // Calculate T levels before and after injection
+    const tLevels = calculateTestosteroneLevels(item);
 
     // Coerce all ratings to numbers
     const mood = Number(item.moodRating) || 0;
@@ -312,7 +323,9 @@ const InjectionHistory = ({
             </View>
             <View>
               <Text className="text-gray-400 text-sm">T Level at Injection</Text>
-              <Text className="text-white">{tLevel} <Text className="text-white">mg</Text></Text>
+              <Text className="text-white">
+                {tLevels.before} → {tLevels.after} <Text className="text-gray-400">mg</Text>
+              </Text>
             </View>
           </View>
 
