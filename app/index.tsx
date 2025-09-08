@@ -620,7 +620,7 @@ export default function HomeScreen() {
                   <Text className="text-white font-semibold">
                         {nextInjection.medicationName}
                   </Text>
-                      <Text className="text-gray-400">{nextInjection.dosage}mg</Text>
+                      <Text className="text-gray-400">{nextInjection.dosage} mg</Text>
                 </View>
                 <View className="flex-row justify-between mt-2">
                       <Text className="text-gray-400">{nextInjection.injectionSite}</Text>
@@ -691,7 +691,7 @@ export default function HomeScreen() {
                     <Text className="text-white font-semibold">
                       {injection.medication}
                     </Text>
-                    <Text className="text-gray-400">{injection.dosage}mg</Text>
+                    <Text className="text-gray-400">{injection.dosage} mg</Text>
                   </View>
                   <View className="flex-row justify-between mt-2">
                     <Text className="text-gray-400">{injection.injectionSite}</Text>

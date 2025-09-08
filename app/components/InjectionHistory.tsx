@@ -303,7 +303,7 @@ const InjectionHistory = ({
             </View>
             <View>
               <Text className="text-gray-400 text-sm">Dosage</Text>
-              <Text className="text-white">{item.dosage}</Text>
+              <Text className="text-white">{item.dosage} <Text className="text-gray-400">mg</Text></Text>
             </View>
           </View>
 
@@ -324,7 +324,7 @@ const InjectionHistory = ({
             <View>
               <Text className="text-gray-400 text-sm">T Level at Injection</Text>
               <Text className="text-white">
-                {tLevels.before} → {tLevels.after} <Text className="text-gray-400">mg</Text>
+                {tLevels.before} <Text className="text-gray-400">mg</Text> → {tLevels.after} <Text className="text-gray-400">mg</Text>
               </Text>
             </View>
           </View>
