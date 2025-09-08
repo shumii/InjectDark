@@ -162,20 +162,34 @@ const StatisticsDashboard = () => {
     let injections = [...data];
     const projections = [];
     
-    for (let i = 0; i < 90; i++) {
-      // Project next injection
-      currentDate = new Date(currentDate.getTime() + diffInMinutes * 60 * 1000);
-      const site = i % 2 === 0 ? lastInjection.injectionSite : getOppositeSite(lastInjection.injectionSite);
+    // Show daily T-levels for all 90 days, with projected injections added at the correct intervals
+    let dailyDate = new Date(lastDate);
+    let nextInjectionDate = new Date(currentDate.getTime() + diffInMinutes * 60 * 1000);
+    let injectionCount = 0;
+    
+    for (let day = 1; day <= 90; day++) {
+      dailyDate.setDate(dailyDate.getDate() + 1);
       
-      const projectedInjection = {
-        ...lastInjection,
-        dateTime: currentDate.toISOString(),
-        injectionSite: site,
-      };
+      // Check if we need to add a projected injection on this day
+      if (Math.abs(dailyDate.getTime() - nextInjectionDate.getTime()) < 24 * 60 * 60 * 1000) { // Within 1 day
+        const site = injectionCount % 2 === 0 ? lastInjection.injectionSite : getOppositeSite(lastInjection.injectionSite);
+        
+        const projectedInjection = {
+          ...lastInjection,
+          dateTime: nextInjectionDate.toISOString(),
+          injectionSite: site,
+        };
+        
+        injections = [projectedInjection, ...injections];
+        injectionCount++;
+        
+        // Calculate next injection date
+        nextInjectionDate = new Date(nextInjectionDate.getTime() + diffInMinutes * 60 * 1000);
+        
+        console.log(`Added projected injection ${injectionCount} on ${dailyDate.toISOString().split('T')[0]}`);
+      }
       
-      injections = [projectedInjection, ...injections];
-      
-      // Calculate T-level for this day
+      // Calculate T-level for this day using all injections (real + projected)
       let tLevel = 0;
       const contributions: Array<{
         date: string;
@@ -191,7 +205,7 @@ const StatisticsDashboard = () => {
         const injectionDate = new Date(injection.dateTime);
         const halfLifeMinutes = injection.halfLifeMinutes || 0;
         if (halfLifeMinutes > 0 && injection.medicationName.toLowerCase().includes('testosterone')) {
-          const minutesDiff = (currentDate.getTime() - injectionDate.getTime()) / (1000 * 60);
+          const minutesDiff = (dailyDate.getTime() - injectionDate.getTime()) / (1000 * 60);
           if (minutesDiff >= 0) {
             const halfLifePeriods = minutesDiff / halfLifeMinutes;
             const decayFactor = Math.pow(0.5, halfLifePeriods);
@@ -206,28 +220,24 @@ const StatisticsDashboard = () => {
               halfLifePeriods: halfLifePeriods,
               decayFactor: decayFactor,
               contribution: contribution,
-              isProjected: injection === projectedInjection
+              isProjected: injection.dateTime > lastInjection.dateTime
             });
           }
         }
       });
       
       const roundedTLevel = Math.round(tLevel);
-      projections.push({ x: new Date(currentDate), y: roundedTLevel });
+      projections.push({ x: new Date(dailyDate), y: roundedTLevel });
       
-      // Log detailed info for first few projections to verify calculation
-      if (i < 3) {
-        console.log(`Projection ${i + 1} (${currentDate.toISOString().split('T')[0]}):`, {
-          totalTLevel: roundedTLevel,
-          rawTLevel: tLevel,
-          contributions: contributions.slice(0, 5) // Show first 5 contributions
-        });
+      // Log detailed info for first few days and injection days
+      if (day <= 5 || Math.abs(dailyDate.getTime() - nextInjectionDate.getTime()) < 24 * 60 * 60 * 1000) {
+        console.log(`Day ${day} (${dailyDate.toISOString().split('T')[0]}): T-level = ${roundedTLevel}, injections = ${injections.length}`);
       }
     }
     
     console.log('=== END VERIFICATION ===');
     
-    // Only return projections (future 90 days)
+    // Return all projections (daily decay + projected injections)
     return projections;
   }, [data, tLevelTimeSeries]);
 
