@@ -20,54 +20,43 @@ const findStabilizedDate = (projections: any[], data: any[], lastInjection: any,
   // Find all injection dates (real + projected)
   const injectionDates: Date[] = [];
   const realInjectionDates = data.map(inj => new Date(inj.dateTime));
-  console.log('All real injection dates:', realInjectionDates.map(d => d.toISOString().split('T')[0]));
   
   // Only include real injection dates up to and including the last injection date
   const lastInjectionDate = new Date(lastInjection.dateTime);
   const filteredRealDates = realInjectionDates.filter(date => date.getTime() <= lastInjectionDate.getTime());
-  console.log('Filtered real injection dates (up to last injection):', filteredRealDates.map(d => d.toISOString().split('T')[0]));
   injectionDates.push(...filteredRealDates);
   
   // Add projected injection dates starting from the last injection date
   let currentInjectionDate = new Date(lastInjection.dateTime);
-  console.log('Starting projected dates from:', currentInjectionDate.toISOString().split('T')[0]);
   const projectedDates: Date[] = [];
   for (let i = 0; i < 10; i++) { // Check up to 10 projected injections
     currentInjectionDate = new Date(currentInjectionDate.getTime() + diffInMinutes * 60 * 1000);
     projectedDates.push(new Date(currentInjectionDate));
   }
-  console.log('Projected injection dates:', projectedDates.map(d => d.toISOString().split('T')[0]));
   injectionDates.push(...projectedDates);
   
   // Sort injection dates
   injectionDates.sort((a, b) => a.getTime() - b.getTime());
   
-  // Debug: Check for duplicates in injectionDates
-  const dateCounts = {};
-  injectionDates.forEach(date => {
-    const dateStr = date.toISOString().split('T')[0];
-    dateCounts[dateStr] = (dateCounts[dateStr] || 0) + 1;
-  });
-  console.log('Duplicate dates in injectionDates:', Object.entries(dateCounts).filter(([date, count]) => count > 1));
-  
   // Find T-levels at each injection point
   const injectionTLevels: { date: Date, tLevel: number }[] = [];
   
-  injectionDates.forEach(injectionDate => {
-    // Find the projection data point closest to this injection date
+  injectionDates.forEach((injectionDate, index) => {
+    // Find the projection data point for the day AFTER the injection to get T-level after injection
+    const dayAfterInjection = new Date(injectionDate.getTime() + 24 * 60 * 60 * 1000);
     const closestProjection = projections.find(proj => {
       const projDate = new Date(proj.x);
-      return Math.abs(projDate.getTime() - injectionDate.getTime()) < 24 * 60 * 60 * 1000; // Within 1 day
+      return Math.abs(projDate.getTime() - dayAfterInjection.getTime()) < 24 * 60 * 60 * 1000; // Within 1 day
     });
     
     if (closestProjection) {
+      // Use the T-level from the day after injection, which represents T-level after injection
       injectionTLevels.push({
         date: injectionDate,
         tLevel: closestProjection.y
       });
     }
   });
-  
   
   // Look for 3 consecutive injections with T-levels within 2 of each other
   let consecutiveCount = 0;
@@ -266,7 +255,6 @@ const StatisticsDashboard = () => {
     // Start from the last injection date and add the interval to get the next injection
     // This ensures projections start from the next scheduled injection date
     let currentDate = new Date(lastDate);
-    let injections = [...data];
     const projections = [];
     
     // Show daily T-levels for all 90 days, with projected injections added at the correct intervals
@@ -277,8 +265,43 @@ const StatisticsDashboard = () => {
     for (let day = 1; day <= 90; day++) {
       dailyDate.setDate(dailyDate.getDate() + 1);
       
+      // Create array of all injections (real + projected up to this day)
+      let allInjections = [...data];
+      
+      // Add projected injections up to this day
+      let tempInjectionDate = new Date(currentDate.getTime() + diffInMinutes * 60 * 1000);
+      for (let i = 0; i < injectionCount; i++) {
+        const site = i % 2 === 0 ? lastInjection.injectionSite : getOppositeSite(lastInjection.injectionSite);
+        const projectedInjection = {
+          ...lastInjection,
+          dateTime: tempInjectionDate.toISOString(),
+          injectionSite: site,
+        };
+        allInjections = [projectedInjection, ...allInjections];
+        tempInjectionDate = new Date(tempInjectionDate.getTime() + diffInMinutes * 60 * 1000);
+      }
+      
+      let addedInjectionToday = false;
+      
       // Check if we need to add a projected injection on this day
-      if (Math.abs(dailyDate.getTime() - nextInjectionDate.getTime()) < 24 * 60 * 60 * 1000) { // Within 1 day
+      // Only add the injection if the daily date matches the injection date exactly
+      if (dailyDate.toDateString() === nextInjectionDate.toDateString()) {
+        // Calculate T-level BEFORE adding the injection
+        let tLevelBeforeInjection = 0;
+        allInjections.forEach(injection => {
+          const injectionDate = new Date(injection.dateTime);
+          const halfLifeMinutes = injection.halfLifeMinutes || 0;
+          if (halfLifeMinutes > 0 && injection.medicationName.toLowerCase().includes('testosterone')) {
+            const minutesDiff = (dailyDate.getTime() - injectionDate.getTime()) / (1000 * 60);
+            if (minutesDiff >= 0) {
+              const halfLifePeriods = minutesDiff / halfLifeMinutes;
+              const decayFactor = Math.pow(0.5, halfLifePeriods);
+              const dosage = parseFloat(injection.dosage.toString());
+              tLevelBeforeInjection += dosage * decayFactor;
+            }
+          }
+        });
+        
         const site = injectionCount % 2 === 0 ? lastInjection.injectionSite : getOppositeSite(lastInjection.injectionSite);
         
         const projectedInjection = {
@@ -287,13 +310,14 @@ const StatisticsDashboard = () => {
           injectionSite: site,
         };
         
-        injections = [projectedInjection, ...injections];
+        allInjections = [projectedInjection, ...allInjections];
         injectionCount++;
+        addedInjectionToday = true;
+        
+        console.log(`Added projected injection ${injectionCount} on ${nextInjectionDate.toISOString().split('T')[0]} - T-level before: ${Math.round(tLevelBeforeInjection)}`);
         
         // Calculate next injection date
         nextInjectionDate = new Date(nextInjectionDate.getTime() + diffInMinutes * 60 * 1000);
-        
-        console.log(`Added projected injection ${injectionCount} on ${dailyDate.toISOString().split('T')[0]}`);
       }
       
       // Calculate T-level for this day using all injections (real + projected)
@@ -308,7 +332,7 @@ const StatisticsDashboard = () => {
         isProjected: boolean;
       }> = [];
       
-      injections.forEach(injection => {
+      allInjections.forEach(injection => {
         const injectionDate = new Date(injection.dateTime);
         const halfLifeMinutes = injection.halfLifeMinutes || 0;
         if (halfLifeMinutes > 0 && injection.medicationName.toLowerCase().includes('testosterone')) {
@@ -336,9 +360,9 @@ const StatisticsDashboard = () => {
       const roundedTLevel = Math.round(tLevel);
       projections.push({ x: new Date(dailyDate), y: roundedTLevel });
       
-      // Log detailed info for first few days and injection days
-      if (day <= 5 || Math.abs(dailyDate.getTime() - nextInjectionDate.getTime()) < 24 * 60 * 60 * 1000) {
-        console.log(`Day ${day} (${dailyDate.toISOString().split('T')[0]}): T-level = ${roundedTLevel}, injections = ${injections.length}`);
+      // Log T-level when we add a projected injection
+      if (addedInjectionToday) {
+        console.log(`INJECTION DAY ${day} (${dailyDate.toISOString().split('T')[0]}): T-level = ${roundedTLevel}, injections = ${allInjections.length}`);
       }
     }
     
@@ -667,8 +691,23 @@ const StatisticsDashboard = () => {
             tickFormat={(t) => Math.round(t)}
             tickValues={(() => {
               const maxValue = Math.max(...siteFrequencyData.map(d => d.y), 0);
-              const tickCount = maxValue + 1;
-              return Array.from({ length: tickCount }, (_, i) => i);
+              
+              let step = 1;
+              if (maxValue > 100) {
+                step = 20;
+              } else if (maxValue > 30) {
+                step = 10;
+              } else if (maxValue > 20) {
+                step = 5;
+              }
+              // For 20 or less, step remains 1
+              
+              const tickValues = [];
+              for (let i = 0; i <= maxValue; i += step) {
+                tickValues.push(i);
+              }
+              
+              return tickValues;
             })()}
           />
           <VictoryBar
