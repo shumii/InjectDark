@@ -15,75 +15,10 @@ interface StatisticsDashboardProps {
   }>;
 }
 
-// Helper function to find the stabilized date
-const findStabilizedDate = (projections: any[], data: any[], lastInjection: any, diffInMinutes: number) => {
-  // Find all injection dates (real + projected)
-  const injectionDates: Date[] = [];
-  const realInjectionDates = data.map(inj => new Date(inj.dateTime));
-  
-  // Only include real injection dates up to and including the last injection date
-  const lastInjectionDate = new Date(lastInjection.dateTime);
-  const filteredRealDates = realInjectionDates.filter(date => date.getTime() <= lastInjectionDate.getTime());
-  injectionDates.push(...filteredRealDates);
-  
-  // Add projected injection dates starting from the last injection date
-  let currentInjectionDate = new Date(lastInjection.dateTime);
-  const projectedDates: Date[] = [];
-  for (let i = 0; i < 10; i++) { // Check up to 10 projected injections
-    currentInjectionDate = new Date(currentInjectionDate.getTime() + diffInMinutes * 60 * 1000);
-    projectedDates.push(new Date(currentInjectionDate));
-  }
-  injectionDates.push(...projectedDates);
-  
-  // Sort injection dates
-  injectionDates.sort((a, b) => a.getTime() - b.getTime());
-  
-  // Find T-levels at each injection point
-  const injectionTLevels: { date: Date, tLevel: number }[] = [];
-  
-  injectionDates.forEach((injectionDate, index) => {
-    // Find the projection data point for the day AFTER the injection to get T-level after injection
-    const dayAfterInjection = new Date(injectionDate.getTime() + 24 * 60 * 60 * 1000);
-    const closestProjection = projections.find(proj => {
-      const projDate = new Date(proj.x);
-      return Math.abs(projDate.getTime() - dayAfterInjection.getTime()) < 24 * 60 * 60 * 1000; // Within 1 day
-    });
-    
-    if (closestProjection) {
-      // Use the T-level from the day after injection, which represents T-level after injection
-      injectionTLevels.push({
-        date: injectionDate,
-        tLevel: closestProjection.y
-      });
-    }
-  });
-  
-  // Look for 3 consecutive injections with T-levels within 2 of each other
-  let consecutiveCount = 0;
-  let stabilizedDate: Date | null = null;
-  
-  for (let i = 1; i < injectionTLevels.length; i++) {
-    const currentTLevel = injectionTLevels[i].tLevel;
-    const previousTLevel = injectionTLevels[i - 1].tLevel;
-    const difference = Math.abs(currentTLevel - previousTLevel);
-    
-    if (difference <= 2) {
-      consecutiveCount++;
-      
-      if (consecutiveCount === 3) {
-        stabilizedDate = injectionTLevels[i].date;
-        break;
-      }
-    } else {
-      consecutiveCount = 0; // Reset counter if T-levels are too different
-    }
-  }
-  
-  return stabilizedDate;
-};
 
 // Helper function to filter projections after stabilization
-const filterProjectionsAfterStabilization = (projections: any[], stabilizedDate: Date | null, lastInjectionDate: Date) => {
+const filterProjectionsAfterStabilization = (projections: any[], stabilizedDate: Date | null, lastInjectionDate: Date) => {  
+  debugger;
   if (!stabilizedDate) {
     console.log('No stabilized date found, returning all projections');
     return projections;
@@ -233,11 +168,15 @@ const StatisticsDashboard = () => {
     return timeSeries;
   }, [data]);
 
+  const lastInjection = useMemo(() => {
+    return data[0];
+  }, [data]);
+
   // Project 90 days of future injections and T-levels, starting from last real day
   const projectedData = useMemo(() => {
     if (data.length < 2 || tLevelTimeSeries.length === 0) return [];
     
-    const lastInjection = data[0];
+    //const lastInjection = data[0];
     const secondLastInjection = data[1];
     const lastDate = new Date(lastInjection.dateTime);
     const secondLastDate = new Date(secondLastInjection.dateTime);
@@ -301,12 +240,13 @@ const StatisticsDashboard = () => {
         injectionCount++;
         addedInjectionToday = true;
         
+        dailyDate.setTime(nextInjectionDate.getTime());
         
         // Calculate next injection date
         nextInjectionDate = new Date(nextInjectionDate.getTime() + (diffInMinutes * (60 * 1000)));
       }
       
-      console.log(`All injections for day ${day} (${dailyDate.toISOString().split('T')[0]}):`, allInjections);
+      //console.log(`All injections for day ${day} (${dailyDate.toISOString().split('T')[0]}):`, allInjections);
 
       // Calculate T-level for this day using all injections (real + projected)
       let tLevel = 0;
@@ -320,11 +260,16 @@ const StatisticsDashboard = () => {
         isProjected: boolean;
       }> = [];
       
-      allInjections.forEach(injection => {
+      allInjections.forEach(injection => {      
         const injectionDate = new Date(injection.dateTime);
         const halfLifeMinutes = injection.halfLifeMinutes || 0;
+
         if (halfLifeMinutes > 0 && injection.medicationName.toLowerCase().includes('testosterone')) {
           const minutesDiff = (dailyDate.getTime() - injectionDate.getTime()) / (1000 * 60);
+          // console.log(`Minutes diff for ${injection.dateTime}:`, minutesDiff);
+          // console.log(`Daily date: ${dailyDate.toISOString().split('T')[0]} with getTime ${dailyDate.getTime()}`);
+          // console.log(`Injection date: ${injectionDate.toISOString().split('T')[0]} with getTime ${injectionDate.getTime()}`);
+
           if (minutesDiff >= 0) {
             const halfLifePeriods = minutesDiff / halfLifeMinutes;
             const decayFactor = Math.pow(0.5, halfLifePeriods);
@@ -346,86 +291,57 @@ const StatisticsDashboard = () => {
       });
       
       const roundedTLevel = Math.round(tLevel);
-      projections.push({ x: new Date(dailyDate), y: roundedTLevel });
+      projections.push({ x: new Date(dailyDate), y: roundedTLevel, isInjection: addedInjectionToday });
       console.log(`T-level for day ${day} (${dailyDate.toISOString().split('T')[0]}):`, roundedTLevel);
     }
     
     
-    // Filter projections to remove data after stabilized date (unless less than 30 days)
-    const filteredProjections = filterProjectionsAfterStabilization(projections, null, lastDate);
+    // // Filter projections to remove data after stabilized date (unless less than 30 days)
+    // const filteredProjections = filterProjectionsAfterStabilization(projections, stabilizedDate, lastDate);
     
-    return filteredProjections;
+    // return filteredProjections;
+    return projections;
   }, [data, tLevelTimeSeries]);
 
   // Calculate stabilization date separately
   const stabilizedDate = useMemo(() => {
-    console.log('StabilizedDate useMemo - data.length:', data.length, 'tLevelTimeSeries.length:', tLevelTimeSeries.length);
+    if (!projectedData || projectedData.length === 0) return null;
     
-    if (data.length < 2 || tLevelTimeSeries.length === 0) {
-      console.log('Early return: insufficient data');
-      return null;
-    }
+    // Find injection days using the isInjection flag
+    const injectionDays: { date: Date, tLevel: number }[] = [];
     
-    const lastInjection = data[0];
-    const secondLastInjection = data[1];
-    
-    console.log('Last injection full object:', lastInjection);
-    console.log('Last injection medication:', lastInjection.medication);
-    
-    // Skip if last injection doesn't have medication data
-    if (!lastInjection.halfLifeMinutes) {
-      console.log('Early return: no medication data');
-      return null;
-    }
-    
-    const diffInMinutes = (new Date(lastInjection.dateTime).getTime() - new Date(secondLastInjection.dateTime).getTime()) / (1000 * 60);
-    
-    // Create projections array for stabilization calculation
-    const projections = [];
-    const lastDate = new Date(lastInjection.dateTime);
-    
-    // Add daily T-levels for 90 days
-    for (let day = 1; day <= 90; day++) {
-      const dailyDate = new Date(lastDate.getTime() + day * 24 * 60 * 60 * 1000);
-      let totalTLevel = 0;
-      
-      // Calculate T-level from all injections
-      for (const injection of data) {
-        if (!injection.halfLifeMinutes) continue; // Skip injections without medication data
-        
-        const injectionDate = new Date(injection.dateTime);
-        const daysSinceInjection = (dailyDate.getTime() - injectionDate.getTime()) / (1000 * 60 * 60 * 24);
-        
-        if (daysSinceInjection >= 0) {
-          const halfLifePeriods = daysSinceInjection / (injection.halfLifeMinutes / (24 * 60));
-          const remainingDosage = injection.dosage * Math.pow(0.5, halfLifePeriods);
-          totalTLevel += remainingDosage;
-        }
+    for (let i = 0; i < projectedData.length; i++) {
+      if (projectedData[i].isInjection) {
+        injectionDays.push({
+          date: projectedData[i].x,
+          tLevel: projectedData[i].y
+        });
       }
-      
-      // Add projected injections
-      let currentInjectionDate = new Date(lastDate);
-      for (let i = 0; i < 10; i++) {
-        currentInjectionDate = new Date(currentInjectionDate.getTime() + diffInMinutes * 60 * 1000);
-        const daysSinceProjectedInjection = (dailyDate.getTime() - currentInjectionDate.getTime()) / (1000 * 60 * 60 * 24);
-        
-        if (daysSinceProjectedInjection >= 0) {
-          const halfLifePeriods = daysSinceProjectedInjection / (lastInjection.halfLifeMinutes / (24 * 60));
-          const remainingDosage = lastInjection.dosage * Math.pow(0.5, halfLifePeriods);
-          totalTLevel += remainingDosage;
-        }
-      }
-      
-      projections.push({
-        x: dailyDate,
-        y: Math.round(totalTLevel)
-      });
     }
     
-    const result = findStabilizedDate(projections, data, lastInjection, diffInMinutes);
-    console.log('Stabilization date result:', result);
-    return result;
-  }, [data, tLevelTimeSeries]);
+    // Look for 3 consecutive injections with T-levels within 2 of each other
+    if (injectionDays.length < 3) return null;
+    
+    let consecutiveCount = 0;
+    
+    for (let i = 1; i < injectionDays.length; i++) {
+      const currentTLevel = injectionDays[i].tLevel;
+      const previousTLevel = injectionDays[i - 1].tLevel;
+      const difference = Math.abs(currentTLevel - previousTLevel);
+      
+      if (difference <= 2) {
+        consecutiveCount++;
+        
+        if (consecutiveCount === 3) {
+          return injectionDays[i].date; // Return the date of the 3rd consecutive injection
+        }
+      } else {
+        consecutiveCount = 0; // Reset counter if T-levels are too different
+      }
+    }
+    
+    return null; // No stabilization found
+  }, [projectedData]);
 
   // Calculate injection site frequency
   const siteFrequencyData = useMemo(() => {
@@ -543,7 +459,7 @@ const StatisticsDashboard = () => {
               minDomain={{ y: 0 }}
             />
             <VictoryLine
-              data={projectedData}
+              data={filterProjectionsAfterStabilization(projectedData, stabilizedDate, lastInjection?.dateTime)}
               style={{
                 data: {
                   stroke: "#60a5fa",
@@ -627,16 +543,22 @@ const StatisticsDashboard = () => {
         const lastDate = new Date(lastInjection.dateTime);
         const secondLastDate = new Date(secondLastInjection.dateTime);
         const diffInMinutes = Math.floor((lastDate.getTime() - secondLastDate.getTime()) / (1000 * 60));
-        const intervalDays = Math.round(diffInMinutes / (24 * 60));
+        const intervalDays = diffInMinutes / (24 * 60); // Keep as decimal
         
         // Use the stabilization date from the useMemo
         const stabilizationDate = stabilizedDate;
         console.log('Using stabilizationDate in JSX:', stabilizationDate);
         
+        // Calculate days from current date to stabilization date
+        const currentDate = new Date();
+        const daysToStabilization = stabilizationDate ? 
+          Math.ceil((stabilizationDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24)) : 
+          null;
+        
         return (
           <View style={{ backgroundColor: '#1f2937', borderRadius: 12, padding: 16, marginBottom: 20 }}>
             <Text className="text-white text-sm leading-6">
-              If you continue to inject <Text className="font-semibold text-blue-400">{lastInjection.dosage}mg</Text> every <Text className="font-semibold text-blue-400">{intervalDays}</Text> days then your testosterone levels will stabilize on <Text className="font-semibold text-green-400">{stabilizationDate ? stabilizationDate.toLocaleDateString() : 'TBD'}</Text>.
+              If you continue to inject <Text className="font-semibold text-blue-400">{lastInjection.dosage}mg</Text> every <Text className="font-semibold text-blue-400">{intervalDays.toFixed(1)}</Text> days then your testosterone levels will stabilize on <Text className="font-semibold text-green-400">{stabilizationDate ? stabilizationDate.toLocaleDateString() : 'TBD'}</Text>{daysToStabilization ? <Text className="font-semibold text-green-400"> ({daysToStabilization} days)</Text> : ''}.
             </Text>
           </View>
         );
