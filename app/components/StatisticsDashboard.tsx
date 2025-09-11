@@ -18,9 +18,7 @@ interface StatisticsDashboardProps {
 
 // Helper function to filter projections after stabilization
 const filterProjectionsAfterStabilization = (projections: any[], stabilizedDate: Date | null, lastInjectionDate: Date) => {  
-  debugger;
   if (!stabilizedDate) {
-    console.log('No stabilized date found, returning all projections');
     return projections;
   }
   
@@ -29,12 +27,8 @@ const filterProjectionsAfterStabilization = (projections: any[], stabilizedDate:
   const minDate = new Date(lastInjectionDate);
   minDate.setDate(minDate.getDate() + minDays);
   
-  console.log('Minimum date (30 days from last injection):', minDate.toISOString().split('T')[0]);
-  console.log('Stabilized date:', stabilizedDate.toISOString().split('T')[0]);
-  
   // Use the later of stabilized date or minimum date
   const cutoffDate = stabilizedDate > minDate ? stabilizedDate : minDate;
-  console.log('Cutoff date:', cutoffDate.toISOString().split('T')[0]);
   
   // Filter projections to only include data up to cutoff date
   const filtered = projections.filter(proj => {
@@ -42,7 +36,6 @@ const filterProjectionsAfterStabilization = (projections: any[], stabilizedDate:
     return projDate <= cutoffDate;
   });
   
-  console.log(`Filtered ${projections.length} projections down to ${filtered.length} projections`);
   return filtered;
 };
 
@@ -90,20 +83,11 @@ const StatisticsDashboard = () => {
   const tLevelTimeSeries = useMemo(() => {
     if (!data || data.length === 0) return [];
     
-    console.log('=== VERIFICATION: HISTORICAL T-LEVEL CALCULATION ===');
-    console.log('Input data:', data.length, 'injections');
-    
     // Get date range from first to last injection
     const sorted = [...data].sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
     const startDate = new Date(sorted[0].dateTime);
     const endDate = new Date(sorted[sorted.length - 1].dateTime);
     const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    
-    console.log('Date range:', {
-      start: startDate.toISOString().split('T')[0],
-      end: endDate.toISOString().split('T')[0],
-      days: days
-    });
     
     const dateRange: string[] = [];
     for (let i = 0; i <= days; i++) {
@@ -116,14 +100,6 @@ const StatisticsDashboard = () => {
     const timeSeries = dateRange.map(dateStr => {
       const currentDate = new Date(dateStr + 'T23:59:59');
       let tLevel = 0;
-      const dailyContributions: Array<{
-        injectionDate: string;
-        dosage: number;
-        minutesDiff: number;
-        halfLifePeriods: number;
-        decayFactor: number;
-        contribution: number;
-      }> = [];
       
       data.forEach(injection => {
         const injectionDate = new Date(injection.dateTime);
@@ -136,35 +112,14 @@ const StatisticsDashboard = () => {
             const dosage = parseFloat(injection.dosage.toString());
             const partial = dosage * decayFactor;
             tLevel += partial;
-            
-            dailyContributions.push({
-              injectionDate: injection.dateTime,
-              dosage: dosage,
-              minutesDiff: minutesDiff,
-              halfLifePeriods: halfLifePeriods,
-              decayFactor: decayFactor,
-              contribution: partial
-            });
           }
         }
       });
       
       const roundedTLevel = Math.round(tLevel);
-      
-      // Log September 4th specifically for verification
-      if (dateStr === '2025-09-04') {
-        console.log('September 4th, 2025 T-level calculation:', {
-          date: dateStr,
-          totalTLevel: roundedTLevel,
-          rawTLevel: tLevel,
-          contributions: dailyContributions
-        });
-      }
-      
       return { x: new Date(currentDate), y: roundedTLevel };
     });
     
-    console.log('=== END HISTORICAL VERIFICATION ===');
     return timeSeries;
   }, [data]);
 
@@ -176,23 +131,12 @@ const StatisticsDashboard = () => {
   const projectedData = useMemo(() => {
     if (data.length < 2 || tLevelTimeSeries.length === 0) return [];
     
-    //const lastInjection = data[0];
     const secondLastInjection = data[1];
     const lastDate = new Date(lastInjection.dateTime);
     const secondLastDate = new Date(secondLastInjection.dateTime);
     const diffInMinutes = Math.floor((lastDate.getTime() - secondLastDate.getTime()) / (1000 * 60));
     
-    console.log('=== VERIFICATION: T-LEVEL CALCULATION ===');
-    console.log('Last injection:', {
-      date: lastInjection.dateTime,
-      dosage: lastInjection.dosage,
-      medication: lastInjection.medicationName,
-      halfLifeMinutes: lastInjection.halfLifeMinutes
-    });
-    console.log('Injection interval (days):', diffInMinutes / (24 * 60));
-    
     // Start from the last injection date and add the interval to get the next injection
-    // This ensures projections start from the next scheduled injection date
     let currentDate = new Date(lastDate);
     const projections = [];
     
@@ -208,8 +152,6 @@ const StatisticsDashboard = () => {
       let allInjections = [...data];
       
       // Add projected injections up to this day
-      // this loop works by adding the diff onto the last real injection date then within each loop we add the diff again so that each loop represents a projected injection
-      // the injectionCount variable is how many injections to add. the injectionCount is set in each loop.... this sounds dodgy, we should look to change so that this generates all the injections we need and thats it. why do we need anymore?
       let tempInjectionDate = new Date(currentDate.getTime() + (diffInMinutes * (60 * 1000)));
       for (let i = 0; i < injectionCount; i++) {
         const site = i % 2 === 0 ? lastInjection.injectionSite : getOppositeSite(lastInjection.injectionSite);
@@ -220,13 +162,11 @@ const StatisticsDashboard = () => {
         };
         allInjections = [projectedInjection, ...allInjections];
         tempInjectionDate = new Date(tempInjectionDate.getTime() + (diffInMinutes * (60 * 1000)));
-      } // this for loop gives us allInjections for each day. i.e. all the injections which effects current day of the loop
+      }
       
-      //console.log(`All injections for day ${day}:`, allInjections);
       let addedInjectionToday = false;
       
       // Check if we need to add a projected injection on this day
-      // Only add the injection if the daily date matches the injection date exactly
       if (dailyDate.toDateString() === nextInjectionDate.toDateString()) {
         const site = injectionCount % 2 === 0 ? lastInjection.injectionSite : getOppositeSite(lastInjection.injectionSite);
         
@@ -245,8 +185,6 @@ const StatisticsDashboard = () => {
         // Calculate next injection date
         nextInjectionDate = new Date(nextInjectionDate.getTime() + (diffInMinutes * (60 * 1000)));
       }
-      
-      //console.log(`All injections for day ${day} (${dailyDate.toISOString().split('T')[0]}):`, allInjections);
 
       // Calculate T-level for this day using all injections (real + projected)
       let tLevel = 0;
@@ -266,9 +204,6 @@ const StatisticsDashboard = () => {
 
         if (halfLifeMinutes > 0 && injection.medicationName.toLowerCase().includes('testosterone')) {
           const minutesDiff = (dailyDate.getTime() - injectionDate.getTime()) / (1000 * 60);
-          // console.log(`Minutes diff for ${injection.dateTime}:`, minutesDiff);
-          // console.log(`Daily date: ${dailyDate.toISOString().split('T')[0]} with getTime ${dailyDate.getTime()}`);
-          // console.log(`Injection date: ${injectionDate.toISOString().split('T')[0]} with getTime ${injectionDate.getTime()}`);
 
           if (minutesDiff >= 0) {
             const halfLifePeriods = minutesDiff / halfLifeMinutes;
@@ -291,15 +226,24 @@ const StatisticsDashboard = () => {
       });
       
       const roundedTLevel = Math.round(tLevel);
+      
+      // Log T-level calculation for each day
+      console.log(`Day ${day} (${dailyDate.toISOString().split('T')[0]}): T-level = ${roundedTLevel}`, {
+        totalContributions: contributions.length,
+        contributions: contributions.map(c => ({
+          date: c.date.split('T')[0],
+          dosage: c.dosage,
+          minutesDiff: Math.round(c.minutesDiff),
+          halfLifePeriods: c.halfLifePeriods.toFixed(2),
+          decayFactor: c.decayFactor.toFixed(3),
+          contribution: c.contribution.toFixed(1),
+          isProjected: c.isProjected
+        }))
+      });
+      
       projections.push({ x: new Date(dailyDate), y: roundedTLevel, isInjection: addedInjectionToday });
-      console.log(`T-level for day ${day} (${dailyDate.toISOString().split('T')[0]}):`, roundedTLevel);
     }
     
-    
-    // // Filter projections to remove data after stabilized date (unless less than 30 days)
-    // const filteredProjections = filterProjectionsAfterStabilization(projections, stabilizedDate, lastDate);
-    
-    // return filteredProjections;
     return projections;
   }, [data, tLevelTimeSeries]);
 
@@ -355,8 +299,6 @@ const StatisticsDashboard = () => {
       // Only count injections with valid site names
       if (site && site.trim() !== '' && site !== 'undefined' && site !== 'null') {
         siteCounts[site] = (siteCounts[site] || 0) + 1;
-      } else {
-        console.warn(`Skipping injection ${index} with invalid site:`, site);
       }
     });
     
@@ -551,7 +493,6 @@ const StatisticsDashboard = () => {
         
         // Use the stabilization date from the useMemo
         const stabilizationDate = stabilizedDate;
-        console.log('Using stabilizationDate in JSX:', stabilizationDate);
         
         // Calculate days from current date to stabilization date
         const currentDate = new Date();
@@ -574,7 +515,7 @@ const StatisticsDashboard = () => {
           width={screenWidth}
           height={250}
           data={siteFrequencyData}
-          colorScale={["#60a5fa", "#f59e0b", "#ef4444", "#10b981", "#8b5cf6", "#f97316", "#06b6d4", "#84cc16"]}
+          colorScale={["#8b5cf6", "#60a5fa", "#a855f7", "#3b82f6", "#7c3aed", "#2563eb", "#9333ea", "#1d4ed8"]}
           style={{
             labels: {
               fill: "transparent"
@@ -592,7 +533,7 @@ const StatisticsDashboard = () => {
           paddingHorizontal: 20
         }}>
           {siteFrequencyData.map((item, index) => {
-            const colors = ["#60a5fa", "#f59e0b", "#ef4444", "#10b981", "#8b5cf6", "#f97316", "#06b6d4", "#84cc16"];
+            const colors = ["#8b5cf6", "#60a5fa", "#a855f7", "#3b82f6", "#7c3aed", "#2563eb", "#9333ea", "#1d4ed8"];
             const total = siteFrequencyData.reduce((sum, d) => sum + d.y, 0);
             const percentage = ((item.y / total) * 100).toFixed(1);
             

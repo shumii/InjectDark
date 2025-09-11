@@ -192,18 +192,29 @@ const InjectionHistory = ({
   };
 
   const handleSaveEditedInjection = async (updatedData: any) => {
-    // Ensure dosage is a number for InjectionData
-    const updatedInjection = {
-      ...updatedData,
-      dosage: Number(updatedData.dosage),
-    };
-    const storedInjections = await AsyncStorage.getItem("injections");
-    let injections = storedInjections ? JSON.parse(storedInjections) : [];
-    injections = injections.map((inj: any) => inj.id === updatedInjection.id ? updatedInjection : inj);
-    await AsyncStorage.setItem("injections", JSON.stringify(injections));
-    setShowEditForm(false);
-    setEditingInjection(null);
-    loadInjections();
+    try {
+      const storedInjections = await AsyncStorage.getItem("injections");
+      let injectionsList = storedInjections ? JSON.parse(storedInjections) : [];
+      
+      // Find the original injection to preserve halfLifeMinutes
+      const originalInjection = injectionsList.find((inj: any) => inj.id === updatedData.id);
+      
+      // Ensure dosage is a number and preserve halfLifeMinutes
+      const updatedInjection = {
+        ...updatedData,
+        dosage: Number(updatedData.dosage),
+        halfLifeMinutes: originalInjection?.halfLifeMinutes || updatedData.halfLifeMinutes,
+      };
+      
+      injectionsList = injectionsList.map((inj: any) => inj.id === updatedInjection.id ? updatedInjection : inj);
+      await AsyncStorage.setItem("injections", JSON.stringify(injectionsList));
+      setShowEditForm(false);
+      setEditingInjection(null);
+      loadInjections();
+    } catch (error) {
+      console.error("Error saving edited injection:", error);
+      Alert.alert("Error", "Failed to save injection. Please try again.");
+    }
   };
 
   const handleAddInjection = async (newInjection: any) => {

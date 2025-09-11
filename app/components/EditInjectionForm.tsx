@@ -70,10 +70,16 @@ const EditInjectionForm = ({
     loadMedications();
   }, []);
 
+  // Set selectedMedication after medications are loaded
+  useEffect(() => {
+    if (medications.length > 0 && !selectedMedication) {
+      const found = medications.find(med => med.name === injection.medicationName);
+      setSelectedMedication(found || null);
+    }
+  }, [medications, injection.medicationName, selectedMedication]);
+
   const [medicationName, setMedicationName] = useState(injection.medicationName);
-  const [selectedMedication, setSelectedMedication] = useState<Medication | null>(() => {
-    return medications.find(med => med.name === injection.medicationName) || null;
-  });
+  const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
   const [showMedicationDropdown, setShowMedicationDropdown] = useState(false);
   const [dosage, setDosage] = useState(injection.dosage.toString());
   const [dateTime, setDateTime] = useState(new Date(injection.dateTime));
