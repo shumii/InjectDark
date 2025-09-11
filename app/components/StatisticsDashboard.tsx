@@ -259,7 +259,7 @@ const StatisticsDashboard = () => {
     
     // Show daily T-levels for all 90 days, with projected injections added at the correct intervals
     let dailyDate = new Date(lastDate);
-    let nextInjectionDate = new Date(currentDate.getTime() + diffInMinutes * 60 * 1000);
+    let nextInjectionDate = new Date(currentDate.getTime() +(diffInMinutes * (60 * 1000))); 
     let injectionCount = 0;
     
     for (let day = 1; day <= 90; day++) {
@@ -269,7 +269,9 @@ const StatisticsDashboard = () => {
       let allInjections = [...data];
       
       // Add projected injections up to this day
-      let tempInjectionDate = new Date(currentDate.getTime() + diffInMinutes * 60 * 1000);
+      // this loop works by adding the diff onto the last real injection date then within each loop we add the diff again so that each loop represents a projected injection
+      // the injectionCount variable is how many injections to add. the injectionCount is set in each loop.... this sounds dodgy, we should look to change so that this generates all the injections we need and thats it. why do we need anymore?
+      let tempInjectionDate = new Date(currentDate.getTime() + (diffInMinutes * (60 * 1000)));
       for (let i = 0; i < injectionCount; i++) {
         const site = i % 2 === 0 ? lastInjection.injectionSite : getOppositeSite(lastInjection.injectionSite);
         const projectedInjection = {
@@ -278,30 +280,15 @@ const StatisticsDashboard = () => {
           injectionSite: site,
         };
         allInjections = [projectedInjection, ...allInjections];
-        tempInjectionDate = new Date(tempInjectionDate.getTime() + diffInMinutes * 60 * 1000);
-      }
+        tempInjectionDate = new Date(tempInjectionDate.getTime() + (diffInMinutes * (60 * 1000)));
+      } // this for loop gives us allInjections for each day. i.e. all the injections which effects current day of the loop
       
+      //console.log(`All injections for day ${day}:`, allInjections);
       let addedInjectionToday = false;
       
       // Check if we need to add a projected injection on this day
       // Only add the injection if the daily date matches the injection date exactly
       if (dailyDate.toDateString() === nextInjectionDate.toDateString()) {
-        // Calculate T-level BEFORE adding the injection
-        let tLevelBeforeInjection = 0;
-        allInjections.forEach(injection => {
-          const injectionDate = new Date(injection.dateTime);
-          const halfLifeMinutes = injection.halfLifeMinutes || 0;
-          if (halfLifeMinutes > 0 && injection.medicationName.toLowerCase().includes('testosterone')) {
-            const minutesDiff = (dailyDate.getTime() - injectionDate.getTime()) / (1000 * 60);
-            if (minutesDiff >= 0) {
-              const halfLifePeriods = minutesDiff / halfLifeMinutes;
-              const decayFactor = Math.pow(0.5, halfLifePeriods);
-              const dosage = parseFloat(injection.dosage.toString());
-              tLevelBeforeInjection += dosage * decayFactor;
-            }
-          }
-        });
-        
         const site = injectionCount % 2 === 0 ? lastInjection.injectionSite : getOppositeSite(lastInjection.injectionSite);
         
         const projectedInjection = {
@@ -314,12 +301,13 @@ const StatisticsDashboard = () => {
         injectionCount++;
         addedInjectionToday = true;
         
-        console.log(`Added projected injection ${injectionCount} on ${nextInjectionDate.toISOString().split('T')[0]} - T-level before: ${Math.round(tLevelBeforeInjection)}`);
         
         // Calculate next injection date
-        nextInjectionDate = new Date(nextInjectionDate.getTime() + diffInMinutes * 60 * 1000);
+        nextInjectionDate = new Date(nextInjectionDate.getTime() + (diffInMinutes * (60 * 1000)));
       }
       
+      console.log(`All injections for day ${day} (${dailyDate.toISOString().split('T')[0]}):`, allInjections);
+
       // Calculate T-level for this day using all injections (real + projected)
       let tLevel = 0;
       const contributions: Array<{
@@ -359,18 +347,12 @@ const StatisticsDashboard = () => {
       
       const roundedTLevel = Math.round(tLevel);
       projections.push({ x: new Date(dailyDate), y: roundedTLevel });
-      
-      // Log T-level when we add a projected injection
-      if (addedInjectionToday) {
-        console.log(`INJECTION DAY ${day} (${dailyDate.toISOString().split('T')[0]}): T-level = ${roundedTLevel}, injections = ${allInjections.length}`);
-      }
+      console.log(`T-level for day ${day} (${dailyDate.toISOString().split('T')[0]}):`, roundedTLevel);
     }
     
-    console.log('=== END VERIFICATION ===');
     
     // Filter projections to remove data after stabilized date (unless less than 30 days)
     const filteredProjections = filterProjectionsAfterStabilization(projections, null, lastDate);
-    console.log('Filtered projections count:', filteredProjections.length);
     
     return filteredProjections;
   }, [data, tLevelTimeSeries]);
