@@ -425,7 +425,7 @@ const StatisticsDashboard = () => {
     <ScrollView className="flex-1 bg-gray-900 p-4">
       <Text className="text-white text-2xl font-bold mb-6">Analysis</Text>
       <View style={{ backgroundColor: '#232b36', borderRadius: 16, padding: 8, marginBottom: 20 }}>
-        <Text className="text-white text-lg font-semibold mb-4 px-2">Projected Testosterone Levels (90 Days)</Text>
+        <Text className="text-white text-lg font-semibold mb-4 px-2">Projected Testosterone Levels</Text>
         <View style={{ position: "relative", width: screenWidth, height: 250 }} pointerEvents="box-none">
           <VictoryChart
             width={screenWidth}

@@ -16,9 +16,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 SplashScreen.preventAutoHideAsync();
 
 const defaultMedications = [
-  { id: "1", name: "Testosterone Enanthate 300", halfLifeDescription: "4 days", halfLifeMinutes: 1440, concentration: 300 },
-  { id: "2", name: "Testosterone Cypionate 200", halfLifeDescription: "5 days", halfLifeMinutes: 5760, concentration: 200 },
-  { id: "3", name: "Testosterone Cypionate 250", halfLifeDescription: "5 days", halfLifeMinutes: 7200, concentration: 250 },
+  { id: "1", name: "Testosterone Enanthate 300", halfLifeDescription: "4 days", halfLifeMinutes: 5760, concentration: 300 },
+  { id: "2", name: "Testosterone Cypionate 200", halfLifeDescription: "8 days", halfLifeMinutes: 11520, concentration: 200 },
+  { id: "3", name: "Testosterone Cypionate 250", halfLifeDescription: "8 days", halfLifeMinutes: 11520, concentration: 250 },
   { id: "4", name: "Growth Hormone", halfLifeDescription: "3.4 hours", halfLifeMinutes: 200, concentration: 10 }
 ];
 
