@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect, useState, useRef } from "react";
 import { View, Text, Dimensions, ScrollView, PanResponder } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { VictoryChart, VictoryLine, VictoryAxis, VictoryTheme, VictoryTooltip, VictoryScatter, VictoryBar } from "victory-native";
+import { VictoryChart, VictoryLine, VictoryAxis, VictoryTheme, VictoryTooltip, VictoryScatter, VictoryBar, VictoryPie } from "victory-native";
 import { getOppositeSite } from '../utils/injectionUtils';
 
 interface StatisticsDashboardProps {
@@ -368,10 +368,12 @@ const StatisticsDashboard = () => {
 
   // Helper to convert x (date) to pixel
   function chartXToPixel(x: Date | string) {    
-    if (!projectedData || projectedData.length === 0) return 0;
+    const filteredProjectedData = filterProjectionsAfterStabilization(projectedData, stabilizedDate, lastInjection?.dateTime);
+
+    if (!filteredProjectedData || filteredProjectedData.length === 0) return 0;
     
-    const minX = Math.min(...projectedData.map(p => p.x.getTime()));
-    const maxX = Math.max(...projectedData.map(p => p.x.getTime()));
+    const minX = Math.min(...filteredProjectedData.map(p => p.x.getTime()));
+    const maxX = Math.max(...filteredProjectedData.map(p => p.x.getTime()));
     const xMs = new Date(x).getTime();
 
     if (maxX === minX) return (screenWidth - 35 - 30) / 2; // Center in data area
@@ -388,9 +390,11 @@ const StatisticsDashboard = () => {
     onPanResponderMove: (evt, gestureState) => {
       // Get the x position relative to the overlay (which matches the chart width)
       const x = evt.nativeEvent.locationX;
+
+      const filteredProjectedData = filterProjectionsAfterStabilization(projectedData, stabilizedDate, lastInjection?.dateTime);
       
-      if (projectedData && projectedData.length > 0) {        
-        const allPoints = projectedData.map(point => ({
+      if (filteredProjectedData && filteredProjectedData.length > 0) {        
+        const allPoints = filteredProjectedData.map(point => ({
           ...point,
           xPx: chartXToPixel(point.x),
           label: `${point.y}mg`,
@@ -469,7 +473,7 @@ const StatisticsDashboard = () => {
               interpolation="monotoneX"
             />
             <VictoryScatter
-              data={projectedData}
+              data={filterProjectionsAfterStabilization(projectedData, stabilizedDate, lastInjection?.dateTime)}
               size={2}
               style={{ data: { fill: "#60a5fa" } }}
               labels={({ datum }) => `${datum.y}mg`}
@@ -566,67 +570,58 @@ const StatisticsDashboard = () => {
 
       <View style={{ backgroundColor: '#232b36', borderRadius: 16, padding: 8 }}>
         <Text className="text-white text-lg font-semibold mb-4 px-2">Injection Site Frequency</Text>
-        <VictoryChart
+        <VictoryPie
           width={screenWidth}
           height={250}
-          theme={VictoryTheme.material}
-          padding={{ top: 10, bottom: 60, left: 50, right: 30 }}
-          domainPadding={{ x: 20 }}
-        >
-          <VictoryAxis
-            style={{
-              tickLabels: {
-                fill: "white",
-                fontSize: 12,
-              },
-              grid: { stroke: "transparent" },
-              axis: { stroke: "transparent" },
-            }}
-          />
-          <VictoryAxis
-            dependentAxis
-            style={{
-              tickLabels: { fill: "white", fontSize: 12 },
-              ticks: { stroke: "transparent" },
-              grid: { stroke: "transparent" },
-              axis: { stroke: "transparent" },
-            }}
-            minDomain={{ y: 0 }}
-            tickFormat={(t) => Math.round(t)}
-            tickValues={(() => {
-              const maxValue = Math.max(...siteFrequencyData.map(d => d.y), 0);
-              
-              let step = 1;
-              if (maxValue > 100) {
-                step = 20;
-              } else if (maxValue > 30) {
-                step = 10;
-              } else if (maxValue > 20) {
-                step = 5;
-              }
-              // For 20 or less, step remains 1
-              
-              const tickValues = [];
-              for (let i = 0; i <= maxValue; i += step) {
-                tickValues.push(i);
-              }
-              
-              return tickValues;
-            })()}
-          />
-          <VictoryBar
-            data={siteFrequencyData}
-            style={{
-              data: {
-                fill: "#10b981",
-                stroke: "#059669",
-                strokeWidth: 1,
-              },
-            }}
-            labels={({ datum }) => `${datum.y}`}
-            labelComponent={<VictoryTooltip constrainToVisibleArea />}
-          />
-        </VictoryChart>
+          data={siteFrequencyData}
+          colorScale={["#60a5fa", "#f59e0b", "#ef4444", "#10b981", "#8b5cf6", "#f97316", "#06b6d4", "#84cc16"]}
+          style={{
+            labels: {
+              fill: "transparent"
+            }
+          }}
+          innerRadius={60}
+          padAngle={2}
+        />
+        {/* Legend */}
+        <View style={{ 
+          flexDirection: 'row', 
+          flexWrap: 'wrap', 
+          justifyContent: 'center', 
+          marginTop: 15,
+          paddingHorizontal: 20
+        }}>
+          {siteFrequencyData.map((item, index) => {
+            const colors = ["#60a5fa", "#f59e0b", "#ef4444", "#10b981", "#8b5cf6", "#f97316", "#06b6d4", "#84cc16"];
+            const total = siteFrequencyData.reduce((sum, d) => sum + d.y, 0);
+            const percentage = ((item.y / total) * 100).toFixed(1);
+            
+            return (
+              <View key={item.x} style={{ 
+                flexDirection: 'row', 
+                alignItems: 'center', 
+                margin: 8,
+                backgroundColor: '#1f2937',
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                borderRadius: 8,
+                minWidth: 120
+              }}>
+                <View style={{ 
+                  width: 16, 
+                  height: 16, 
+                  backgroundColor: colors[index % colors.length], 
+                  borderRadius: 8,
+                  marginRight: 10 
+                }} />
+                <View style={{ flex: 1 }}>
+                  <Text className="text-white text-sm font-medium">{item.x}</Text>
+                  <Text className="text-gray-400 text-xs">{item.y} injections ({percentage}%)</Text>
+                </View>
+              </View>
+            );
+          })}
+        </View>
       </View>
     </ScrollView>
   );
