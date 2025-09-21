@@ -1,4 +1,4 @@
-package com.anonymous.testtempo
+package com.pinn.app
 
 import android.app.Application
 import android.content.res.Configuration

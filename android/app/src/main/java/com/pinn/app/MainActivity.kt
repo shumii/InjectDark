@@ -1,4 +1,4 @@
-package com.anonymous.testtempo
+package com.pinn.app
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build
