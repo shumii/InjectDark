@@ -306,27 +306,15 @@ export default function HomeScreen() {
       hour12: false 
     });
 
-    // Coming up in less than 1 minute
-    if (diffInSeconds < 60) {
-      return "Coming up now";
-    }
-    // Coming up in minutes: less than 1 hour
+    // Less than 60 minutes: show "in X mins"
     if (diffInMinutes < 60) {
-      return `In ${diffInMinutes}m`;
+      return `in ${diffInMinutes} mins`;
     }
-    // Coming up in hours: less than 24 hours
+    // Less than 24 hours: show "in X hours"
     if (diffInHours < 24) {
-      return `In ${diffInHours}h`;
+      return `in ${diffInHours} hours`;
     }
-    // Tomorrow at TIME
-    if (diffInDays === 1) {
-      return `Tomorrow at ${timeString}`;
-    }
-    // Days in future (2-7 days): include time
-    if (diffInDays < 7) {
-      return `In ${diffInDays}d at ${timeString}`;
-    }
-    // Full date for further future
+    // 24 hours or more: show "Dec 22 at 19:19" format
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric'
