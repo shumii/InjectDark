@@ -812,9 +812,16 @@ export default function HomeScreen() {
                           mode="time"
                           display="spinner"
                           onChange={(event: any, selectedTime?: Date) => {
-                            setShowTimePicker(Platform.OS === 'ios');
-                            if (selectedTime) {
-                              saveDefaultTimeSettings(selectedTime, useCurrentTime);
+                            if (Platform.OS === 'android') {
+                              setShowTimePicker(false);
+                              if (event.type === 'set' && selectedTime) {
+                                saveDefaultTimeSettings(selectedTime, useCurrentTime);
+                              }
+                            } else {
+                              // iOS behavior - keep picker open
+                              if (selectedTime) {
+                                saveDefaultTimeSettings(selectedTime, useCurrentTime);
+                              }
                             }
                           }}
                           style={{

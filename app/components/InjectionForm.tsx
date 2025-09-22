@@ -296,13 +296,22 @@ const InjectionForm = ({
   };
 
   const handleTimeChange = (event: any, selectedTime?: Date) => {
-    // Don't close the time picker automatically
-    // Only update the time if a time was selected
-    if (selectedTime) {
-      const currentDateTime = new Date(dateTime);
-      currentDateTime.setHours(selectedTime.getHours());
-      currentDateTime.setMinutes(selectedTime.getMinutes());
-      setDateTime(currentDateTime);
+    if (Platform.OS === 'android') {
+      setShowTimePicker(false);
+      if (event.type === 'set' && selectedTime) {
+        const currentDateTime = new Date(dateTime);
+        currentDateTime.setHours(selectedTime.getHours());
+        currentDateTime.setMinutes(selectedTime.getMinutes());
+        setDateTime(currentDateTime);
+      }
+    } else {
+      // iOS behavior - keep picker open, only update time
+      if (selectedTime) {
+        const currentDateTime = new Date(dateTime);
+        currentDateTime.setHours(selectedTime.getHours());
+        currentDateTime.setMinutes(selectedTime.getMinutes());
+        setDateTime(currentDateTime);
+      }
     }
   };
 
