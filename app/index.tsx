@@ -800,7 +800,7 @@ export default function HomeScreen() {
                           mode="time"
                           display={Platform.OS === 'android' ? 'clock' : 'compact'}
                           onChange={(event: any, selectedTime?: Date) => {
-you                             if (Platform.OS === 'android') {
+                             if (Platform.OS === 'android') {
                               setShowTimePicker(false);
                               if (event.type === 'set' && selectedTime) {
                                 saveDefaultTimeSettings(selectedTime, useCurrentTime);
