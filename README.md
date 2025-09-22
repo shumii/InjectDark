@@ -42,6 +42,29 @@ To learn more about developing your project with Expo, look at the following res
 - [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
 - [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
 
+## Building for Production
+
+### Android Build
+To build the Android app for production (APK and AAB files):
+
+```bash
+# Quick build (recommended)
+./build_android.sh
+
+# Or build manually - see BUILD_GUIDE.md for detailed instructions
+```
+
+**Important Files:**
+- `BUILD_GUIDE.md` - Complete build documentation
+- `QUICK_BUILD.md` - Quick reference commands
+- `build_android.sh` - Automated build script
+
+**Key Information:**
+- App Name: PINN
+- Package: com.pinn.app
+- Keystore: android/app/pinn-release-key.keystore
+- SHA-1: EA:28:75:70:8B:24:3F:69:3F:0A:C0:A2:5E:E5:14:DA:27:9C:BC:5D
+
 ## Join the community
 
 Join our community of developers creating universal apps.
