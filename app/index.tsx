@@ -810,7 +810,7 @@ export default function HomeScreen() {
                           testID="timePicker"
                           value={defaultInjectionTime}
                           mode="time"
-                          display="spinner"
+                          display={Platform.OS === 'android' ? 'clock' : 'compact'}
                           onChange={(event: any, selectedTime?: Date) => {
                             if (Platform.OS === 'android') {
                               setShowTimePicker(false);
