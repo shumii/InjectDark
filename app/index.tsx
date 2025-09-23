@@ -906,7 +906,7 @@ export default function HomeScreen() {
                 App Information
               </Text>
               <Text className="text-gray-400 mb-1">
-                Version: 1.0.0
+                Version: 1.0.1
               </Text>
               <Text className="text-gray-400">
                 © 2025 PINN
