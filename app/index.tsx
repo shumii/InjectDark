@@ -181,7 +181,7 @@ export default function HomeScreen() {
   const updateHistoricHalfLife = async () => {
     Alert.alert(
       "Update Historic Half-Life",
-      "This will update the half-life values for all historic testosterone cypionate injections to the new value. This action cannot be undone.",
+      "This will update the half-life values for all historic injections based on their current medication settings. This action cannot be undone.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -189,25 +189,41 @@ export default function HomeScreen() {
           style: "default",
           onPress: async () => {
             try {
-              // Get current injections
+              // Get current injections and medications
               const storedInjections = await AsyncStorage.getItem('injections');
+              const storedMedications = await AsyncStorage.getItem('medications');
+              
               if (!storedInjections) {
                 Alert.alert("No Data", "No injection data found to update.");
                 return;
               }
 
+              if (!storedMedications) {
+                Alert.alert("No Medications", "No medication data found. Please add medications first.");
+                return;
+              }
+
               const injections = JSON.parse(storedInjections);
+              const medications = JSON.parse(storedMedications);
               let updatedCount = 0;
 
-              // Update half-life for testosterone cypionate injections
+              // Create a map of medication names to their half-life data
+              const medicationMap = new Map();
+              medications.forEach((med: any) => {
+                medicationMap.set(med.name, {
+                  halfLifeDescription: med.halfLifeDescription,
+                  halfLifeMinutes: med.halfLifeMinutes
+                });
+              });
+
+              // Update half-life for all injections based on their medication
               const updatedInjections = injections.map((injection: any) => {
-                if (injection.medicationName && 
-                    injection.medicationName.toLowerCase().includes('testosterone cypionate')) {
-                  // Update to new half-life value (you can adjust this value as needed)
+                if (injection.medicationName && medicationMap.has(injection.medicationName)) {
+                  const medData = medicationMap.get(injection.medicationName);
                   const updatedInjection = {
                     ...injection,
-                    halfLifeDescription: "8 days", // Updated half-life description
-                    halfLifeMinutes: 11520 // 8 days in minutes (8 * 24 * 60)
+                    halfLifeDescription: medData.halfLifeDescription,
+                    halfLifeMinutes: medData.halfLifeMinutes
                   };
                   updatedCount++;
                   return updatedInjection;
@@ -231,7 +247,7 @@ export default function HomeScreen() {
 
               Alert.alert(
                 "Success", 
-                `Updated half-life for ${updatedCount} testosterone cypionate injection(s).`
+                `Updated half-life for ${updatedCount} injection(s) based on current medication settings.`
               );
             } catch (error) {
               console.error('Error updating historic half-life:', error);
@@ -854,7 +870,7 @@ export default function HomeScreen() {
                 </Text>
               </TouchableOpacity>
               <Text className="text-gray-400 mt-2 text-sm">
-                Update half-life values for all historic testosterone cypionate injections
+                Update half-life values for all historic injections based on current medication settings
               </Text>
               
               <TouchableOpacity
