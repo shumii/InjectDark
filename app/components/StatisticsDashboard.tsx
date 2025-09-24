@@ -329,21 +329,37 @@ const StatisticsDashboard = () => {
   // PanResponder for overlay (recreated on every render for fresh chartData)
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: (evt) => {
+      // Handle initial touch - use pageX for more reliable coordinates
+      const x = evt.nativeEvent.locationX || evt.nativeEvent.pageX - 35; // Account for left padding
+      updateHoveredPoint(x);
+    },
     onPanResponderMove: (evt, gestureState) => {
       // Get the x position relative to the overlay (which matches the chart width)
-      const x = evt.nativeEvent.locationX;
+      const x = evt.nativeEvent.locationX || evt.nativeEvent.pageX - 35; // Account for left padding
+      updateHoveredPoint(x);
+    },
+    onPanResponderRelease: () => setHoveredPoint(null),
+    onPanResponderTerminate: () => setHoveredPoint(null),
+  });
 
-      const filteredProjectedData = filterProjectionsAfterStabilization(projectedData, stabilizedDate, lastInjection?.dateTime);
+  // Helper function to update hovered point
+  const updateHoveredPoint = (x: number) => {
+    const filteredProjectedData = filterProjectionsAfterStabilization(projectedData, stabilizedDate, lastInjection?.dateTime);
+    
+    if (filteredProjectedData && filteredProjectedData.length > 0) {        
+      const allPoints = filteredProjectedData.map(point => ({
+        ...point,
+        xPx: chartXToPixel(point.x),
+        label: `${point.y}mg`,
+      }));
       
-      if (filteredProjectedData && filteredProjectedData.length > 0) {        
-        const allPoints = filteredProjectedData.map(point => ({
-          ...point,
-          xPx: chartXToPixel(point.x),
-          label: `${point.y}mg`,
-        }));
-        
-        let closest = null;
-        let minDiff = Infinity;
+      let closest = null;
+      let minDiff = Infinity;
+      
+      // Only update if x is within reasonable bounds
+      if (x >= 0 && x <= (screenWidth - 35 - 30)) {
         for (const pt of allPoints) {
           const diff = Math.abs(pt.xPx - x);
           if (diff < minDiff) {
@@ -356,12 +372,11 @@ const StatisticsDashboard = () => {
           closest.y = Number(Number(closest.y).toFixed(0));
           closest.label = closest.y.toString();
         }
-        setHoveredPoint(closest);
       }
-    },
-    onPanResponderRelease: () => setHoveredPoint(null),
-    onPanResponderTerminate: () => setHoveredPoint(null),
-  });
+      
+      setHoveredPoint(closest);
+    }
+  };
 
   return (
     <ScrollView className="flex-1 bg-gray-900 p-4">
@@ -449,6 +464,7 @@ const StatisticsDashboard = () => {
                     backgroundColor: "#60a5fa",
                     opacity: 0.5,
                   }}
+                  pointerEvents="none"
                 />
                 {/* Tooltip */}
                 <View
@@ -469,6 +485,7 @@ const StatisticsDashboard = () => {
                     elevation: 4,
                     zIndex: 100,
                   }}
+                  pointerEvents="none"
                 >
                   <Text style={{ color: "#60a5fa", fontWeight: "bold", fontSize: 13 }}>
                     {hoveredPoint.x ? new Date(hoveredPoint.x).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}

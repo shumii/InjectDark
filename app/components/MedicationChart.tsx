@@ -392,23 +392,40 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
   // PanResponder for overlay (recreated on every render for fresh chartData)
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: (evt) => {
+      // Handle initial touch - use pageX for more reliable coordinates
+      const x = evt.nativeEvent.locationX || evt.nativeEvent.pageX - 35; // Account for left padding
+      updateHoveredPoint(x);
+    },
     onPanResponderMove: (evt, gestureState) => {
       // Get the x position relative to the overlay (which matches the chart width)
       // gestureState.x0 is the initial touch, gestureState.moveX is the absolute screen x
       // evt.nativeEvent.locationX is the x within the overlay
-      const x = evt.nativeEvent.locationX;
-      if (chartData.length > 0) {        
-        const allPoints = chartData.flatMap((dataset, idx) =>
-          dataset.data.map(point => ({
-            ...point,
-            medication: dataset.medication,
-            color: colors[idx % colors.length],
-            xPx: chartXToPixel(point.x),
-            label: `${point.y}mg`, // Add label for tooltip
-          }))
-        );
-        let closest = null;
-        let minDiff = Infinity;
+      const x = evt.nativeEvent.locationX || evt.nativeEvent.pageX - 35; // Account for left padding
+      updateHoveredPoint(x);
+    },
+    onPanResponderRelease: () => setHoveredPoint(null),
+    onPanResponderTerminate: () => setHoveredPoint(null),
+  });
+
+  // Helper function to update hovered point
+  const updateHoveredPoint = (x: number) => {
+    if (chartData.length > 0) {        
+      const allPoints = chartData.flatMap((dataset, idx) =>
+        dataset.data.map(point => ({
+          ...point,
+          medication: dataset.medication,
+          color: colors[idx % colors.length],
+          xPx: chartXToPixel(point.x),
+          label: `${point.y}mg`, // Add label for tooltip
+        }))
+      );
+      let closest = null;
+      let minDiff = Infinity;
+      
+      // Only update if x is within reasonable bounds
+      if (x >= 0 && x <= (chartWidth - 35 - 30)) {
         for (const pt of allPoints) {
           // x is now relative to the data area (no need to subtract padding)
           const diff = Math.abs(pt.xPx - x);
@@ -422,12 +439,11 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
           closest.y = Number(Number(closest.y).toFixed(0));
           closest.label = closest.y.toString();
         }
-        setHoveredPoint(closest); // Always show the closest point
       }
-    },
-    onPanResponderRelease: () => setHoveredPoint(null),
-    onPanResponderTerminate: () => setHoveredPoint(null),
-  });
+      
+      setHoveredPoint(closest); // Always show the closest point
+    }
+  };
 
   return (
     <View className="bg-gray-800 rounded-lg p-4 mb-6">
@@ -544,6 +560,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
                         backgroundColor: hoveredPoint.color,
                         opacity: 0.5,
                       }}
+                      pointerEvents="none"
                     />
                     {/* Tooltip */}
                     <View
@@ -564,6 +581,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
                         elevation: 4,
                         zIndex: 100,
                       }}
+                      pointerEvents="none"
                     >
                       <Text style={{ color: "#60a5fa", fontWeight: "bold", fontSize: 13 }}>
                         {hoveredPoint.x ? new Date(hoveredPoint.x).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
@@ -684,6 +702,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
                       backgroundColor: hoveredPoint.color,
                       opacity: 0.5,
                     }}
+                    pointerEvents="none"
                   />
                   {/* Tooltip */}
                   <View
@@ -704,6 +723,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
                       elevation: 4,
                       zIndex: 100,
                     }}
+                    pointerEvents="none"
                   >
                     <Text style={{ color: "#60a5fa", fontWeight: "bold", fontSize: 13 }}>
                       {hoveredPoint.x ? new Date(hoveredPoint.x).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
