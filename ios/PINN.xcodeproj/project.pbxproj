@@ -13,23 +13,23 @@
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
-		FD3FC2038780CB2186725F81 /* libPods-testtempo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B0198247B27EA25ECB788428 /* libPods-testtempo.a */; };
+		FD3FC2038780CB2186725F81 /* libPods-PINN.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B0198247B27EA25ECB788428 /* libPods-PINN.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		093736D13A145437E012B149 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-testtempo/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		13B07F961A680F5B00A75B9A /* testtempo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = testtempo.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = testtempo/Images.xcassets; sourceTree = "<group>"; };
-		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = testtempo/Info.plist; sourceTree = "<group>"; };
-		2B511656141D9CE7DDB89D5F /* Pods-testtempo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-testtempo.debug.xcconfig"; path = "Target Support Files/Pods-testtempo/Pods-testtempo.debug.xcconfig"; sourceTree = "<group>"; };
-		3B8A24A487F9775BD723ABB4 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = testtempo/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		7712B093FD4442FD68BD234F /* Pods-testtempo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-testtempo.release.xcconfig"; path = "Target Support Files/Pods-testtempo/Pods-testtempo.release.xcconfig"; sourceTree = "<group>"; };
-		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = testtempo/SplashScreen.storyboard; sourceTree = "<group>"; };
-		B0198247B27EA25ECB788428 /* libPods-testtempo.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-testtempo.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		093736D13A145437E012B149 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-PINN/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		13B07F961A680F5B00A75B9A /* PINN.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PINN.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = PINN/Images.xcassets; sourceTree = "<group>"; };
+		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = PINN/Info.plist; sourceTree = "<group>"; };
+		2B511656141D9CE7DDB89D5F /* Pods-PINN.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PINN.debug.xcconfig"; path = "Target Support Files/Pods-PINN/Pods-PINN.debug.xcconfig"; sourceTree = "<group>"; };
+		3B8A24A487F9775BD723ABB4 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = PINN/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		7712B093FD4442FD68BD234F /* Pods-PINN.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PINN.release.xcconfig"; path = "Target Support Files/Pods-PINN/Pods-PINN.release.xcconfig"; sourceTree = "<group>"; };
+		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = PINN/SplashScreen.storyboard; sourceTree = "<group>"; };
+		B0198247B27EA25ECB788428 /* libPods-PINN.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-PINN.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = testtempo/AppDelegate.swift; sourceTree = "<group>"; };
-		F11748442D0722820044C1D9 /* testtempo-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "testtempo-Bridging-Header.h"; path = "testtempo/testtempo-Bridging-Header.h"; sourceTree = "<group>"; };
+		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = PINN/AppDelegate.swift; sourceTree = "<group>"; };
+		F11748442D0722820044C1D9 /* PINN-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "PINN-Bridging-Header.h"; path = "PINN/PINN-Bridging-Header.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -37,42 +37,42 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FD3FC2038780CB2186725F81 /* libPods-testtempo.a in Frameworks */,
+				FD3FC2038780CB2186725F81 /* libPods-PINN.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		13B07FAE1A68108700A75B9A /* testtempo */ = {
+		13B07FAE1A68108700A75B9A /* PINN */ = {
 			isa = PBXGroup;
 			children = (
 				F11748412D0307B40044C1D9 /* AppDelegate.swift */,
-				F11748442D0722820044C1D9 /* testtempo-Bridging-Header.h */,
+				F11748442D0722820044C1D9 /* PINN-Bridging-Header.h */,
 				BB2F792B24A3F905000567C9 /* Supporting */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
 				3B8A24A487F9775BD723ABB4 /* PrivacyInfo.xcprivacy */,
 			);
-			name = testtempo;
+			name = PINN;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				B0198247B27EA25ECB788428 /* libPods-testtempo.a */,
+				B0198247B27EA25ECB788428 /* libPods-PINN.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		4C19E72DE9C4A4BBA919F7B7 /* testtempo */ = {
+		4C19E72DE9C4A4BBA919F7B7 /* PINN */ = {
 			isa = PBXGroup;
 			children = (
 				093736D13A145437E012B149 /* ExpoModulesProvider.swift */,
 			);
-			name = testtempo;
+			name = PINN;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -85,8 +85,8 @@
 		836C0D8984B593929F244518 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				2B511656141D9CE7DDB89D5F /* Pods-testtempo.debug.xcconfig */,
-				7712B093FD4442FD68BD234F /* Pods-testtempo.release.xcconfig */,
+				2B511656141D9CE7DDB89D5F /* Pods-PINN.debug.xcconfig */,
+				7712B093FD4442FD68BD234F /* Pods-PINN.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -94,7 +94,7 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
-				13B07FAE1A68108700A75B9A /* testtempo */,
+				13B07FAE1A68108700A75B9A /* PINN */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
@@ -109,7 +109,7 @@
 		83CBBA001A601CBA00E9B192 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				13B07F961A680F5B00A75B9A /* testtempo.app */,
+				13B07F961A680F5B00A75B9A /* PINN.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -120,13 +120,13 @@
 				BB2F792C24A3F905000567C9 /* Expo.plist */,
 			);
 			name = Supporting;
-			path = testtempo/Supporting;
+			path = PINN/Supporting;
 			sourceTree = "<group>";
 		};
 		E54236BEBCF079424399D606 /* ExpoModulesProviders */ = {
 			isa = PBXGroup;
 			children = (
-				4C19E72DE9C4A4BBA919F7B7 /* testtempo */,
+				4C19E72DE9C4A4BBA919F7B7 /* PINN */,
 			);
 			name = ExpoModulesProviders;
 			sourceTree = "<group>";
@@ -134,9 +134,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		13B07F861A680F5B00A75B9A /* testtempo */ = {
+		13B07F861A680F5B00A75B9A /* PINN */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "testtempo" */;
+			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "PINN" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
 				FCC51BF80A2C5CED036AA7D1 /* [Expo] Configure project */,
@@ -151,9 +151,9 @@
 			);
 			dependencies = (
 			);
-			name = testtempo;
-			productName = testtempo;
-			productReference = 13B07F961A680F5B00A75B9A /* testtempo.app */;
+			name = PINN;
+			productName = PINN;
+			productReference = 13B07F961A680F5B00A75B9A /* PINN.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -169,7 +169,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "testtempo" */;
+			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "PINN" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -182,7 +182,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				13B07F861A680F5B00A75B9A /* testtempo */,
+				13B07F861A680F5B00A75B9A /* PINN */,
 			);
 		};
 /* End PBXProject section */
@@ -232,7 +232,7 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-testtempo-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-PINN-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -245,7 +245,7 @@
 			files = (
 			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-testtempo/Pods-testtempo-frameworks.sh",
+				"${PODS_ROOT}/Target Support Files/Pods-PINN/Pods-PINN-frameworks.sh",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
 			);
 			name = "[CP] Embed Pods Frameworks";
@@ -254,7 +254,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-testtempo/Pods-testtempo-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PINN/Pods-PINN-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
@@ -263,7 +263,7 @@
 			files = (
 			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-testtempo/Pods-testtempo-resources.sh",
+				"${PODS_ROOT}/Target Support Files/Pods-PINN/Pods-PINN-resources.sh",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
@@ -332,7 +332,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-testtempo/Pods-testtempo-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PINN/Pods-PINN-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		FCC51BF80A2C5CED036AA7D1 /* [Expo] Configure project */ = {
@@ -352,7 +352,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-testtempo/expo-configure-project.sh\"\n";
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-PINN/expo-configure-project.sh\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -371,11 +371,11 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 2B511656141D9CE7DDB89D5F /* Pods-testtempo.debug.xcconfig */;
+			baseConfigurationReference = 2B511656141D9CE7DDB89D5F /* Pods-PINN.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = testtempo/testtempo.entitlements;
+				CODE_SIGN_ENTITLEMENTS = PINN/PINN.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 72UC53C8R9;
 				ENABLE_BITCODE = NO;
@@ -383,7 +383,7 @@
 					"$(inherited)",
 					"FB_SONARKIT_ENABLED=1",
 				);
-				INFOPLIST_FILE = testtempo/Info.plist;
+				INFOPLIST_FILE = PINN/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -398,7 +398,7 @@
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.pinn.app;
 				PRODUCT_NAME = PINN;
-				SWIFT_OBJC_BRIDGING_HEADER = "testtempo/testtempo-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "PINN/PINN-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -408,14 +408,14 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 7712B093FD4442FD68BD234F /* Pods-testtempo.release.xcconfig */;
+			baseConfigurationReference = 7712B093FD4442FD68BD234F /* Pods-PINN.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = testtempo/testtempo.entitlements;
+				CODE_SIGN_ENTITLEMENTS = PINN/PINN.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 72UC53C8R9;
-				INFOPLIST_FILE = testtempo/Info.plist;
+				INFOPLIST_FILE = PINN/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -430,7 +430,7 @@
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.pinn.app;
 				PRODUCT_NAME = PINN;
-				SWIFT_OBJC_BRIDGING_HEADER = "testtempo/testtempo-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "PINN/PINN-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
@@ -492,7 +492,10 @@
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -547,7 +550,10 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
@@ -558,7 +564,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "testtempo" */ = {
+		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "PINN" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,
@@ -567,7 +573,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "testtempo" */ = {
+		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "PINN" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,
