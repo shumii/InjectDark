@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, useState, useRef } from "react";
-import { View, Text, Dimensions, ScrollView, PanResponder } from "react-native";
+import { View, Text, Dimensions, ScrollView, PanResponder, TouchableWithoutFeedback } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { VictoryChart, VictoryLine, VictoryAxis, VictoryTheme, VictoryTooltip, VictoryScatter, VictoryBar, VictoryPie } from "victory-native";
 import { getOppositeSite } from '../utils/injectionUtils';
@@ -44,6 +44,7 @@ const StatisticsDashboard = () => {
   const [hoveredPoint, setHoveredPoint] = useState<any>(null);
   const screenWidth = Dimensions.get("window").width - 32;
   const chartWidth = screenWidth;
+  const timeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     const loadInjections = async () => {
@@ -78,6 +79,15 @@ const StatisticsDashboard = () => {
       }
     };
     loadInjections();
+  }, []);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   }, []);
 
   // Calculate daily T-levels for the input data (like MedicationChart)
@@ -327,23 +337,25 @@ const StatisticsDashboard = () => {
     return relativePosition * dataAreaWidth;
   }
 
-  // PanResponder for overlay (recreated on every render for fresh chartData)
-  const panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: () => true,
-    onPanResponderGrant: (evt) => {
-      // Handle initial touch - use pageX for more reliable coordinates
-      const x = evt.nativeEvent.locationX || evt.nativeEvent.pageX - 35; // Account for left padding
-      updateHoveredPoint(x);
-    },
-    onPanResponderMove: (evt, gestureState) => {
-      // Get the x position relative to the overlay (which matches the chart width)
-      const x = evt.nativeEvent.locationX || evt.nativeEvent.pageX - 35; // Account for left padding
-      updateHoveredPoint(x);
-    },
-    onPanResponderRelease: () => setHoveredPoint(null),
-    onPanResponderTerminate: () => setHoveredPoint(null),
-  });
+  // Touch handlers for better iOS compatibility with fast movements
+  const handleTouchStart = (evt: any) => {
+    const x = evt.nativeEvent.locationX || evt.nativeEvent.pageX - 35;
+    updateHoveredPoint(x);
+  };
+
+  const handleTouchMove = (evt: any) => {
+    const x = evt.nativeEvent.locationX || evt.nativeEvent.pageX - 35;
+    updateHoveredPoint(x);
+  };
+
+  const handleTouchEnd = () => {
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    // Keep tooltip visible briefly after release for better UX on iOS
+    timeoutRef.current = setTimeout(() => setHoveredPoint(null), 300);
+  };
 
   // Helper function to update hovered point
   const updateHoveredPoint = (x: number) => {
@@ -359,8 +371,8 @@ const StatisticsDashboard = () => {
       let closest = null;
       let minDiff = Infinity;
       
-      // Only update if x is within reasonable bounds
-      if (x >= 0 && x <= (chartWidth - 35 - 30)) {
+      // Only update if x is within reasonable bounds - be more lenient for iOS rapid movements
+      if (x >= -20 && x <= (chartWidth - 35 - 30 + 20)) {
         for (const pt of allPoints) {
           const diff = Math.abs(pt.xPx - x);
           if (diff < minDiff) {
@@ -375,7 +387,13 @@ const StatisticsDashboard = () => {
         }
       }
       
-      setHoveredPoint(closest);
+      // Only update if the closest point has actually changed
+      setHoveredPoint((prev: any) => {
+        if (!prev && !closest) return prev;
+        if (!prev || !closest) return closest;
+        if (prev.x !== closest.x || prev.y !== closest.y) return closest;
+        return prev;
+      });
     }
   };
 
@@ -448,9 +466,10 @@ const StatisticsDashboard = () => {
               width: chartWidth - 35 - 30, // Match chart data area width
               height: 250,
             }}
-            {...panResponder.panHandlers}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
             pointerEvents="auto"
-            onStartShouldSetResponder={() => true}
           >
             {hoveredPoint && (
               <>

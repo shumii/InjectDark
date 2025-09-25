@@ -389,25 +389,21 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
     return relativePosition * dataAreaWidth;
   }
 
-  // PanResponder for overlay (recreated on every render for fresh chartData)
-  const panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: () => true,
-    onPanResponderGrant: (evt) => {
-      // Handle initial touch - use pageX for more reliable coordinates
-      const x = evt.nativeEvent.locationX || evt.nativeEvent.pageX - 35; // Account for left padding
-      updateHoveredPoint(x);
-    },
-    onPanResponderMove: (evt, gestureState) => {
-      // Get the x position relative to the overlay (which matches the chart width)
-      // gestureState.x0 is the initial touch, gestureState.moveX is the absolute screen x
-      // evt.nativeEvent.locationX is the x within the overlay
-      const x = evt.nativeEvent.locationX || evt.nativeEvent.pageX - 35; // Account for left padding
-      updateHoveredPoint(x);
-    },
-    onPanResponderRelease: () => setHoveredPoint(null),
-    onPanResponderTerminate: () => setHoveredPoint(null),
-  });
+  // Touch handlers for better iOS compatibility with fast movements
+  const handleTouchStart = (evt: any) => {
+    const x = evt.nativeEvent.locationX || evt.nativeEvent.pageX - 35;
+    updateHoveredPoint(x);
+  };
+
+  const handleTouchMove = (evt: any) => {
+    const x = evt.nativeEvent.locationX || evt.nativeEvent.pageX - 35;
+    updateHoveredPoint(x);
+  };
+
+  const handleTouchEnd = () => {
+    // Keep tooltip visible briefly after release for better UX on iOS
+    setTimeout(() => setHoveredPoint(null), 300);
+  };
 
   // Helper function to update hovered point
   const updateHoveredPoint = (x: number) => {
@@ -441,7 +437,13 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
         }
       }
       
-      setHoveredPoint(closest); // Always show the closest point
+      // Only update if the closest point has actually changed
+      setHoveredPoint((prev: any) => {
+        if (!prev && !closest) return prev;
+        if (!prev || !closest) return closest;
+        if (prev.x !== closest.x || prev.y !== closest.y) return closest;
+        return prev;
+      });
     }
   };
 
@@ -543,9 +545,10 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
                   width: chartWidth - 35 - 30, // Match chart data area width
                   height: 250,
                 }}
-                {...panResponder.panHandlers}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
                 pointerEvents="auto"
-                onStartShouldSetResponder={() => true}
               >
                 {hoveredPoint && (
                   <>
@@ -685,9 +688,10 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
                 width: chartWidth - 35 - 30, // Match chart data area width
                 height: 250,
               }}
-              {...panResponder.panHandlers}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
               pointerEvents="auto"
-              onStartShouldSetResponder={() => true}
             >
               {hoveredPoint && (
                 <>
