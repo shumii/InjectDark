@@ -38,6 +38,7 @@ interface RecentInjection {
   dateDisplay: string;
   date: Date;
   injectionSite: string;
+  concentration?: number;
 }
 
 const StorageService = {
@@ -96,6 +97,18 @@ export default function HomeScreen() {
   const [selectedInjectionId, setSelectedInjectionId] = useState<string | null>(null);
 
   const [showMedicationManagement, setShowMedicationManagement] = useState(false);
+
+  // Utility function to format dosage based on user preference
+  const formatDosage = (dosageInMg: number, medicationName: string, concentration?: number) => {
+    if (defaultDosageUnit === 'ml') {
+      // Convert mg to ml using concentration
+      const medConcentration = concentration || 100; // Default to 100mg/ml if not specified
+      const dosageInMl = dosageInMg / medConcentration;
+      return `${dosageInMl.toFixed(1)} ml (${dosageInMg} mg)`;
+    } else {
+      return `${dosageInMg} mg`;
+    }
+  };
 
   // Load settings from AsyncStorage
   useEffect(() => {
@@ -359,6 +372,7 @@ export default function HomeScreen() {
             dateDisplay: formatRelativeDateTime(injection.dateTime),
             date: injection.dateTime,
               injectionSite: injection.injectionSite,
+              concentration: injection.concentration,
           }))
           //.sort((a, b) => b.date.getTime() - a.date.getTime()).reverse();
       
@@ -624,7 +638,7 @@ export default function HomeScreen() {
                   <Text className="text-white font-semibold">
                         {nextInjection.medicationName}
                   </Text>
-                      <Text className="text-gray-400">{nextInjection.dosage} mg</Text>
+                      <Text className="text-gray-400">{formatDosage(nextInjection.dosage, nextInjection.medicationName, nextInjection.concentration)}</Text>
                 </View>
                 <View className="flex-row justify-between mt-2">
                       <Text className="text-gray-400">{nextInjection.injectionSite}</Text>
@@ -675,7 +689,7 @@ export default function HomeScreen() {
                     <Text className="text-white font-semibold">
                       {injection.medication}
                     </Text>
-                    <Text className="text-gray-400">{injection.dosage} mg</Text>
+                    <Text className="text-gray-400">{formatDosage(injection.dosage, injection.medication, injection.concentration)}</Text>
                   </View>
                   <View className="flex-row justify-between mt-2">
                     <Text className="text-gray-400">{injection.injectionSite}</Text>

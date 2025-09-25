@@ -49,6 +49,34 @@ const InjectionHistory = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const flatListRef = useRef<FlatList<Injection>>(null);
+  const [defaultDosageUnit, setDefaultDosageUnit] = useState<'mg' | 'ml'>('mg');
+
+  // Load dosage unit setting
+  useEffect(() => {
+    const loadDosageUnit = async () => {
+      try {
+        const storedUnit = await AsyncStorage.getItem('defaultDosageUnit');
+        if (storedUnit) {
+          setDefaultDosageUnit(storedUnit as 'mg' | 'ml');
+        }
+      } catch (error) {
+        console.error('Error loading dosage unit:', error);
+      }
+    };
+    loadDosageUnit();
+  }, []);
+
+  // Utility function to format dosage based on user preference
+  const formatDosage = (dosageInMg: number, medicationName: string, concentration?: number) => {
+    if (defaultDosageUnit === 'ml') {
+      // Convert mg to ml using concentration
+      const medConcentration = concentration || 100; // Default to 100mg/ml if not specified
+      const dosageInMl = dosageInMg / medConcentration;
+      return `${dosageInMl.toFixed(1)} ml (${dosageInMg} mg)`;
+    } else {
+      return `${dosageInMg} mg`;
+    }
+  };
   const [editingInjection, setEditingInjection] = useState<Injection | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -314,7 +342,7 @@ const InjectionHistory = ({
             </View>
             <View>
               <Text className="text-gray-400 text-sm">Dosage</Text>
-              <Text className="text-white">{item.dosage} <Text className="text-gray-400">mg</Text></Text>
+              <Text className="text-white">{formatDosage(item.dosage, item.medicationName, item.concentration)}</Text>
             </View>
           </View>
 
