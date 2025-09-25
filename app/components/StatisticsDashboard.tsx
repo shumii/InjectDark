@@ -43,6 +43,7 @@ const StatisticsDashboard = () => {
   const [data, setData] = useState<any[]>([]);
   const [hoveredPoint, setHoveredPoint] = useState<any>(null);
   const screenWidth = Dimensions.get("window").width - 32;
+  const chartWidth = screenWidth;
 
   useEffect(() => {
     const loadInjections = async () => {
@@ -241,7 +242,7 @@ const StatisticsDashboard = () => {
         }))
       });
       
-      projections.push({ x: new Date(dailyDate), y: roundedTLevel, isInjection: addedInjectionToday });
+      projections.push({ x: dailyDate.toISOString().split('T')[0], y: roundedTLevel, isInjection: addedInjectionToday });
     }
     
     return projections;
@@ -257,7 +258,7 @@ const StatisticsDashboard = () => {
     for (let i = 0; i < projectedData.length; i++) {
       if (projectedData[i].isInjection) {
         injectionDays.push({
-          date: projectedData[i].x,
+          date: new Date(projectedData[i].x),
           tLevel: projectedData[i].y
         });
       }
@@ -314,14 +315,14 @@ const StatisticsDashboard = () => {
 
     if (!filteredProjectedData || filteredProjectedData.length === 0) return 0;
     
-    const minX = Math.min(...filteredProjectedData.map(p => p.x.getTime()));
-    const maxX = Math.max(...filteredProjectedData.map(p => p.x.getTime()));
+    const minX = Math.min(...filteredProjectedData.map(p => new Date(p.x).getTime()));
+    const maxX = Math.max(...filteredProjectedData.map(p => new Date(p.x).getTime()));
     const xMs = new Date(x).getTime();
 
-    if (maxX === minX) return (screenWidth - 35 - 30) / 2; // Center in data area
+    if (maxX === minX) return (chartWidth - 35 - 30) / 2; // Center in data area
     
     // Calculate position relative to data area width
-    const dataAreaWidth = screenWidth - 35 - 30;
+    const dataAreaWidth = chartWidth - 35 - 30;
     const relativePosition = (xMs - minX) / (maxX - minX);
     return relativePosition * dataAreaWidth;
   }
@@ -359,7 +360,7 @@ const StatisticsDashboard = () => {
       let minDiff = Infinity;
       
       // Only update if x is within reasonable bounds
-      if (x >= 0 && x <= (screenWidth - 35 - 30)) {
+      if (x >= 0 && x <= (chartWidth - 35 - 30)) {
         for (const pt of allPoints) {
           const diff = Math.abs(pt.xPx - x);
           if (diff < minDiff) {
@@ -383,9 +384,9 @@ const StatisticsDashboard = () => {
       <Text className="text-white text-2xl font-bold mb-6">Analysis</Text>
       <View style={{ backgroundColor: '#232b36', borderRadius: 16, padding: 8, marginBottom: 20 }}>
         <Text className="text-white text-lg font-semibold mb-4 px-2">Projected Testosterone Levels</Text>
-        <View style={{ position: "relative", width: screenWidth, height: 250 }} pointerEvents="box-none">
+        <View style={{ position: "relative", width: chartWidth, height: 250 }} pointerEvents="box-none">
           <VictoryChart
-            width={screenWidth}
+            width={chartWidth}
             height={250}
             theme={VictoryTheme.material}
             padding={{ top: 10, bottom: 60, left: 35, right: 30 }}
@@ -444,7 +445,7 @@ const StatisticsDashboard = () => {
               position: "absolute",
               left: 35, // Match chart left padding
               top: 0,
-              width: screenWidth - 35 - 30, // Match chart data area width
+              width: chartWidth - 35 - 30, // Match chart data area width
               height: 250,
             }}
             {...panResponder.panHandlers}
@@ -470,7 +471,7 @@ const StatisticsDashboard = () => {
                 <View
                   style={{
                     position: "absolute",
-                    left: Math.max(0, Math.min(screenWidth - 140, hoveredPoint.xPx + 8)),
+                    left: Math.max(0, Math.min(chartWidth - 140, hoveredPoint.xPx + 8)),
                     top: 40,
                     backgroundColor: "#222",
                     padding: 10,
@@ -529,7 +530,7 @@ const StatisticsDashboard = () => {
       <View style={{ backgroundColor: '#232b36', borderRadius: 16, padding: 8 }}>
         <Text className="text-white text-lg font-semibold mb-4 px-2">Injection Site Frequency</Text>
         <VictoryPie
-          width={screenWidth}
+          width={chartWidth}
           height={250}
           data={siteFrequencyData}
           colorScale={["#8b5cf6", "#60a5fa", "#a855f7", "#3b82f6", "#7c3aed", "#2563eb", "#9333ea", "#1d4ed8"]}
