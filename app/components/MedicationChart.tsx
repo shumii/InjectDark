@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -35,13 +35,37 @@ interface MedicationChartProps {
 type TimePeriod = "week" | "month" | "quarter" | "year";
 
 const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
-  const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>("quarter");
+  // Calculate default period based on data range
+  const getDefaultPeriod = (): TimePeriod => {
+    if (injectionData.length === 0) return "quarter";
+    
+    const dates = injectionData.map(injection => new Date(injection.dateTime));
+    const oldestDate = new Date(Math.min(...dates.map(d => d.getTime())));
+    const newestDate = new Date(Math.max(...dates.map(d => d.getTime())));
+    const daysDiff = Math.ceil((newestDate.getTime() - oldestDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysDiff >= 60) {
+      return "quarter"; // 90 days
+    } else if (daysDiff >= 8) {
+      return "month"; // 30 days
+    } else {
+      return "week"; // 7 days
+    }
+  };
+
+  const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>(getDefaultPeriod());
   const [maxTestosterone, setMaxTestosterone] = useState(0);
   const [minTestosterone, setMinTestosterone] = useState(0);
   const [averageTestosterone, setAverageTestosterone] = useState(0);
   const [hoveredPoint, setHoveredPoint] = useState<any>(null);
   const screenWidth = Dimensions.get("window").width - 32; // Account for padding
   const chartWidth = selectedPeriod === 'year' ? screenWidth * 1.6 : screenWidth;
+
+  // Update selected period when injection data changes
+  useEffect(() => {
+    const newDefaultPeriod = getDefaultPeriod();
+    setSelectedPeriod(newDefaultPeriod);
+  }, [injectionData]);
 
   // Get current date and calculate date ranges
   const currentDate = new Date();
