@@ -482,6 +482,19 @@ const InjectionHistory = ({
     );
   };
 
+  // If showing add form, render it full screen like home screen
+  if (showAddForm) {
+    return (
+      <InjectionForm
+        onClose={() => setShowAddForm(false)}
+        onSave={handleAddInjection}
+        defaultDosageUnit={defaultDosageUnit}
+        defaultInjectionTime={new Date()}
+        useCurrentTime={true}
+      />
+    );
+  }
+
   return (
     <View className="flex-1 bg-gray-900 p-4">
       <Text className="text-white text-2xl font-bold mb-6">Injection History</Text>
@@ -573,43 +586,6 @@ const InjectionHistory = ({
         />
       )}
 
-      {/* Render the InjectionForm for adding new injection as an overlay */}
-      {showAddForm && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 100,
-          }}
-        >
-          <View style={{ width: '96%', maxWidth: 500, borderRadius: 20, overflow: 'hidden', backgroundColor: '#232b36', padding: 0 }}>
-            <InjectionForm
-              onClose={() => setShowAddForm(false)}
-              onSave={handleAddInjection}
-              defaultInjectionTime={new Date()}
-              useCurrentTime={true}
-              lastInjection={injections.length > 0 ? {
-                ...injections[0],
-                dosage: Number(injections[0].dosage),
-                dateTime: new Date(injections[0].dateTime),
-                injectionSite: injections[0].injectionSite || "",
-                moodRating: injections[0].moodRating ?? 0,
-                sleepRating: injections[0].sleepRating ?? 0,
-                libidoRating: injections[0].libidoRating ?? 0,
-                energyRating: injections[0].energyRating ?? 0,
-                sidesRating: injections[0].sidesRating ?? 0,
-                notes: injections[0].notes ?? "",
-              } : undefined}
-            />
-          </View>
-        </View>
-      )}
     </View>
   );
 };
