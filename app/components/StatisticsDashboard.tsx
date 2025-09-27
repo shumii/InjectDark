@@ -262,15 +262,21 @@ const StatisticsDashboard = () => {
   const stabilizedDate = useMemo(() => {
     if (!projectedData || projectedData.length === 0) return null;
     
-    // Find injection days using the isInjection flag
+    const currentDate = new Date();
+    
+    // Find injection days using the isInjection flag, but only future dates
     const injectionDays: { date: Date, tLevel: number }[] = [];
     
     for (let i = 0; i < projectedData.length; i++) {
       if (projectedData[i].isInjection) {
-        injectionDays.push({
-          date: new Date(projectedData[i].x),
-          tLevel: projectedData[i].y
-        });
+        const injectionDate = new Date(projectedData[i].x);
+        // Only consider future injection dates
+        if (injectionDate > currentDate) {
+          injectionDays.push({
+            date: injectionDate,
+            tLevel: projectedData[i].y
+          });
+        }
       }
     }
     
