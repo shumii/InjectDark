@@ -690,7 +690,12 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
                   <View
                     style={{
                       position: "absolute",
-                      left: Math.max(0, Math.min(chartWidth - 140, hoveredPoint.xPx + 8)),
+                      left: (() => {
+                        const tooltipWidth = 200; // Approximate tooltip width
+                        const gap = 8;
+                        const rightEdge = hoveredPoint.xPx + gap + tooltipWidth;
+                        return rightEdge > chartWidth ? Math.max(0, hoveredPoint.xPx - tooltipWidth) : hoveredPoint.xPx + gap;
+                      })(),
                       top: 40,
                       backgroundColor: "#222",
                       padding: 10,
