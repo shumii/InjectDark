@@ -298,6 +298,8 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
         // Add Total T to the medication map
         medicationMap['Total T'] = totalTLevels;
         medications.add('Total T');
+        
+        console.log('Added Total T - medications set now contains:', Array.from(medications));
       }
     }
 
@@ -311,6 +313,9 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
         })),
       };
     });
+
+    console.log('Final chartData medications:', finalData.map(d => d.medication));
+    console.log('Medications set used for chartData:', Array.from(medications));
 
     return finalData;
   }, [filteredData, selectedPeriod, filteredTLevels]);
@@ -396,6 +401,9 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
     name: item.medication,
     symbol: { fill: colors[index % colors.length] },
   }));
+  
+  console.log('Legend data medications:', legendData.map(d => d.name));
+  console.log('Chart data medications:', chartData.map(d => d.medication));
 
   // Helper to convert x (date) to pixel
   function chartXToPixel(x: Date | string) {    
@@ -718,15 +726,15 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
       {/* Legend */}
       {chartData.length > 0 && (
         <VictoryLegend
-          x={50}
+          x={20}
           y={0}
-          width={screenWidth}
-          height={50}
+          width={screenWidth - 40}
+          height={legendData.length > 2 ? 100 : 50}
           centerTitle
           orientation="horizontal"
-          itemsPerRow={2}
+          itemsPerRow={legendData.length > 3 ? 1 : 2}
           style={{
-            labels: { fill: "white", fontSize: 14 },
+            labels: { fill: "white", fontSize: 11 },
           }}
           data={legendData}
         />
