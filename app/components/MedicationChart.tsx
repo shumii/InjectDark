@@ -718,7 +718,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
                           <View key={dataset.medication} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
                             <View style={{ width: 8, height: 8, backgroundColor: colors[index % colors.length], borderRadius: 4, marginRight: 6 }} />
                             <Text style={{ color: "#fff", fontSize: 12 }}>
-                              {dataset.medication}: {point ? `${point.y}mg` : '0mg'}
+                              {dataset.medication}: {point ? `${Math.round(point.y)}mg` : '0mg'}
                             </Text>
                           </View>
                         );
