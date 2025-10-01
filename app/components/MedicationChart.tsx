@@ -710,8 +710,26 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
                     <Text style={{ color: "#60a5fa", fontWeight: "bold", fontSize: 13 }}>
                       {hoveredPoint.x ? new Date(hoveredPoint.x).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
                     </Text>
-                    <Text style={{ color: "#fff", fontWeight: "bold" }}>{hoveredPoint.medication || 'No medication'}</Text>
-                    <Text style={{ color: "#fff" }}>{hoveredPoint.label || 'No label'}</Text>
+                    {chartData.length > 1 ? (
+                      // Show all medications when there are multiple
+                      chartData.map((dataset, index) => {
+                        const point = dataset.data.find(p => p.x === hoveredPoint.x);
+                        return (
+                          <View key={dataset.medication} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+                            <View style={{ width: 8, height: 8, backgroundColor: colors[index % colors.length], borderRadius: 4, marginRight: 6 }} />
+                            <Text style={{ color: "#fff", fontSize: 12 }}>
+                              {dataset.medication}: {point ? `${point.y}mg` : '0mg'}
+                            </Text>
+                          </View>
+                        );
+                      })
+                    ) : (
+                      // Show single medication when there's only one
+                      <>
+                        <Text style={{ color: "#fff", fontWeight: "bold" }}>{hoveredPoint.medication || 'No medication'}</Text>
+                        <Text style={{ color: "#fff" }}>{hoveredPoint.label || 'No label'}mg</Text>
+                      </>
+                    )}
                   </View>
                 </>
               )}
