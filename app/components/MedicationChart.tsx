@@ -561,64 +561,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
                 ))}
               </VictoryChart>
               {/* Custom overlay for glide tooltip */}
-              <View
-                style={{
-                  position: "absolute",
-                  left: 35, // Match chart left padding
-                  top: 0,
-                  width: chartWidth - 35 - 30, // Match chart data area width
-                  height: 250,
-                }}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-                pointerEvents="auto"
-              >
-                {hoveredPoint && (
-                  <>
-                    {/* Vertical line */}
-                    <View
-                      style={{
-                        position: "absolute",
-                        left: hoveredPoint.xPx - 1,
-                        top: 0,
-                        width: 2,
-                        height: 250,
-                        backgroundColor: hoveredPoint.color,
-                        opacity: 0.5,
-                      }}
-                      pointerEvents="none"
-                    />
-                    {/* Tooltip */}
-                    <View
-                      style={{
-                        position: "absolute",
-                        left: Math.max(0, Math.min(chartWidth, hoveredPoint.xPx + 8)),
-                        top: 40,
-                        backgroundColor: "#222",
-                        padding: 10,
-                        borderRadius: 10,
-                        minWidth: 120,
-                        borderWidth: 2,
-                        borderColor: "#60a5fa",
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: 0.2,
-                        shadowRadius: 4,
-                        elevation: 4,
-                        zIndex: 100,
-                      }}
-                      pointerEvents="none"
-                    >
-                      <Text style={{ color: "#60a5fa", fontWeight: "bold", fontSize: 13 }}>
-                        {hoveredPoint.x ? new Date(hoveredPoint.x).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
-                      </Text>
-                      <Text style={{ color: "#fff", fontWeight: "bold" }}>{hoveredPoint.medication || 'No medication'}</Text>
-                      <Text style={{ color: "#fff" }}>{hoveredPoint.label || 'No label'}</Text>
-                    </View>
-                  </>
-                )}
-              </View>
+      
             </View>
           </ScrollView>
         ) : (
