@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, FlatList, Modal, TextInput, Alert, SafeAreaView } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Pencil, Plus } from "lucide-react-native";
+import { Pencil, Plus, Trash2 } from "lucide-react-native";
 
 interface Medication {
   id: string;
@@ -56,6 +56,28 @@ const MedicationManagementScreen = () => {
     saveMedications(newMeds);
     setShowEditModal(false);
     setEditingMedication(null);
+  };
+
+  // Delete Medication
+  const handleDeleteMedication = (medicationId: string) => {
+    Alert.alert(
+      "Delete Medication",
+      "Are you sure you want to delete this medication? This action cannot be undone.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            const newMeds = medications.filter(m => m.id !== medicationId);
+            saveMedications(newMeds);
+          }
+        }
+      ]
+    );
   };
 
   // AddMedicationForm
@@ -134,14 +156,19 @@ const MedicationManagementScreen = () => {
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <View style={{ backgroundColor: '#23283a', borderRadius: 12, padding: 18, marginBottom: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <View>
+              <View style={{ flex: 1 }}>
                 <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{item.name}</Text>
                 <Text style={{ color: '#a3a3a3', fontSize: 14 }}>{item.concentration} mg/ml</Text>
                 {item.halfLifeDescription && <Text style={{ color: '#a3a3a3', fontSize: 12 }}>Half-life: {item.halfLifeDescription}</Text>}
               </View>
-              <TouchableOpacity onPress={() => { setEditingMedication(item); setShowEditModal(true); }} style={{ backgroundColor: '#2563eb22', borderRadius: 20, padding: 8 }}>
-                <Pencil size={16} color="#60a5fa" />
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <TouchableOpacity onPress={() => { setEditingMedication(item); setShowEditModal(true); }} style={{ backgroundColor: '#2563eb22', borderRadius: 20, padding: 8 }}>
+                  <Pencil size={16} color="#60a5fa" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleDeleteMedication(item.id)} style={{ backgroundColor: '#dc262622', borderRadius: 20, padding: 8 }}>
+                  <Trash2 size={16} color="#f87171" />
+                </TouchableOpacity>
+              </View>
             </View>
           )}
           ListEmptyComponent={<Text style={{ color: "#aaa", textAlign: "center", marginTop: 40 }}>No medications added yet.</Text>}

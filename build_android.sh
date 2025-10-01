@@ -35,6 +35,38 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# Function to increment version numbers
+increment_version() {
+    print_status "Incrementing version numbers..."
+    
+    # Read current version from package.json
+    CURRENT_VERSION=$(grep '"version"' package.json | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+    print_status "Current version: $CURRENT_VERSION"
+    
+    # Increment patch version (e.g., 1.0.1 -> 1.0.2)
+    IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
+    MAJOR=${VERSION_PARTS[0]}
+    MINOR=${VERSION_PARTS[1]}
+    PATCH=${VERSION_PARTS[2]}
+    
+    NEW_PATCH=$((PATCH + 1))
+    NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+    
+    print_status "New version: $NEW_VERSION"
+    
+    # Update package.json
+    sed -i '' "s/\"version\": \"$CURRENT_VERSION\"/\"version\": \"$NEW_VERSION\"/" package.json
+    
+    # Update android/app/build.gradle
+    CURRENT_VERSION_CODE=$(grep 'versionCode' android/app/build.gradle | sed 's/.*versionCode *\([0-9]*\).*/\1/')
+    NEW_VERSION_CODE=$((CURRENT_VERSION_CODE + 1))
+    
+    sed -i '' "s/versionCode $CURRENT_VERSION_CODE/versionCode $NEW_VERSION_CODE/" android/app/build.gradle
+    sed -i '' "s/versionName \"$CURRENT_VERSION\"/versionName \"$NEW_VERSION\"/" android/app/build.gradle
+    
+    print_success "Version incremented to $NEW_VERSION (versionCode: $NEW_VERSION_CODE)"
+}
+
 # Function to check if required tools exist
 check_requirements() {
     print_status "Checking requirements..."
@@ -135,6 +167,7 @@ main() {
     echo ""
     
     check_requirements
+    increment_version
     
     # Parse command line arguments
     BUILD_APK=true
