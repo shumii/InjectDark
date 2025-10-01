@@ -402,8 +402,11 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
     symbol: { fill: colors[index % colors.length] },
   }));
   
-  console.log('Legend data medications:', legendData.map(d => d.name));
+  console.log('Chart data length:', chartData.length);
   console.log('Chart data medications:', chartData.map(d => d.medication));
+  console.log('Legend data length:', legendData.length);
+  console.log('Legend data medications:', legendData.map(d => d.name));
+  console.log('Legend data full objects:', legendData);
 
   // Helper to convert x (date) to pixel
   function chartXToPixel(x: Date | string) {    
@@ -729,12 +732,12 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
           x={20}
           y={0}
           width={screenWidth - 40}
-          height={legendData.length > 2 ? 100 : 50}
+          height={legendData.length > 2 ? 140 : 50}
           centerTitle
           orientation="horizontal"
-          itemsPerRow={legendData.length > 3 ? 1 : 2}
+          itemsPerRow={1}
           style={{
-            labels: { fill: "white", fontSize: 11 },
+            labels: { fill: "white", fontSize: 12 },
           }}
           data={legendData}
         />
