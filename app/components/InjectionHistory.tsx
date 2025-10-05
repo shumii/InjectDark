@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import InjectionForm from "./InjectionForm";
 import EditInjectionForm from "./EditInjectionForm";
+import { getOppositeSite } from '../utils/injectionUtils';
 
 interface Injection {
   id: string;
@@ -538,10 +539,36 @@ const InjectionHistory = ({
 
   // If showing add form, render it full screen like home screen
   if (showAddForm) {
+    // Calculate the suggested site for the new injection - same logic as home screen
+    let suggestedSite = "";
+    if (injections.length >= 2) {
+      // Get the last two injections
+      const lastInjection = injections[0];
+      const secondLastInjection = injections[1];
+      
+      // Calculate the time difference in minutes between the last two injections
+      const lastDate = new Date(lastInjection.dateTime);
+      const secondLastDate = new Date(secondLastInjection.dateTime);
+      const diffInMinutes = Math.floor((lastDate.getTime() - secondLastDate.getTime()) / (1000 * 60));
+      
+      // Calculate the next injection date by adding the same time difference
+      const nextDate = new Date(lastDate.getTime() + diffInMinutes * 60 * 1000);
+      
+      // Determine next injection site - suggest opposite side
+      suggestedSite = getOppositeSite(lastInjection.injectionSite);
+    } else if (injections.length === 1) {
+      // If we only have one injection, suggest the opposite site
+      suggestedSite = getOppositeSite(injections[0].injectionSite);
+    }
+
     return (
       <View className="flex-1 bg-gray-900">
         <InjectionForm
           onClose={() => setShowAddForm(false)}
+          lastInjection={injections.length > 0 ? {
+            ...injections[0],
+            injectionSite: suggestedSite || injections[0].injectionSite
+          } : undefined}
           onSave={handleAddInjection}
           defaultDosageUnit={defaultDosageUnit}
           defaultInjectionTime={new Date()}
