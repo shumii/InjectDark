@@ -485,13 +485,15 @@ const InjectionHistory = ({
   // If showing add form, render it full screen like home screen
   if (showAddForm) {
     return (
-      <InjectionForm
-        onClose={() => setShowAddForm(false)}
-        onSave={handleAddInjection}
-        defaultDosageUnit={defaultDosageUnit}
-        defaultInjectionTime={new Date()}
-        useCurrentTime={true}
-      />
+      <View className="flex-1 bg-gray-900">
+        <InjectionForm
+          onClose={() => setShowAddForm(false)}
+          onSave={handleAddInjection}
+          defaultDosageUnit={defaultDosageUnit}
+          defaultInjectionTime={new Date()}
+          useCurrentTime={true}
+        />
+      </View>
     );
   }
 
