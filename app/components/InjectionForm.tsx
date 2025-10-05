@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { Calendar, Clock, Check, ChevronDown, Repeat } from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import StarRating from "./StarRating";
+import SatisfactionRating from "./SatisfactionRating";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
@@ -593,15 +593,15 @@ const InjectionForm = ({
         <View>
           <Text className="text-white text-base mb-2">How have you been feeling recently?</Text>
           <Text className="text-white text-base mb-2">Mood</Text>
-          <StarRating onRatingChange={handleMoodRatingChange}></StarRating>
+          <SatisfactionRating onRatingChange={handleMoodRatingChange}></SatisfactionRating>
           <Text className="text-white text-base mb-2">Sleep</Text>
-          <StarRating onRatingChange={handleSleepRatingChange}></StarRating>
+          <SatisfactionRating onRatingChange={handleSleepRatingChange}></SatisfactionRating>
           <Text className="text-white text-base mb-2">Libido</Text>
-          <StarRating onRatingChange={handleLibidoRatingChange}></StarRating>
+          <SatisfactionRating onRatingChange={handleLibidoRatingChange}></SatisfactionRating>
           <Text className="text-white text-base mb-2">Energy</Text>
-          <StarRating onRatingChange={handleEnergyRatingChange}></StarRating>
+          <SatisfactionRating onRatingChange={handleEnergyRatingChange}></SatisfactionRating>
           <Text className="text-white text-base mb-2">Side Effects</Text>
-          <StarRating onRatingChange={handleSidesRatingChange}></StarRating>
+          <SatisfactionRating onRatingChange={handleSidesRatingChange}></SatisfactionRating>
         </View>
 
         <View className="mb-7">

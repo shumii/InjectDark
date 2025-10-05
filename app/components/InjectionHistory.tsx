@@ -13,6 +13,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Calendar, ChevronDown, List, BarChart, Trash2, Search, Pencil, Plus } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from '@expo/vector-icons';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import InjectionForm from "./InjectionForm";
 import EditInjectionForm from "./EditInjectionForm";
 
@@ -262,19 +263,72 @@ const InjectionHistory = ({
     }
   };
 
-  const renderRatingStars = (rating: number | undefined) => {
+  const renderRatingFaces = (rating: number | undefined) => {
     const ratingValue = rating || 0;
     return (
       <View className="flex-row">
-        {[...Array(5)].map((_, index) => (
-          <Ionicons
-            key={index}
-            name={index < ratingValue ? 'star' : 'star-outline'}
-            size={14}
-            color={index < ratingValue ? "#FFD700" : "#9CA3AF"}
-            style={{ marginRight: 2 }}
-          />
-        ))}
+        {[...Array(5)].map((_, index) => {
+          const ratingLevel = index + 1;
+          const isSelected = ratingLevel === ratingValue;
+          
+          // Choose smiley face based on rating level - each level gets a distinct face
+          let iconName = 'happy-outline'; // Default neutral face
+          let iconColor = '#9CA3AF'; // Default gray color
+          
+          if (isSelected) {
+            switch (ratingLevel) {
+              case 1:
+                iconName = 'frown-o';
+                iconColor = '#EF4444'; // Red for very sad
+                break;
+              case 2:
+                iconName = 'frown-o';
+                iconColor = '#F97316'; // Orange for sad
+                break;
+              case 3:
+                iconName = 'meh-o';
+                iconColor = '#EAB308'; // Yellow for neutral
+                break;
+              case 4:
+                iconName = 'smile-o';
+                iconColor = '#22C55E'; // Green for happy
+                break;
+              case 5:
+                iconName = 'smile-o';
+                iconColor = '#3B82F6'; // Blue for very happy
+                break;
+            }
+          } else {
+            // For unselected faces, show different faces based on their position
+            switch (ratingLevel) {
+              case 1:
+                iconName = 'frown-o';
+                break;
+              case 2:
+                iconName = 'frown-o';
+                break;
+              case 3:
+                iconName = 'meh-o';
+                break;
+              case 4:
+                iconName = 'smile-o';
+                break;
+              case 5:
+                iconName = 'smile-o';
+                break;
+            }
+          }
+          
+          return (
+            <Icon
+              key={index}
+              name={iconName}
+              size={20}
+              color={iconColor}
+              style={{ marginRight: 2 }}
+            />
+          );
+        })}
       </View>
     );
   };
@@ -373,33 +427,33 @@ const InjectionHistory = ({
             <View className="mt-4 pt-4 border-t border-gray-700">
               <View className="flex-row flex-wrap">
                 {mood > 0 && (
-                  <View className="bg-gray-700/50 rounded-lg p-2 mr-2 mb-2">
+                  <View className="bg-gray-700/50 rounded-lg p-2 mb-2" style={{ width: '48%', marginRight: '2%' }}>
                     <Text className="text-gray-400 text-xs mb-1">Mood</Text>
-                    {renderRatingStars(mood)}
+                    {renderRatingFaces(mood)}
                   </View>
                 )}
                 {sleep > 0 && (
-                  <View className="bg-gray-700/50 rounded-lg p-2 mr-2 mb-2">
+                  <View className="bg-gray-700/50 rounded-lg p-2 mb-2" style={{ width: '48%', marginRight: '2%' }}>
                     <Text className="text-gray-400 text-xs mb-1">Sleep</Text>
-                    {renderRatingStars(sleep)}
+                    {renderRatingFaces(sleep)}
                   </View>
                 )}
                 {libido > 0 && (
-                  <View className="bg-gray-700/50 rounded-lg p-2 mr-2 mb-2">
+                  <View className="bg-gray-700/50 rounded-lg p-2 mb-2" style={{ width: '48%', marginRight: '2%' }}>
                     <Text className="text-gray-400 text-xs mb-1">Libido</Text>
-                    {renderRatingStars(libido)}
+                    {renderRatingFaces(libido)}
                   </View>
                 )}
                 {energy > 0 && (
-                  <View className="bg-gray-700/50 rounded-lg p-2 mr-2 mb-2">
+                  <View className="bg-gray-700/50 rounded-lg p-2 mb-2" style={{ width: '48%', marginRight: '2%' }}>
                     <Text className="text-gray-400 text-xs mb-1">Energy</Text>
-                    {renderRatingStars(energy)}
+                    {renderRatingFaces(energy)}
                   </View>
                 )}
                 {sides > 0 && (
-                  <View className="bg-gray-700/50 rounded-lg p-2 mr-2 mb-2">
+                  <View className="bg-gray-700/50 rounded-lg p-2 mb-2" style={{ width: '48%', marginRight: '2%' }}>
                     <Text className="text-gray-400 text-xs mb-1">Side Effects</Text>
-                    {renderRatingStars(sides)}
+                    {renderRatingFaces(sides)}
                   </View>
                 )}
               </View>
