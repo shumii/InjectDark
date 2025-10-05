@@ -691,10 +691,77 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
                     style={{
                       position: "absolute",
                       left: (() => {
-                        const tooltipWidth = 200; // Approximate tooltip width
+                        // Calculate dynamic tooltip width based on actual text measurement
+                        const measureTextWidth = (text: string) => {
+                          // Use a more accurate character width calculation
+                          // Based on typical font metrics for 12px font size
+                          const charWidths = {
+                            'i': 4, 'l': 4, 't': 5, 'f': 5, 'j': 4, 'r': 5,
+                            'a': 6, 'c': 6, 'e': 6, 'g': 6, 'o': 6, 'p': 6, 'q': 6, 's': 6, 'u': 6, 'v': 6, 'w': 8, 'x': 6, 'y': 6, 'z': 6,
+                            'b': 7, 'd': 7, 'h': 7, 'k': 7, 'n': 7,
+                            'm': 10,
+                            'A': 8, 'B': 8, 'C': 8, 'D': 8, 'E': 7, 'F': 7, 'G': 8, 'H': 8, 'I': 4, 'J': 6, 'K': 8, 'L': 7, 'M': 10, 'N': 8, 'O': 8, 'P': 8, 'Q': 8, 'R': 8, 'S': 8, 'T': 7, 'U': 8, 'V': 8, 'W': 11, 'X': 8, 'Y': 8, 'Z': 7,
+                            '0': 7, '1': 6, '2': 7, '3': 7, '4': 7, '5': 7, '6': 7, '7': 7, '8': 7, '9': 7,
+                            ' ': 3, ':': 4, 'm': 7, 'g': 6
+                          };
+                          
+                          let totalWidth = 0;
+                          for (const char of text) {
+                            totalWidth += charWidths[char] || 7; // Default to 7px for unknown characters
+                          }
+                          return totalWidth;
+                        };
+                        
+                        const longestMedicationText = chartData.reduce((longest, dataset) => {
+                          const maxValue = Math.max(...dataset.data.map(point => point.y));
+                          const medicationText = `${dataset.medication}: ${Math.round(maxValue)}mg`;
+                          const textWidth = measureTextWidth(medicationText);
+                          return textWidth > longest ? textWidth : longest;
+                        }, 0);
+                        
+                        const baseWidth = 40; // Base width for padding and colored dots
+                        const safetyBuffer = 20; // Extra buffer to prevent off-screen rendering
+                        const tooltipWidth = Math.min(baseWidth + longestMedicationText + safetyBuffer, 300); // Cap at 300px
+                        
                         const gap = 8;
-                        const rightEdge = hoveredPoint.xPx + gap + tooltipWidth;
-                        return rightEdge > chartWidth ? Math.max(0, hoveredPoint.xPx - tooltipWidth) : hoveredPoint.xPx + gap;
+                        const chartLeftPadding = 35; // Chart's left padding
+                        const chartRightPadding = 30; // Chart's right padding
+                        const dataAreaWidth = chartWidth - chartLeftPadding - chartRightPadding;
+                        
+                        // Convert hoveredPoint.xPx to absolute position (it's relative to data area)
+                        const absoluteX = hoveredPoint.xPx + chartLeftPadding;
+                        const rightEdge = absoluteX + gap + tooltipWidth;
+                        const leftEdge = absoluteX - tooltipWidth - gap;
+                        const maxRight = chartWidth - chartRightPadding;
+                        
+                        console.log('Tooltip positioning debug:', {
+                          hoveredPointX: hoveredPoint.xPx,
+                          absoluteX,
+                          tooltipWidth,
+                          rightEdge,
+                          leftEdge,
+                          chartWidth,
+                          maxRight,
+                          chartLeftPadding,
+                          chartRightPadding
+                        });
+                        
+                        // Check if tooltip can fit to the right
+                        if (rightEdge <= maxRight) {
+                          console.log('Positioning to the right:', absoluteX + gap);
+                          return absoluteX + gap;
+                        }
+                        // Check if tooltip can fit to the left (allow it to go closer to the edge)
+                        else if (leftEdge >= 0) {
+                          console.log('Positioning to the left:', leftEdge);
+                          return leftEdge;
+                        }
+                        // If neither fits, center the tooltip on the line
+                        else {
+                          const centered = Math.max(chartLeftPadding, absoluteX - (tooltipWidth / 2));
+                          console.log('Centering tooltip:', centered);
+                          return centered;
+                        }
                       })(),
                       top: 40,
                       backgroundColor: "#222",
