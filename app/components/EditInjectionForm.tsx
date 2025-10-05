@@ -141,7 +141,6 @@ const EditInjectionForm = ({
   };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(false);
     if (selectedDate) {
       const currentDateTime = new Date(dateTime);
       currentDateTime.setFullYear(selectedDate.getFullYear());
