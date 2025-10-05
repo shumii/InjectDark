@@ -389,7 +389,7 @@ const StatisticsDashboard = () => {
         
         if (closest) {
           closest.y = Number(Number(closest.y).toFixed(0));
-          closest.label = closest.y.toString();
+          closest.label = closest.y.toString() + 'mg';
         }
       }
       
