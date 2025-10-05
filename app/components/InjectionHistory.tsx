@@ -552,39 +552,40 @@ const InjectionHistory = ({
   }
 
   return (
-    <View className="flex-1 bg-gray-900 p-4">
-      <Text className="text-white text-2xl font-bold mb-6">Injection History</Text>
+    <View className="flex-1 bg-gray-900">
+      <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
+        <Text className="text-white text-2xl font-bold mb-6">Injection History</Text>
 
-      <View className={`mb-4 bg-gray-800 rounded-lg flex-row items-center px-3 ${searchFocused ? 'border border-blue-500' : ''}`}>
-        <Search size={18} color="#6B7280" />
-        <TextInput
-          className="flex-1 py-3 px-2 text-white"
-          placeholder="Search medications, sites, dosages..."
-          placeholderTextColor="#6B7280"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          onFocus={() => setSearchFocused(true)}
-          onBlur={() => setSearchFocused(false)}
-        />
-        {searchQuery !== "" && (
-          <TouchableOpacity onPress={() => setSearchQuery("")}>
-            <Ionicons name="close-circle" size={18} color="#6B7280" />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Add Injection Button - match HomeScreen style */}
-      <TouchableOpacity
-        onPress={() => setShowAddForm(true)}
-        className="mb-6 rounded-md bg-blue-500"
-      >
-        <View style={{ flexDirection: 'row' }} className="p-4">
-          <Plus size={24} color="white" />
-          <Text className="text-white text-lg font-semibold ml-2">
-            Add Injection
-          </Text>
+        <View className={`mb-4 bg-gray-800 rounded-lg flex-row items-center px-3 ${searchFocused ? 'border border-blue-500' : ''}`}>
+          <Search size={18} color="#6B7280" />
+          <TextInput
+            className="flex-1 py-3 px-2 text-white"
+            placeholder="Search medications, sites, dosages..."
+            placeholderTextColor="#6B7280"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
+          />
+          {searchQuery !== "" && (
+            <TouchableOpacity onPress={() => setSearchQuery("")}>
+              <Ionicons name="close-circle" size={18} color="#6B7280" />
+            </TouchableOpacity>
+          )}
         </View>
-      </TouchableOpacity>
+
+        {/* Add Injection Button - match HomeScreen style */}
+        <TouchableOpacity
+          onPress={() => setShowAddForm(true)}
+          className="mb-6 rounded-md bg-blue-500"
+        >
+          <View style={{ flexDirection: 'row' }} className="p-4">
+            <Plus size={24} color="white" />
+            <Text className="text-white text-lg font-semibold ml-2">
+              Add Injection
+            </Text>
+          </View>
+        </TouchableOpacity>
 
       {loading ? (
         <View className="flex-1 justify-center items-center">
@@ -621,6 +622,8 @@ const InjectionHistory = ({
                 )}
               />
           )}
+
+      </ScrollView>
 
       {/* Render the InjectionForm for editing */}
       {showEditForm && editingInjection && (
