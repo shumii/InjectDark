@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { Calendar, Clock, Check, ChevronDown, Repeat } from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import StarRating from "./StarRating";
+import SatisfactionRating from "./SatisfactionRating";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface EditInjectionFormProps {
@@ -357,15 +357,15 @@ const EditInjectionForm = ({
         <View>
           <Text className="text-white text-base mb-2">How have you been feeling recently?</Text>
           <Text className="text-white text-base mb-2">Mood</Text>
-          <StarRating onRatingChange={setSelectedMoodRating} initialRating={selectedMoodRating} />
+          <SatisfactionRating onRatingChange={setSelectedMoodRating} initialRating={selectedMoodRating} />
           <Text className="text-white text-base mb-2">Sleep</Text>
-          <StarRating onRatingChange={setSelectedSleepRating} initialRating={selectedSleepRating} />
+          <SatisfactionRating onRatingChange={setSelectedSleepRating} initialRating={selectedSleepRating} />
           <Text className="text-white text-base mb-2">Libido</Text>
-          <StarRating onRatingChange={setSelectedLibidoRating} initialRating={selectedLibidoRating} />
+          <SatisfactionRating onRatingChange={setSelectedLibidoRating} initialRating={selectedLibidoRating} />
           <Text className="text-white text-base mb-2">Energy</Text>
-          <StarRating onRatingChange={setSelectedEnergyRating} initialRating={selectedEnergyRating} />
+          <SatisfactionRating onRatingChange={setSelectedEnergyRating} initialRating={selectedEnergyRating} />
           <Text className="text-white text-base mb-2">Side Effects</Text>
-          <StarRating onRatingChange={setSelectedSidesRating} initialRating={selectedSidesRating} />
+          <SatisfactionRating onRatingChange={setSelectedSidesRating} initialRating={selectedSidesRating} />
         </View>
         {/* Notes */}
         <View className="mb-7">
