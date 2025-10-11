@@ -19,6 +19,7 @@ import {
   VictoryTooltip,
 } from "victory-native";
 import { Calendar } from "lucide-react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface MedicationChartProps {
   injectionData?: Array<{
@@ -61,11 +62,30 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
   const screenWidth = Dimensions.get("window").width - 32; // Account for padding
   const chartWidth = selectedPeriod === 'year' ? screenWidth * 1.6 : screenWidth;
 
-  // Update selected period when injection data changes
+  // Load saved period preference on mount
   useEffect(() => {
-    const newDefaultPeriod = getDefaultPeriod();
-    setSelectedPeriod(newDefaultPeriod);
-  }, [injectionData]);
+    const loadSavedPeriod = async () => {
+      try {
+        const savedPeriod = await AsyncStorage.getItem('medicationChartPeriod');
+        if (savedPeriod && ['week', 'month', 'quarter', 'year'].includes(savedPeriod)) {
+          setSelectedPeriod(savedPeriod as TimePeriod);
+        }
+      } catch (error) {
+        console.error('Error loading saved period:', error);
+      }
+    };
+    loadSavedPeriod();
+  }, []);
+
+  // Save period preference when it changes
+  const handlePeriodChange = async (period: TimePeriod) => {
+    setSelectedPeriod(period);
+    try {
+      await AsyncStorage.setItem('medicationChartPeriod', period);
+    } catch (error) {
+      console.error('Error saving period:', error);
+    }
+  };
 
   // Get current date and calculate date ranges
   const currentDate = new Date();
@@ -496,7 +516,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
         {(["week", "month", "quarter", "year"] as TimePeriod[]).map((period) => (
           <TouchableOpacity
             key={period}
-            onPress={() => setSelectedPeriod(period)}
+            onPress={() => handlePeriodChange(period)}
             className={`px-4 py-2 mx-1 rounded-full ${selectedPeriod === period ? "bg-purple-600" : "bg-gray-700"}`}
           >
             <Text className="text-white capitalize">{period === "quarter" ? "90 Days" : period}</Text>
