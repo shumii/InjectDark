@@ -783,7 +783,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
                           return centered;
                         }
                       })(),
-                      top: 40,
+                      top: -70,
                       backgroundColor: "#222",
                       padding: 10,
                       borderRadius: 10,
