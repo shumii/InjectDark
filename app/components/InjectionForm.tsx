@@ -346,6 +346,7 @@ const InjectionForm = ({
     return date.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
+      hour12: false,
     });
   };
 
@@ -560,6 +561,7 @@ const InjectionForm = ({
               mode="time"
                       display="spinner"
               onChange={handleTimeChange}
+                      is24Hour={true}
                       style={{
                         width: '100%',
                       }}

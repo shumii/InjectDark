@@ -270,7 +270,7 @@ const EditInjectionForm = ({
               onPress={() => setShowTimePicker(true)}
             >
               <Clock size={20} color="#fff" />
-              <Text className="text-white ml-2">{dateTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</Text>
+              <Text className="text-white ml-2">{dateTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false })}</Text>
             </TouchableOpacity>
           </View>
           {showDatePicker && (
@@ -330,6 +330,7 @@ const EditInjectionForm = ({
                       mode="time"
                       display="spinner"
                       onChange={handleTimeChange}
+                      is24Hour={true}
                       style={{ width: "100%" }}
                     />
                   </View>
