@@ -698,9 +698,9 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
                     style={{
                       position: "absolute",
                       left: hoveredPoint.xPx - 1,
-                      top: 0,
+                      top: 10, // Match chart top padding
                       width: 2,
-                      height: 250,
+                      height: 180, // Chart height (250) minus top padding (10) minus bottom padding (60) = 180
                       backgroundColor: hoveredPoint.color,
                       opacity: 0.5,
                     }}
