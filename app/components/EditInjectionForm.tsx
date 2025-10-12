@@ -8,6 +8,7 @@ import {
   Modal,
   FlatList,
   Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import { Calendar, Clock, Check, ChevronDown, Repeat } from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -223,10 +224,15 @@ const EditInjectionForm = ({
   };
 
   return (
-    <ScrollView className="bg-gray-900 p-4">
-      <View className="bg-gray-800 rounded-lg p-5 mb-5">
-        <Text className="text-2xl font-bold text-white mb-6">
-          Edit Injection
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      className="flex-1"
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+    >
+      <ScrollView className="bg-gray-900 p-4">
+        <View className="bg-gray-800 rounded-lg p-5 mb-5">
+          <Text className="text-2xl font-bold text-white mb-6">
+            Edit Injection
         </Text>
         {/* Medication Name */}
         <View className="mb-4">
@@ -467,6 +473,7 @@ const EditInjectionForm = ({
         </TouchableOpacity>
       </View>
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 

@@ -538,6 +538,26 @@ const InjectionHistory = ({
     );
   };
 
+  // If showing edit form, render it full screen
+  if (showEditForm && editingInjection) {
+    return (
+      <View className="flex-1 bg-gray-900">
+        <EditInjectionForm
+          onClose={() => setShowEditForm(false)}
+          onSave={handleSaveEditedInjection}
+          injection={{
+            ...editingInjection,
+            dosage: Number(editingInjection.dosage),
+            dateTime: new Date(editingInjection.dateTime),
+            injectionSite: editingInjection.injectionSite || "",
+            halfLifeMinutes: editingInjection.halfLifeMinutes,
+            concentration: editingInjection.concentration,
+          }}
+        />
+      </View>
+    );
+  }
+
   // If showing add form, render it full screen like home screen
   if (showAddForm) {
     // Calculate the suggested site for the new injection - same logic as home screen
@@ -652,26 +672,6 @@ const InjectionHistory = ({
           )}
 
       </ScrollView>
-
-      {/* Render the InjectionForm for editing */}
-      {showEditForm && editingInjection && (
-        <EditInjectionForm
-          onClose={() => setShowEditForm(false)}
-          onSave={handleSaveEditedInjection}
-          injection={{
-            ...editingInjection,
-            dosage: Number(editingInjection.dosage),
-            dateTime: new Date(editingInjection.dateTime),
-            injectionSite: editingInjection.injectionSite || "",
-            moodRating: editingInjection.moodRating ?? 0,
-            sleepRating: editingInjection.sleepRating ?? 0,
-            libidoRating: editingInjection.libidoRating ?? 0,
-            energyRating: editingInjection.energyRating ?? 0,
-            sidesRating: editingInjection.sidesRating ?? 0,
-            notes: editingInjection.notes ?? "",
-          }}
-        />
-      )}
 
     </View>
   );
