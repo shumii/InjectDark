@@ -14,6 +14,7 @@ import { Calendar, Clock, Check, ChevronDown, Repeat } from "lucide-react-native
 import DateTimePicker from "@react-native-community/datetimepicker";
 import SatisfactionRating from "./SatisfactionRating";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { normalizeNumberInput, parseLocalizedNumber } from "../utils/injectionUtils";
 
 interface EditInjectionFormProps {
   onClose: () => void,
@@ -127,14 +128,15 @@ const EditInjectionForm = ({
   const toggleDosageUnit = () => {
     const concentration = getCurrentConcentration();
     
-    if (dosage && !isNaN(Number(dosage))) {
+    const normalizedDosage = parseLocalizedNumber(dosage);
+    if (dosage && !isNaN(normalizedDosage)) {
       if (dosageUnit === 'mg') {
         // Convert from mg to ml
-        setDosage((Number(dosage) / concentration).toFixed(2));
+        setDosage((normalizedDosage / concentration).toFixed(2));
         setDosageUnit('ml');
       } else {
         // Convert from ml to mg
-        setDosage(Math.round(Number(dosage) * concentration).toString());
+        setDosage(Math.round(normalizedDosage * concentration).toString());
         setDosageUnit('mg');
       }
     } else {
@@ -149,7 +151,7 @@ const EditInjectionForm = ({
     }
     if (!dosage.trim()) {
       newErrors.dosage = "Dosage is required";
-    } else if (isNaN(Number(dosage))) {
+    } else if (isNaN(parseLocalizedNumber(dosage))) {
       newErrors.dosage = "Dosage must be a number";
     }
     if (!injectionSite) {
@@ -163,10 +165,11 @@ const EditInjectionForm = ({
     if (validateForm()) {
       const concentration = getCurrentConcentration();
       
-      // Convert dosage to mg if currently in ml
+      // Normalize and convert dosage to mg if currently in ml
+      const normalizedDosage = parseLocalizedNumber(dosage);
       const dosageInMg = dosageUnit === 'ml' 
-        ? Number(dosage) * concentration 
-        : Number(dosage);
+        ? normalizedDosage * concentration 
+        : normalizedDosage;
       
       onSave({
         ...injection,
@@ -320,9 +323,9 @@ const EditInjectionForm = ({
           {errors.dosage && (
             <Text className="text-red-500 mt-1">{errors.dosage}</Text>
           )}
-          {dosageUnit === 'ml' && dosage && !isNaN(Number(dosage)) && selectedMedication && selectedMedication.concentration && selectedMedication.concentration > 0 && (
+          {dosageUnit === 'ml' && dosage && !isNaN(parseLocalizedNumber(dosage)) && selectedMedication && selectedMedication.concentration && selectedMedication.concentration > 0 && (
             <Text className="text-gray-400 text-xs mt-1">
-              Equivalent to {Math.round(parseFloat(dosage) * selectedMedication.concentration)}mg
+              Equivalent to {Math.round(parseLocalizedNumber(dosage) * selectedMedication.concentration)}mg
             </Text>
           )}
         </View>
