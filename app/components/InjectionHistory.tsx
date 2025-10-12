@@ -39,12 +39,14 @@ interface InjectionHistoryProps {
   injections?: Injection[];
   onSelectInjection?: (injection: Injection) => void;
   selectedInjectionId?: string;
+  onClearSelectedInjection?: () => void;
 }
 
 const InjectionHistory = ({
   injections: propInjections,
   onSelectInjection = () => {},
   selectedInjectionId,
+  onClearSelectedInjection,
 }: InjectionHistoryProps) => {
   const [injections, setInjections] = useState<Injection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -130,13 +132,43 @@ const InjectionHistory = ({
 
 
   useEffect(() => {
-    if (selectedInjectionId && filteredInjections.length > 0) {
+    if (selectedInjectionId && filteredInjections.length > 0 && !showEditForm && !showAddForm) {
+      console.log('[InjectionHistory] Attempting to scroll to injection:', selectedInjectionId);
       const index = filteredInjections.findIndex(inj => inj.id === selectedInjectionId);
-      if (index !== -1 && flatListRef.current) {
-        flatListRef.current.scrollToIndex({ index, animated: true });
+      console.log('[InjectionHistory] Found at index:', index, 'of', filteredInjections.length);
+      
+      if (index !== -1) {
+        // Use setTimeout to ensure FlatList is mounted and laid out
+        const timer = setTimeout(() => {
+          console.log('[InjectionHistory] Timer fired, flatListRef exists:', !!flatListRef.current);
+          if (flatListRef.current) {
+            try {
+              console.log('[InjectionHistory] Calling scrollToIndex with index:', index);
+              flatListRef.current.scrollToIndex({ 
+                index, 
+                animated: true,
+                viewPosition: 0 // Position at top of viewport
+              });
+              // Clear the selected injection after scrolling
+              if (onClearSelectedInjection) {
+                setTimeout(() => {
+                  onClearSelectedInjection();
+                }, 1000); // Wait for scroll animation to complete
+              }
+            } catch (error) {
+              console.log('[InjectionHistory] scrollToIndex failed:', error);
+              // Still clear even if scroll failed
+              if (onClearSelectedInjection) {
+                onClearSelectedInjection();
+              }
+            }
+          }
+        }, 500); // Longer timeout to ensure everything is rendered
+        
+        return () => clearTimeout(timer);
       }
     }
-  }, [selectedInjectionId, filteredInjections]);
+  }, [selectedInjectionId, filteredInjections, showEditForm, showAddForm, onClearSelectedInjection]);
 
   // Calculate testosterone level at a specific injection time
   const calculateTestosteroneLevel = (currentInjection: Injection) => {
@@ -599,79 +631,89 @@ const InjectionHistory = ({
     );
   }
 
+  const renderHeader = () => (
+    <View className="p-4">
+      <Text className="text-white text-2xl font-bold mb-6">Injection History</Text>
+
+      <View className={`mb-4 bg-gray-800 rounded-lg flex-row items-center px-3 ${searchFocused ? 'border border-blue-500' : ''}`}>
+        <Search size={18} color="#6B7280" />
+        <TextInput
+          className="flex-1 py-3 px-2 text-white"
+          placeholder="Search medications, sites, dosages..."
+          placeholderTextColor="#6B7280"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onFocus={() => setSearchFocused(true)}
+          onBlur={() => setSearchFocused(false)}
+        />
+        {searchQuery !== "" && (
+          <TouchableOpacity onPress={() => setSearchQuery("")}>
+            <Ionicons name="close-circle" size={18} color="#6B7280" />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Add Injection Button - match HomeScreen style */}
+      <TouchableOpacity
+        onPress={() => setShowAddForm(true)}
+        className="mb-6 rounded-md bg-blue-500"
+      >
+        <View style={{ flexDirection: 'row' }} className="p-4">
+          <Plus size={24} color="white" />
+          <Text className="text-white text-lg font-semibold ml-2">
+            Add Injection
+          </Text>
+        </View>
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
     <View className="flex-1 bg-gray-900">
-      <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
-        <Text className="text-white text-2xl font-bold mb-6">Injection History</Text>
-
-        <View className={`mb-4 bg-gray-800 rounded-lg flex-row items-center px-3 ${searchFocused ? 'border border-blue-500' : ''}`}>
-          <Search size={18} color="#6B7280" />
-          <TextInput
-            className="flex-1 py-3 px-2 text-white"
-            placeholder="Search medications, sites, dosages..."
-            placeholderTextColor="#6B7280"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onFocus={() => setSearchFocused(true)}
-            onBlur={() => setSearchFocused(false)}
-          />
-          {searchQuery !== "" && (
-            <TouchableOpacity onPress={() => setSearchQuery("")}>
-              <Ionicons name="close-circle" size={18} color="#6B7280" />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Add Injection Button - match HomeScreen style */}
-        <TouchableOpacity
-          onPress={() => setShowAddForm(true)}
-          className="mb-6 rounded-md bg-blue-500"
-        >
-          <View style={{ flexDirection: 'row' }} className="p-4">
-            <Plus size={24} color="white" />
-            <Text className="text-white text-lg font-semibold ml-2">
-              Add Injection
-            </Text>
-          </View>
-        </TouchableOpacity>
-
       {loading ? (
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#60a5fa" />
           <Text className="text-white mt-4">Loading injections...</Text>
         </View>
       ) : filteredInjections.length === 0 ? (
-        <View className="flex-1 justify-center items-center">
-          {searchQuery !== "" ? (
-            <>
-              <Text className="text-white text-lg">No matching injections found</Text>
-              <Text className="text-gray-400 mt-2 text-center">
-                Try adjusting your search terms or clear the search to see all injections
-              </Text>
-            </>
-          ) : (
-            <>
-          <Text className="text-white text-lg">No injection records found</Text>
-          <Text className="text-gray-400 mt-2">
-            Add your first injection to get started
-          </Text>
-            </>
-          )}
+        <View className="flex-1">
+          {renderHeader()}
+          <View className="flex-1 justify-center items-center px-4">
+            {searchQuery !== "" ? (
+              <>
+                <Text className="text-white text-lg">No matching injections found</Text>
+                <Text className="text-gray-400 mt-2 text-center">
+                  Try adjusting your search terms or clear the search to see all injections
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text className="text-white text-lg">No injection records found</Text>
+                <Text className="text-gray-400 mt-2">
+                  Add your first injection to get started
+                </Text>
+              </>
+            )}
+          </View>
         </View>
       ) : (
-              <FlatList
+        <FlatList
           ref={flatListRef}
           data={filteredInjections}
-                renderItem={renderListItem}
-                keyExtractor={(item) => item.id}
-                className="flex-1"
-                getItemLayout={(data, index) => (
-                  {length: 180, offset: 180 * index, index} // Approximate row height
-                )}
-              />
-          )}
-
-      </ScrollView>
+          renderItem={renderListItem}
+          keyExtractor={(item) => item.id}
+          ListHeaderComponent={renderHeader}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          onScrollToIndexFailed={(info) => {
+            // Fallback if scrollToIndex fails
+            const wait = new Promise(resolve => setTimeout(resolve, 500));
+            wait.then(() => {
+              flatListRef.current?.scrollToIndex({ index: info.index, animated: true, viewPosition: 0.5 });
+            });
+          }}
+        />
+      )}
 
     </View>
   );

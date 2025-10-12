@@ -725,7 +725,10 @@ export default function HomeScreen() {
           </ScrollView>
         );
       case "history":
-        return <InjectionHistory selectedInjectionId={selectedInjectionId || undefined} />;
+        return <InjectionHistory 
+          selectedInjectionId={selectedInjectionId || undefined} 
+          onClearSelectedInjection={() => setSelectedInjectionId(null)}
+        />;
       case "stats":
         return <StatisticsDashboard />;
       case "settings":
