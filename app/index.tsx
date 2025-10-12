@@ -597,7 +597,7 @@ export default function HomeScreen() {
     switch (activeTab) {
       case "home":
         return (
-          <ScrollView className="flex-1 px-4">
+          <ScrollView className="flex-1">
             <View className="mt-4 mb-6">
               <Text className="text-2xl font-bold text-white mb-1">
                 PINN
