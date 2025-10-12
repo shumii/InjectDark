@@ -95,6 +95,28 @@ const EditInjectionForm = ({
   const [notes, setNotes] = useState(injection.notes);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Load dosage unit preference and convert dosage if needed
+  useEffect(() => {
+    const loadDosageUnitPreference = async () => {
+      try {
+        const storedUnit = await AsyncStorage.getItem('defaultDosageUnit');
+        if (storedUnit && (storedUnit === 'mg' || storedUnit === 'ml')) {
+          setDosageUnit(storedUnit as 'mg' | 'ml');
+          
+          // If preference is ml and we have a medication with concentration, convert the dosage
+          if (storedUnit === 'ml' && selectedMedication?.concentration) {
+            const mlValue = (injection.dosage / selectedMedication.concentration).toFixed(2);
+            setDosage(mlValue);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading dosage unit preference:', error);
+      }
+    };
+    
+    loadDosageUnitPreference();
+  }, [selectedMedication]);
+
   // Get the current medication's concentration for conversion
   const getCurrentConcentration = () => {
     return selectedMedication?.concentration || 100; // Default to 100mg/ml if not specified
