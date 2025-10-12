@@ -632,8 +632,8 @@ const InjectionHistory = ({
   }
 
   const renderHeader = () => (
-    <View className="p-4">
-      <Text className="text-white text-2xl font-bold mb-6">Injection History</Text>
+    <View className="mt-5">
+      <Text className="text-white text-2xl font-bold mb-3">Injection History</Text>
 
       <View className={`mb-4 bg-gray-800 rounded-lg flex-row items-center px-3 ${searchFocused ? 'border border-blue-500' : ''}`}>
         <Search size={18} color="#6B7280" />
