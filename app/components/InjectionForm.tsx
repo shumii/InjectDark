@@ -145,15 +145,19 @@ const InjectionForm = ({
   };
 
   const [dosage, setDosage] = useState(() => {
-    
-    // If default unit is ml and we have a dosage and medication, convert from mg to ml
-    if (defaultDosageUnit === 'ml' && lastInjection?.dosage && selectedMedication?.concentration) {
-      const mlValue = (lastInjection.dosage / selectedMedication.concentration).toFixed(2);
-      return mlValue;
-    }
-    
     return lastInjection?.dosage?.toString() || "";
   });
+
+  // Update dosage when medication is loaded and we need to convert to ml
+  useEffect(() => {
+    if (defaultDosageUnit === 'ml' && lastInjection?.dosage && selectedMedication?.concentration) {
+      const mlValue = (lastInjection.dosage / selectedMedication.concentration).toFixed(2);
+      setDosage(mlValue);
+    } else if (lastInjection?.dosage && !dosage) {
+      // If we haven't set dosage yet and we have a last injection, use it
+      setDosage(lastInjection.dosage.toString());
+    }
+  }, [selectedMedication, defaultDosageUnit, lastInjection?.dosage]);
 
   const [dateTime, setDateTime] = useState(() => {    
     if (useCurrentTime) {

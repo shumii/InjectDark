@@ -81,6 +81,7 @@ const EditInjectionForm = ({
   const [medicationName, setMedicationName] = useState(injection.medicationName);
   const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
   const [showMedicationDropdown, setShowMedicationDropdown] = useState(false);
+  const [dosageUnit, setDosageUnit] = useState<'mg' | 'ml'>('mg');
   const [dosage, setDosage] = useState(injection.dosage.toString());
   const [dateTime, setDateTime] = useState(new Date(injection.dateTime));
   const [injectionSite, setInjectionSite] = useState(injection.injectionSite);
@@ -93,6 +94,30 @@ const EditInjectionForm = ({
   const [selectedSidesRating, setSelectedSidesRating] = useState(injection.sidesRating);
   const [notes, setNotes] = useState(injection.notes);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Get the current medication's concentration for conversion
+  const getCurrentConcentration = () => {
+    return selectedMedication?.concentration || 100; // Default to 100mg/ml if not specified
+  };
+
+  // Function to toggle between mg and ml
+  const toggleDosageUnit = () => {
+    const concentration = getCurrentConcentration();
+    
+    if (dosage && !isNaN(Number(dosage))) {
+      if (dosageUnit === 'mg') {
+        // Convert from mg to ml
+        setDosage((Number(dosage) / concentration).toFixed(2));
+        setDosageUnit('ml');
+      } else {
+        // Convert from ml to mg
+        setDosage(Math.round(Number(dosage) * concentration).toString());
+        setDosageUnit('mg');
+      }
+    } else {
+      setDosageUnit(prevUnit => prevUnit === 'mg' ? 'ml' : 'mg');
+    }
+  };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -113,8 +138,13 @@ const EditInjectionForm = ({
 
   const handleSubmit = () => {
     if (validateForm()) {
-      const concentration = selectedMedication?.concentration || 100;
-      const dosageInMg = Number(dosage);
+      const concentration = getCurrentConcentration();
+      
+      // Convert dosage to mg if currently in ml
+      const dosageInMg = dosageUnit === 'ml' 
+        ? Number(dosage) * concentration 
+        : Number(dosage);
+      
       onSave({
         ...injection,
         medicationName,
@@ -242,16 +272,30 @@ const EditInjectionForm = ({
         {/* Dosage */}
         <View className="mb-4">
           <Text className="text-white text-base mb-2">Dosage</Text>
-          <TextInput
-            className={`bg-gray-700 text-white p-3 rounded-md ${errors.dosage ? "border border-red-500" : ""}`}
-            placeholder="Enter dosage (mg)"
-            placeholderTextColor="#9ca3af"
-            value={dosage}
-            keyboardType="numeric"
-            onChangeText={(value) => setDosage(value.replace(/[^0-9.]/g, ""))}
-          />
+          <View className="flex-row items-center">
+            <TextInput
+              className={`flex-1 bg-gray-700 text-white p-3 rounded-l-md ${errors.dosage ? "border border-red-500" : ""}`}
+              placeholder={`Enter dosage (${dosageUnit})`}
+              placeholderTextColor="#9ca3af"
+              value={dosage}
+              keyboardType="numeric"
+              onChangeText={(value) => setDosage(value.replace(/[^0-9.]/g, ""))}
+            />
+            <TouchableOpacity
+              className="bg-blue-600 p-3 rounded-r-md flex-row items-center"
+              onPress={toggleDosageUnit}
+            >
+              <Repeat size={16} color="white" />
+              <Text className="text-white ml-2 font-bold">{dosageUnit}</Text>
+            </TouchableOpacity>
+          </View>
           {errors.dosage && (
             <Text className="text-red-500 mt-1">{errors.dosage}</Text>
+          )}
+          {dosageUnit === 'ml' && dosage && !isNaN(Number(dosage)) && selectedMedication && selectedMedication.concentration && selectedMedication.concentration > 0 && (
+            <Text className="text-gray-400 text-xs mt-1">
+              Equivalent to {Math.round(parseFloat(dosage) * selectedMedication.concentration)}mg
+            </Text>
           )}
         </View>
         {/* Date & Time */}
