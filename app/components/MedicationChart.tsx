@@ -141,8 +141,19 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
         fullDateRange.forEach(date => {
           const currentDate = new Date(date);
           //currentDate.setHours(23, 59, 59, 999);
-          currentDate.setHours(injectionDate.getHours(), injectionDate.getMinutes(), injectionDate.getSeconds(), injectionDate.getMilliseconds());
+          
+          // if injectionData has an injection where injection date matches date then get that injection time
+          var matchingInjectionForDate = injectionData.find(inj => new Date(inj.dateTime).toISOString().split("T")[0] === date);          
 
+          if (matchingInjectionForDate){
+            
+            var time = new Date(matchingInjectionForDate.dateTime);
+            currentDate.setHours(time.getHours(), time.getMinutes(), time.getSeconds(), time.getMilliseconds());  
+          }
+          else{
+            currentDate.setHours(injectionDate.getHours(), injectionDate.getMinutes(), injectionDate.getSeconds(), injectionDate.getMilliseconds());
+          }
+          
           // Calculate minutes difference
           const minutesDiff = (currentDate.getTime() - injectionDate.getTime()) / (1000 * 60);
 
@@ -154,6 +165,14 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
 
             // Add this level to any existing level for this day
             fullMedicationMap[medicationName][date] += levelForThisInjection;
+
+            // log if date matches debug date so we can see the contributions of each injection for a date
+
+            
+              // if (date == "2025-09-26"){
+              //   console.log(`Injection: ${injection.medicationName}, Dosage: ${injection.dosage}mg, Minutes since injection: ${minutesDiff.toFixed(1)}, Half-life periods: ${halfLifePeriods.toFixed(2)}, Contribution: ${levelForThisInjection.toFixed(2)}mg`);
+              //   console.log('MinutesDiff was calculated using ' + currentDate.toISOString() + ' - ' + injectionDate.toISOString());
+              // }
           }
         });
       }
@@ -319,7 +338,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
         medicationMap['Total T'] = totalTLevels;
         medications.add('Total T');
         
-        console.log('Added Total T - medications set now contains:', Array.from(medications));
+        
       }
     }
 
@@ -334,8 +353,7 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
       };
     });
 
-    console.log('Final chartData medications:', finalData.map(d => d.medication));
-    console.log('Medications set used for chartData:', Array.from(medications));
+    
 
     return finalData;
   }, [filteredData, selectedPeriod, filteredTLevels]);
@@ -422,11 +440,6 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
     symbol: { fill: colors[index % colors.length] },
   }));
   
-  console.log('Chart data length:', chartData.length);
-  console.log('Chart data medications:', chartData.map(d => d.medication));
-  console.log('Legend data length:', legendData.length);
-  console.log('Legend data medications:', legendData.map(d => d.name));
-  console.log('Legend data full objects:', legendData);
 
   // Helper to convert x (date) to pixel
   function chartXToPixel(x: Date | string) {    
@@ -753,33 +766,21 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
                         const rightEdge = absoluteX + gap + tooltipWidth;
                         const leftEdge = absoluteX - tooltipWidth - gap;
                         const maxRight = chartWidth - chartRightPadding;
-                        
-                        console.log('Tooltip positioning debug:', {
-                          hoveredPointX: hoveredPoint.xPx,
-                          absoluteX,
-                          tooltipWidth,
-                          rightEdge,
-                          leftEdge,
-                          chartWidth,
-                          maxRight,
-                          chartLeftPadding,
-                          chartRightPadding
-                        });
-                        
+             
                         // Check if tooltip can fit to the right
                         if (rightEdge <= maxRight) {
-                          console.log('Positioning to the right:', absoluteX + gap);
+                          
                           return absoluteX + gap;
                         }
                         // Check if tooltip can fit to the left (allow it to go closer to the edge)
                         else if (leftEdge >= 0) {
-                          console.log('Positioning to the left:', leftEdge);
+                          
                           return leftEdge;
                         }
                         // If neither fits, center the tooltip on the line
                         else {
                           const centered = Math.max(chartLeftPadding, absoluteX - (tooltipWidth / 2));
-                          console.log('Centering tooltip:', centered);
+                          
                           return centered;
                         }
                       })(),

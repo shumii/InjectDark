@@ -239,18 +239,18 @@ const StatisticsDashboard = () => {
       const roundedTLevel = Math.round(tLevel);
       
       // Log T-level calculation for each day
-      console.log(`Day ${day} (${dailyDate.toISOString().split('T')[0]}): T-level = ${roundedTLevel}`, {
-        totalContributions: contributions.length,
-        contributions: contributions.map(c => ({
-          date: c.date.split('T')[0],
-          dosage: c.dosage,
-          minutesDiff: Math.round(c.minutesDiff),
-          halfLifePeriods: c.halfLifePeriods.toFixed(2),
-          decayFactor: c.decayFactor.toFixed(3),
-          contribution: c.contribution.toFixed(1),
-          isProjected: c.isProjected
-        }))
-      });
+      // console.log(`Day ${day} (${dailyDate.toISOString().split('T')[0]}): T-level = ${roundedTLevel}`, {
+      //   totalContributions: contributions.length,
+      //   contributions: contributions.map(c => ({
+      //     date: c.date.split('T')[0],
+      //     dosage: c.dosage,
+      //     minutesDiff: Math.round(c.minutesDiff),
+      //     halfLifePeriods: c.halfLifePeriods.toFixed(2),
+      //     decayFactor: c.decayFactor.toFixed(3),
+      //     contribution: c.contribution.toFixed(1),
+      //     isProjected: c.isProjected
+      //   }))
+      // });
       
       projections.push({ x: dailyDate.toISOString().split('T')[0], y: roundedTLevel, isInjection: addedInjectionToday });
     }
