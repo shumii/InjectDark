@@ -40,6 +40,7 @@ interface InjectionHistoryProps {
   onSelectInjection?: (injection: Injection) => void;
   selectedInjectionId?: string;
   onClearSelectedInjection?: () => void;
+  onDataChange?: () => void;
 }
 
 const InjectionHistory = ({
@@ -47,6 +48,7 @@ const InjectionHistory = ({
   onSelectInjection = () => {},
   selectedInjectionId,
   onClearSelectedInjection,
+  onDataChange,
 }: InjectionHistoryProps) => {
   const [injections, setInjections] = useState<Injection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -237,6 +239,7 @@ const InjectionHistory = ({
                 const updatedInjections = parsedInjections.filter((injection: any) => injection.id !== id);
                 await AsyncStorage.setItem("injections", JSON.stringify(updatedInjections));
                 await loadInjections();
+                onDataChange?.(); // Notify parent that data changed
               }
             } catch (error) {
               console.error("Error deleting injection:", error);
@@ -273,6 +276,7 @@ const InjectionHistory = ({
       setShowEditForm(false);
       setEditingInjection(null);
       loadInjections();
+      onDataChange?.(); // Notify parent that data changed
     } catch (error) {
       console.error("Error saving edited injection:", error);
       Alert.alert("Error", "Failed to save injection. Please try again.");
@@ -290,6 +294,7 @@ const InjectionHistory = ({
       
       setShowAddForm(false);
       loadInjections();
+      onDataChange?.(); // Notify parent that data changed
     } catch (error) {
       console.error("Error adding injection:", error);
       Alert.alert("Error", "Failed to add injection. Please try again.");

@@ -98,6 +98,9 @@ export default function HomeScreen() {
 
   const [showMedicationManagement, setShowMedicationManagement] = useState(false);
 
+  // Track if data has been modified to know when to reload
+  const dataModifiedRef = React.useRef(false);
+
   // Utility function to format dosage based on user preference
   const formatDosage = (dosageInMg: number, medicationName: string, concentration?: number) => {
     // Dosage is already converted to number during load, no need to convert again
@@ -403,12 +406,13 @@ export default function HomeScreen() {
     loadInjections();
   }, []);
 
-  // Refresh data when Home tab becomes active
+  // Reload data when switching to Home if data was modified in other tabs
   useEffect(() => {
-    if (activeTab === "home" && !showInjectionForm) {
+    if (activeTab === "home" && dataModifiedRef.current) {
       loadInjections();
+      dataModifiedRef.current = false;
     }
-  }, [activeTab, showInjectionForm]);
+  }, [activeTab]);
 
   // Refresh data when app comes to focus
   useEffect(() => {
@@ -740,6 +744,9 @@ export default function HomeScreen() {
         return <InjectionHistory 
           selectedInjectionId={selectedInjectionId || undefined} 
           onClearSelectedInjection={() => setSelectedInjectionId(null)}
+          onDataChange={() => {
+            dataModifiedRef.current = true;
+          }}
         />;
       case "stats":
         return <StatisticsDashboard />;
@@ -961,6 +968,7 @@ export default function HomeScreen() {
       <View className="flex-row bg-gray-800 px-2 py-2">
         <TouchableOpacity
           className={`flex-1 items-center py-2 ${activeTab === "home" ? "bg-gray-700 rounded-lg" : ""}`}
+          activeOpacity={0.7}
           onPress={() => {
             setShowInjectionForm(false);
             setActiveTab("home");
@@ -979,6 +987,7 @@ export default function HomeScreen() {
 
         <TouchableOpacity
           className={`flex-1 items-center py-2 ${activeTab === "history" ? "bg-gray-700 rounded-lg" : ""}`}
+          activeOpacity={0.7}
           onPress={() => {
             setShowInjectionForm(false);
             setActiveTab("history");
@@ -999,6 +1008,7 @@ export default function HomeScreen() {
 
         <TouchableOpacity
           className={`flex-1 items-center py-2 ${activeTab === "stats" ? "bg-gray-700 rounded-lg" : ""}`}
+          activeOpacity={0.7}
           onPress={() => {
             setShowInjectionForm(false);
             setActiveTab("stats");
@@ -1019,6 +1029,7 @@ export default function HomeScreen() {
 
         <TouchableOpacity
           className={`flex-1 items-center py-2 ${activeTab === "settings" ? "bg-gray-700 rounded-lg" : ""}`}
+          activeOpacity={0.7}
           onPress={() => {
             setShowInjectionForm(false);
             setActiveTab("settings");
