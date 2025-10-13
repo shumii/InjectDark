@@ -100,19 +100,18 @@ export default function HomeScreen() {
 
   // Utility function to format dosage based on user preference
   const formatDosage = (dosageInMg: number, medicationName: string, concentration?: number) => {
-    // Ensure dosage is a valid number
-    const dosage = Number(dosageInMg);
-    if (isNaN(dosage)) {
+    // Dosage is already converted to number during load, no need to convert again
+    if (isNaN(dosageInMg)) {
       return '0 mg';
     }
     
     if (defaultDosageUnit === 'ml') {
       // Convert mg to ml using concentration
       const medConcentration = concentration || 100; // Default to 100mg/ml if not specified
-      const dosageInMl = dosage / medConcentration;
-      return `${dosageInMl.toFixed(1)} ml (${dosage} mg)`;
+      const dosageInMl = dosageInMg / medConcentration;
+      return `${dosageInMl.toFixed(1)} ml (${dosageInMg} mg)`;
     } else {
-      return `${dosage} mg`;
+      return `${dosageInMg} mg`;
     }
   };
 
@@ -366,7 +365,13 @@ export default function HomeScreen() {
           const parsedInjections: InjectionData[] =
             JSON.parse(storedInjections);
 
-          const sortedInjections = parsedInjections.sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());          
+          // Convert dosage to number once during load, not during render
+          const normalizedInjections = parsedInjections.map(inj => ({
+            ...inj,
+            dosage: Number(inj.dosage)
+          }));
+
+          const sortedInjections = normalizedInjections.sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());          
 
           // Format the data for display and take only the 3 most recent
           const formattedInjections = sortedInjections
@@ -374,7 +379,7 @@ export default function HomeScreen() {
             .map((injection: InjectionData) => ({
               id: injection.id,
               medication: injection.medicationName,
-              dosage: Number(injection.dosage),
+              dosage: injection.dosage,
             dateDisplay: formatRelativeDateTime(injection.dateTime),
             date: injection.dateTime,
               injectionSite: injection.injectionSite,
@@ -603,7 +608,7 @@ export default function HomeScreen() {
     switch (activeTab) {
       case "home":
         return (
-          <ScrollView className="flex-1">
+          <ScrollView className="flex-1 px-4">
             <View className="mt-4 mb-6">
               <Text className="text-2xl font-bold text-white mb-1">
                 PINN
