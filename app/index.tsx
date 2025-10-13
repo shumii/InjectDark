@@ -359,8 +359,9 @@ export default function HomeScreen() {
     const loadInjections = async () => {
       try {
         setLoading(true);
+        debugger;
         const storedInjections = await AsyncStorage.getItem("injections");
-
+        debugger;
         if (storedInjections) {
           const parsedInjections: InjectionData[] =
             JSON.parse(storedInjections);

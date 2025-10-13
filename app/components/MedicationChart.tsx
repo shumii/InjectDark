@@ -113,6 +113,13 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
       fullDateRange.push(d.toISOString().split("T")[0]);
     }
 
+    // PERFORMANCE FIX: Pre-build a map of date -> injection for O(1) lookup instead of O(N) find()
+    const injectionsByDate: Record<string, typeof injectionData[0]> = {};
+    injectionData.forEach((injection) => {
+      const dateKey = new Date(injection.dateTime).toISOString().split("T")[0];
+      injectionsByDate[dateKey] = injection;
+    });
+
     // Group injections by medication name and calculate daily testosterone levels
     const fullMedicationMap: Record<string, Record<string, number>> = {};
     const allMedications = new Set<string>();
@@ -140,14 +147,12 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
         // Process each day from injection date
         fullDateRange.forEach(date => {
           const currentDate = new Date(date);
-          //currentDate.setHours(23, 59, 59, 999);
           
-          // if injectionData has an injection where injection date matches date then get that injection time
-          var matchingInjectionForDate = injectionData.find(inj => new Date(inj.dateTime).toISOString().split("T")[0] === date);          
+          // PERFORMANCE FIX: Use O(1) map lookup instead of O(N) find()
+          const matchingInjectionForDate = injectionsByDate[date];
 
           if (matchingInjectionForDate){
-            
-            var time = new Date(matchingInjectionForDate.dateTime);
+            const time = new Date(matchingInjectionForDate.dateTime);
             currentDate.setHours(time.getHours(), time.getMinutes(), time.getSeconds(), time.getMilliseconds());  
           }
           else{
@@ -165,22 +170,10 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
 
             // Add this level to any existing level for this day
             fullMedicationMap[medicationName][date] += levelForThisInjection;
-
-            // log if date matches debug date so we can see the contributions of each injection for a date
-
-            
-              // if (date == "2025-09-26"){
-              //   console.log(`Injection: ${injection.medicationName}, Dosage: ${injection.dosage}mg, Minutes since injection: ${minutesDiff.toFixed(1)}, Half-life periods: ${halfLifePeriods.toFixed(2)}, Contribution: ${levelForThisInjection.toFixed(2)}mg`);
-              //   console.log('MinutesDiff was calculated using ' + currentDate.toISOString() + ' - ' + injectionDate.toISOString());
-              // }
           }
         });
       }
     });
-
-    // Add Total T to the medication map
-    // fullMedicationMap['Total T'] = fullTotalTLevels;
-    // allMedications.add('Total T');
 
     return {
       medicationMap: fullMedicationMap,
