@@ -100,13 +100,19 @@ export default function HomeScreen() {
 
   // Utility function to format dosage based on user preference
   const formatDosage = (dosageInMg: number, medicationName: string, concentration?: number) => {
+    // Ensure dosage is a valid number
+    const dosage = Number(dosageInMg);
+    if (isNaN(dosage)) {
+      return '0 mg';
+    }
+    
     if (defaultDosageUnit === 'ml') {
       // Convert mg to ml using concentration
       const medConcentration = concentration || 100; // Default to 100mg/ml if not specified
-      const dosageInMl = dosageInMg / medConcentration;
-      return `${dosageInMl.toFixed(1)} ml (${dosageInMg} mg)`;
+      const dosageInMl = dosage / medConcentration;
+      return `${dosageInMl.toFixed(1)} ml (${dosage} mg)`;
     } else {
-      return `${dosageInMg} mg`;
+      return `${dosage} mg`;
     }
   };
 
@@ -368,7 +374,7 @@ export default function HomeScreen() {
             .map((injection: InjectionData) => ({
               id: injection.id,
               medication: injection.medicationName,
-              dosage: injection.dosage,
+              dosage: Number(injection.dosage),
             dateDisplay: formatRelativeDateTime(injection.dateTime),
             date: injection.dateTime,
               injectionSite: injection.injectionSite,

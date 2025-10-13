@@ -46,4 +46,11 @@ export function normalizeNumberInput(value: string): string {
 export function parseLocalizedNumber(value: string): number {
   const normalized = normalizeNumberInput(value);
   return parseFloat(normalized);
-} 
+}
+
+// Default export to satisfy React component requirements
+export default {
+  getOppositeSite,
+  normalizeNumberInput,
+  parseLocalizedNumber,
+}; 
