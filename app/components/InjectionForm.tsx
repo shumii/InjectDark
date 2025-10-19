@@ -15,7 +15,7 @@ import { Calendar, Clock, Check, ChevronDown, Repeat } from "lucide-react-native
 import DateTimePicker from "@react-native-community/datetimepicker";
 import SatisfactionRating from "./SatisfactionRating";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { normalizeNumberInput, parseLocalizedNumber } from "../utils/injectionUtils";
+import { normalizeNumberInput, parseLocalizedNumber, formatLocalizedNumber } from "../utils/injectionUtils";
 
 
 interface InjectionFormProps {
@@ -264,11 +264,13 @@ const InjectionForm = ({
     if (dosage && !isNaN(normalizedDosage)) {
       if (dosageUnit === 'mg') {
         // Convert from mg to ml
-        setDosage((normalizedDosage / concentration).toFixed(2));
+        const mlValue = normalizedDosage / concentration;
+        setDosage(formatLocalizedNumber(mlValue, 2));
         setDosageUnit('ml');
       } else {
         // Convert from ml to mg
-        setDosage(Math.round(normalizedDosage * concentration).toString());
+        const mgValue = Math.round(normalizedDosage * concentration);
+        setDosage(formatLocalizedNumber(mgValue, 0));
         setDosageUnit('mg');
       }
     } else {
@@ -450,8 +452,19 @@ const InjectionForm = ({
             value={dosage}
               keyboardType="numeric"
             onChangeText={(value)=>{
-                setDosage(value.replace(/[^0-9.]/g, ''));
-            }}            
+                setDosage(value.replace(/[^0-9.,]/g, ''));
+            }}
+            onBlur={() => {
+              // Format to user's locale when they finish editing
+              if (dosage && dosage.trim() !== '') {
+                const parsed = parseLocalizedNumber(dosage);
+                if (!isNaN(parsed)) {
+                  // Determine decimal places based on the value
+                  const decimals = parsed % 1 === 0 ? 0 : 2;
+                  setDosage(formatLocalizedNumber(parsed, decimals));
+                }
+              }
+            }}
           />
             <TouchableOpacity
               className="bg-blue-600 p-3 rounded-r-md flex-row items-center"

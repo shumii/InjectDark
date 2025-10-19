@@ -79,7 +79,11 @@ const InjectionHistory = ({
       // Convert mg to ml using concentration
       const medConcentration = concentration || 100; // Default to 100mg/ml if not specified
       const dosageInMl = dosageInMg / medConcentration;
-      return `${formatLocalizedNumber(dosageInMl, 1)} ml (${formatLocalizedNumber(dosageInMg, 0)} mg)`;
+      
+      // Show 2 decimals if the second decimal place is non-zero, otherwise show 1 decimal
+      const decimals = (Math.round(dosageInMl * 100) % 10) !== 0 ? 2 : 1;
+      
+      return `${formatLocalizedNumber(dosageInMl, decimals)} ml (${formatLocalizedNumber(dosageInMg, 0)} mg)`;
     } else {
       return `${formatLocalizedNumber(dosageInMg, 0)} mg`;
     }

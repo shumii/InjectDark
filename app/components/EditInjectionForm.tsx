@@ -15,7 +15,7 @@ import { Calendar, Clock, Check, ChevronDown, Repeat } from "lucide-react-native
 import DateTimePicker from "@react-native-community/datetimepicker";
 import SatisfactionRating from "./SatisfactionRating";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { normalizeNumberInput, parseLocalizedNumber } from "../utils/injectionUtils";
+import { normalizeNumberInput, parseLocalizedNumber, formatLocalizedNumber } from "../utils/injectionUtils";
 
 interface EditInjectionFormProps {
   onClose: () => void,
@@ -85,7 +85,11 @@ const EditInjectionForm = ({
   const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
   const [showMedicationDropdown, setShowMedicationDropdown] = useState(false);
   const [dosageUnit, setDosageUnit] = useState<'mg' | 'ml'>('mg');
-  const [dosage, setDosage] = useState(injection.dosage.toString());
+  const [dosage, setDosage] = useState(() => {
+    // Format initial dosage with user's locale decimal separator
+    const decimals = injection.dosage % 1 === 0 ? 0 : 2;
+    return formatLocalizedNumber(injection.dosage, decimals);
+  });
   const [dateTime, setDateTime] = useState(new Date(injection.dateTime));
   const [injectionSite, setInjectionSite] = useState(injection.injectionSite);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -109,8 +113,8 @@ const EditInjectionForm = ({
           
           // If preference is ml and we have a medication with concentration, convert the dosage
           if (storedUnit === 'ml' && selectedMedication?.concentration) {
-            const mlValue = (injection.dosage / selectedMedication.concentration).toFixed(2);
-            setDosage(mlValue);
+            const mlValue = injection.dosage / selectedMedication.concentration;
+            setDosage(formatLocalizedNumber(mlValue, 2));
           }
         }
       } catch (error) {
@@ -134,11 +138,13 @@ const EditInjectionForm = ({
     if (dosage && !isNaN(normalizedDosage)) {
       if (dosageUnit === 'mg') {
         // Convert from mg to ml
-        setDosage((normalizedDosage / concentration).toFixed(2));
+        const mlValue = normalizedDosage / concentration;
+        setDosage(formatLocalizedNumber(mlValue, 2));
         setDosageUnit('ml');
       } else {
         // Convert from ml to mg
-        setDosage(Math.round(normalizedDosage * concentration).toString());
+        const mgValue = Math.round(normalizedDosage * concentration);
+        setDosage(formatLocalizedNumber(mgValue, 0));
         setDosageUnit('mg');
       }
     } else {
@@ -318,7 +324,18 @@ const EditInjectionForm = ({
               placeholderTextColor="#9ca3af"
               value={dosage}
               keyboardType="numeric"
-              onChangeText={(value) => setDosage(value.replace(/[^0-9.]/g, ""))}
+              onChangeText={(value) => setDosage(value.replace(/[^0-9.,]/g, ""))}
+              onBlur={() => {
+                // Format to user's locale when they finish editing
+                if (dosage && dosage.trim() !== '') {
+                  const parsed = parseLocalizedNumber(dosage);
+                  if (!isNaN(parsed)) {
+                    // Determine decimal places based on the value
+                    const decimals = parsed % 1 === 0 ? 0 : 2;
+                    setDosage(formatLocalizedNumber(parsed, decimals));
+                  }
+                }
+              }}
             />
             <TouchableOpacity
               className="bg-blue-600 p-3 rounded-r-md flex-row items-center"
