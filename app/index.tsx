@@ -21,7 +21,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
-import { getOppositeSite } from './utils/injectionUtils';
+import { getOppositeSite, parseLocalizedNumber, formatLocalizedNumber } from './utils/injectionUtils';
 
 // Import components
 import InjectionForm from "./components/InjectionForm";
@@ -103,18 +103,25 @@ export default function HomeScreen() {
 
   // Utility function to format dosage based on user preference
   const formatDosage = (dosageInMg: number, medicationName: string, concentration?: number) => {
-    // Dosage is already converted to number during load, no need to convert again
-    if (isNaN(dosageInMg)) {
+    // Ensure dosage is a valid number, handling regional decimal formats
+    let dosage: number;
+    if (typeof dosageInMg === 'string') {
+      dosage = parseLocalizedNumber(dosageInMg);
+    } else {
+      dosage = Number(dosageInMg);
+    }
+    
+    if (isNaN(dosage)) {
       return '0 mg';
     }
     
     if (defaultDosageUnit === 'ml') {
       // Convert mg to ml using concentration
       const medConcentration = concentration || 100; // Default to 100mg/ml if not specified
-      const dosageInMl = dosageInMg / medConcentration;
-      return `${dosageInMl.toFixed(1)} ml (${dosageInMg} mg)`;
+      const dosageInMl = dosage / medConcentration;
+      return `${formatLocalizedNumber(dosageInMl, 1)} ml (${formatLocalizedNumber(dosage, 0)} mg)`;
     } else {
-      return `${dosageInMg} mg`;
+      return `${formatLocalizedNumber(dosage, 0)} mg`;
     }
   };
 

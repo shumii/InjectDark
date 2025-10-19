@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import InjectionForm from "./InjectionForm";
 import EditInjectionForm from "./EditInjectionForm";
-import { getOppositeSite } from '../utils/injectionUtils';
+import { getOppositeSite, formatLocalizedNumber } from '../utils/injectionUtils';
 
 interface Injection {
   id: string;
@@ -78,9 +78,9 @@ const InjectionHistory = ({
       // Convert mg to ml using concentration
       const medConcentration = concentration || 100; // Default to 100mg/ml if not specified
       const dosageInMl = dosageInMg / medConcentration;
-      return `${dosageInMl.toFixed(1)} ml (${dosageInMg} mg)`;
+      return `${formatLocalizedNumber(dosageInMl, 1)} ml (${formatLocalizedNumber(dosageInMg, 0)} mg)`;
     } else {
-      return `${dosageInMg} mg`;
+      return `${formatLocalizedNumber(dosageInMg, 0)} mg`;
     }
   };
   const [editingInjection, setEditingInjection] = useState<Injection | null>(null);

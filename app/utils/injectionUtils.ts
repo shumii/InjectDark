@@ -48,9 +48,36 @@ export function parseLocalizedNumber(value: string): number {
   return parseFloat(normalized);
 }
 
+/**
+ * Formats a number to the user's regional format
+ * Detects if the user uses comma or period as decimal separator
+ * @param value - The number to format
+ * @param decimals - Number of decimal places (default: 1)
+ * @returns Formatted string with appropriate decimal separator
+ */
+export function formatLocalizedNumber(value: number, decimals: number = 1): string {
+  if (isNaN(value)) return '0';
+  
+  // Detect user's decimal separator by checking their locale
+  const testNumber = 1.1;
+  const localizedTest = testNumber.toLocaleString();
+  const usesComma = localizedTest.includes(',');
+  
+  // Format the number with the specified decimals
+  const formatted = value.toFixed(decimals);
+  
+  // Replace period with comma if user's locale uses comma
+  if (usesComma) {
+    return formatted.replace('.', ',');
+  }
+  
+  return formatted;
+}
+
 // Default export to satisfy React component requirements
 export default {
   getOppositeSite,
   normalizeNumberInput,
   parseLocalizedNumber,
+  formatLocalizedNumber,
 }; 
