@@ -591,8 +591,8 @@ const InjectionHistory = ({
     setSearchQuery("");
   };
 
-  // Render header component - using useCallback for function stability
-  const renderHeader = useCallback(() => (
+  // Memoize header to prevent TextInput from losing focus
+  const renderHeader = useMemo(() => (
     <View className="mt-5">
       <Text className="text-white text-2xl font-bold mb-3">Injection History</Text>
 
@@ -702,7 +702,7 @@ const InjectionHistory = ({
         </View>
       ) : filteredInjections.length === 0 ? (
         <View className="flex-1">
-          {renderHeader()}
+          {renderHeader}
           <View className="flex-1 justify-center items-center px-4">
             {searchQuery !== "" ? (
               <>
