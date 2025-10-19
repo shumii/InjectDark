@@ -59,6 +59,8 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
   const [minTestosterone, setMinTestosterone] = useState(0);
   const [averageTestosterone, setAverageTestosterone] = useState(0);
   const [hoveredPoint, setHoveredPoint] = useState<any>(null);
+  const touchStartTime = useRef<number>(0);
+  const hideTooltipTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const screenWidth = Dimensions.get("window").width - 32; // Account for padding
   const chartWidth = selectedPeriod === 'year' ? screenWidth * 1.6 : screenWidth;
 
@@ -75,6 +77,15 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
       }
     };
     loadSavedPeriod();
+  }, []);
+
+  // Cleanup tooltip timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hideTooltipTimeout.current) {
+        clearTimeout(hideTooltipTimeout.current);
+      }
+    };
   }, []);
 
   // Save period preference when it changes
@@ -452,18 +463,43 @@ const MedicationChart = ({ injectionData = [] }: MedicationChartProps) => {
 
   // Touch handlers for better iOS compatibility with fast movements
   const handleTouchStart = (evt: any) => {
+    // Clear any existing timeout
+    if (hideTooltipTimeout.current) {
+      clearTimeout(hideTooltipTimeout.current);
+      hideTooltipTimeout.current = null;
+    }
+    
+    // Record touch start time to detect tap vs drag
+    touchStartTime.current = Date.now();
+    
     const x = evt.nativeEvent.locationX || evt.nativeEvent.pageX - 35;
     updateHoveredPoint(x);
   };
 
   const handleTouchMove = (evt: any) => {
+    // Clear any existing timeout when moving
+    if (hideTooltipTimeout.current) {
+      clearTimeout(hideTooltipTimeout.current);
+      hideTooltipTimeout.current = null;
+    }
+    
     const x = evt.nativeEvent.locationX || evt.nativeEvent.pageX - 35;
     updateHoveredPoint(x);
   };
 
   const handleTouchEnd = () => {
-    // Keep tooltip visible briefly after release for better UX on iOS
-    setTimeout(() => setHoveredPoint(null), 300);
+    // Calculate touch duration to determine if it was a tap or drag
+    const touchDuration = Date.now() - touchStartTime.current;
+    const isTap = touchDuration < 200; // Less than 200ms is considered a tap
+    
+    // For taps, show tooltip for longer (2.5 seconds)
+    // For drags, hide quickly (300ms)
+    const hideDelay = isTap ? 2500 : 300;
+    
+    hideTooltipTimeout.current = setTimeout(() => {
+      setHoveredPoint(null);
+      hideTooltipTimeout.current = null;
+    }, hideDelay);
   };
 
   // Helper function to update hovered point

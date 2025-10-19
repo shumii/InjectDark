@@ -44,7 +44,8 @@ const StatisticsDashboard = () => {
   const [hoveredPoint, setHoveredPoint] = useState<any>(null);
   const screenWidth = Dimensions.get("window").width - 32;
   const chartWidth = screenWidth;
-  const timeoutRef = useRef<number | null>(null);
+  const touchStartTime = useRef<number>(0);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const loadInjections = async () => {
@@ -345,22 +346,43 @@ const StatisticsDashboard = () => {
 
   // Touch handlers for better iOS compatibility with fast movements
   const handleTouchStart = (evt: any) => {
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    
+    // Record touch start time to detect tap vs drag
+    touchStartTime.current = Date.now();
+    
     const x = evt.nativeEvent.locationX || evt.nativeEvent.pageX - 35;
     updateHoveredPoint(x);
   };
 
   const handleTouchMove = (evt: any) => {
+    // Clear any existing timeout when moving
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    
     const x = evt.nativeEvent.locationX || evt.nativeEvent.pageX - 35;
     updateHoveredPoint(x);
   };
 
   const handleTouchEnd = () => {
-    // Clear any existing timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    // Keep tooltip visible briefly after release for better UX on iOS
-    timeoutRef.current = setTimeout(() => setHoveredPoint(null), 300);
+    // Calculate touch duration to determine if it was a tap or drag
+    const touchDuration = Date.now() - touchStartTime.current;
+    const isTap = touchDuration < 200; // Less than 200ms is considered a tap
+    
+    // For taps, show tooltip for longer (2.5 seconds)
+    // For drags, hide quickly (300ms)
+    const hideDelay = isTap ? 2500 : 300;
+    
+    timeoutRef.current = setTimeout(() => {
+      setHoveredPoint(null);
+      timeoutRef.current = null;
+    }, hideDelay);
   };
 
   // Helper function to update hovered point
