@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   View,
   Text,
@@ -52,7 +52,8 @@ const InjectionHistory = ({
 }: InjectionHistoryProps) => {
   const [injections, setInjections] = useState<Injection[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [tempSearchQuery, setTempSearchQuery] = useState(""); // What user is typing
+  const [searchQuery, setSearchQuery] = useState(""); // Actual search filter applied
   const [searchFocused, setSearchFocused] = useState(false);
   const flatListRef = useRef<FlatList<Injection>>(null);
   const [defaultDosageUnit, setDefaultDosageUnit] = useState<'mg' | 'ml'>('mg');
@@ -119,17 +120,21 @@ const InjectionHistory = ({
     loadInjections();
   }, [propInjections]);
 
-  const filteredInjections = injections
-    .filter(injection => {
-      const query = searchQuery.toLowerCase();
-      return (
-        injection.medicationName.toLowerCase().includes(query) ||
-        injection.injectionSite?.toLowerCase().includes(query) ||
-        injection.dosage.toString().toLowerCase().includes(query) ||
-        injection.notes?.toLowerCase().includes(query)
-      );
-    })
-    .sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
+  // Memoize filtered injections to prevent unnecessary recalculations
+  const filteredInjections = useMemo(() => 
+    injections
+      .filter(injection => {
+        const query = searchQuery.toLowerCase();
+        return (
+          injection.medicationName.toLowerCase().includes(query) ||
+          injection.injectionSite?.toLowerCase().includes(query) ||
+          injection.dosage.toString().toLowerCase().includes(query) ||
+          injection.notes?.toLowerCase().includes(query)
+        );
+      })
+      .sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()),
+    [injections, searchQuery]
+  );
 
 
 
@@ -636,7 +641,19 @@ const InjectionHistory = ({
     );
   }
 
-  const renderHeader = () => (
+  // Handler for when user submits search (presses return/search button)
+  const handleSearchSubmit = () => {
+    setSearchQuery(tempSearchQuery);
+  };
+
+  // Handler to clear search
+  const handleClearSearch = () => {
+    setTempSearchQuery("");
+    setSearchQuery("");
+  };
+
+  // Memoize header to prevent TextInput from losing focus
+  const renderHeader = useMemo(() => (
     <View className="mt-5">
       <Text className="text-white text-2xl font-bold mb-3">Injection History</Text>
 
@@ -646,13 +663,16 @@ const InjectionHistory = ({
           className="flex-1 py-3 px-2 text-white"
           placeholder="Search medications, sites, dosages..."
           placeholderTextColor="#6B7280"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
+          value={tempSearchQuery}
+          onChangeText={setTempSearchQuery}
           onFocus={() => setSearchFocused(true)}
           onBlur={() => setSearchFocused(false)}
+          returnKeyType="search"
+          onSubmitEditing={handleSearchSubmit}
+          enablesReturnKeyAutomatically={true}
         />
-        {searchQuery !== "" && (
-          <TouchableOpacity onPress={() => setSearchQuery("")}>
+        {tempSearchQuery !== "" && (
+          <TouchableOpacity onPress={handleClearSearch}>
             <Ionicons name="close-circle" size={18} color="#6B7280" />
           </TouchableOpacity>
         )}
@@ -671,7 +691,7 @@ const InjectionHistory = ({
         </View>
       </TouchableOpacity>
     </View>
-  );
+  ), [tempSearchQuery, searchFocused]);
 
   return (
     <View className="flex-1 bg-gray-900">
@@ -682,7 +702,7 @@ const InjectionHistory = ({
         </View>
       ) : filteredInjections.length === 0 ? (
         <View className="flex-1">
-          {renderHeader()}
+          {renderHeader}
           <View className="flex-1 justify-center items-center px-4">
             {searchQuery !== "" ? (
               <>
