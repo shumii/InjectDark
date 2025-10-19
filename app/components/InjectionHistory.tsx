@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -580,6 +580,58 @@ const InjectionHistory = ({
     );
   };
 
+  // Handler for when user submits search (presses return/search button)
+  const handleSearchSubmit = () => {
+    setSearchQuery(tempSearchQuery);
+  };
+
+  // Handler to clear search
+  const handleClearSearch = () => {
+    setTempSearchQuery("");
+    setSearchQuery("");
+  };
+
+  // Render header component - using useCallback for function stability
+  const renderHeader = useCallback(() => (
+    <View className="mt-5">
+      <Text className="text-white text-2xl font-bold mb-3">Injection History</Text>
+
+      <View className={`mb-4 bg-gray-800 rounded-lg flex-row items-center px-3 ${searchFocused ? 'border border-blue-500' : ''}`}>
+        <Search size={18} color="#6B7280" />
+        <TextInput
+          className="flex-1 py-3 px-2 text-white"
+          placeholder="Search medications, sites, dosages..."
+          placeholderTextColor="#6B7280"
+          value={tempSearchQuery}
+          onChangeText={setTempSearchQuery}
+          onFocus={() => setSearchFocused(true)}
+          onBlur={() => setSearchFocused(false)}
+          returnKeyType="search"
+          onSubmitEditing={handleSearchSubmit}
+          enablesReturnKeyAutomatically={true}
+        />
+        {tempSearchQuery !== "" && (
+          <TouchableOpacity onPress={handleClearSearch}>
+            <Ionicons name="close-circle" size={18} color="#6B7280" />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Add Injection Button - match HomeScreen style */}
+      <TouchableOpacity
+        onPress={() => setShowAddForm(true)}
+        className="mb-6 rounded-md bg-blue-500"
+      >
+        <View style={{ flexDirection: 'row' }} className="p-4">
+          <Plus size={24} color="white" />
+          <Text className="text-white text-lg font-semibold ml-2">
+            Add Injection
+          </Text>
+        </View>
+      </TouchableOpacity>
+    </View>
+  ), [tempSearchQuery, searchFocused]);
+
   // If showing edit form, render it full screen
   if (showEditForm && editingInjection) {
     return (
@@ -641,58 +693,6 @@ const InjectionHistory = ({
     );
   }
 
-  // Handler for when user submits search (presses return/search button)
-  const handleSearchSubmit = () => {
-    setSearchQuery(tempSearchQuery);
-  };
-
-  // Handler to clear search
-  const handleClearSearch = () => {
-    setTempSearchQuery("");
-    setSearchQuery("");
-  };
-
-  // Memoize header to prevent TextInput from losing focus
-  const renderHeader = useMemo(() => (
-    <View className="mt-5">
-      <Text className="text-white text-2xl font-bold mb-3">Injection History</Text>
-
-      <View className={`mb-4 bg-gray-800 rounded-lg flex-row items-center px-3 ${searchFocused ? 'border border-blue-500' : ''}`}>
-        <Search size={18} color="#6B7280" />
-        <TextInput
-          className="flex-1 py-3 px-2 text-white"
-          placeholder="Search medications, sites, dosages..."
-          placeholderTextColor="#6B7280"
-          value={tempSearchQuery}
-          onChangeText={setTempSearchQuery}
-          onFocus={() => setSearchFocused(true)}
-          onBlur={() => setSearchFocused(false)}
-          returnKeyType="search"
-          onSubmitEditing={handleSearchSubmit}
-          enablesReturnKeyAutomatically={true}
-        />
-        {tempSearchQuery !== "" && (
-          <TouchableOpacity onPress={handleClearSearch}>
-            <Ionicons name="close-circle" size={18} color="#6B7280" />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Add Injection Button - match HomeScreen style */}
-      <TouchableOpacity
-        onPress={() => setShowAddForm(true)}
-        className="mb-6 rounded-md bg-blue-500"
-      >
-        <View style={{ flexDirection: 'row' }} className="p-4">
-          <Plus size={24} color="white" />
-          <Text className="text-white text-lg font-semibold ml-2">
-            Add Injection
-          </Text>
-        </View>
-      </TouchableOpacity>
-    </View>
-  ), [tempSearchQuery, searchFocused]);
-
   return (
     <View className="flex-1 bg-gray-900">
       {loading ? (
@@ -702,7 +702,7 @@ const InjectionHistory = ({
         </View>
       ) : filteredInjections.length === 0 ? (
         <View className="flex-1">
-          {renderHeader}
+          {renderHeader()}
           <View className="flex-1 justify-center items-center px-4">
             {searchQuery !== "" ? (
               <>
