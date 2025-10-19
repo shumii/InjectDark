@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   FlatList,
   Platform,
   KeyboardAvoidingView,
+  Keyboard,
 } from "react-native";
 import { Calendar, Clock, Check, ChevronDown, Repeat } from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -181,6 +182,7 @@ const InjectionForm = ({
   const [selectedSidesRating, setSelectedSidesRating] = useState(0);
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const scrollViewRef = useRef<ScrollView>(null);
 
   if (!isOpen) return null;
 
@@ -361,12 +363,14 @@ const InjectionForm = ({
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       className="flex-1"
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
     >
       <ScrollView 
+        ref={scrollViewRef}
         className="bg-gray-900 p-4"
-        contentContainerStyle={{ paddingBottom: 50 }}
+        contentContainerStyle={{ paddingBottom: 400 }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <View className="bg-gray-800 rounded-lg p-5 mb-5">
         <Text className="text-2xl font-bold text-white mb-6">
@@ -613,7 +617,14 @@ const InjectionForm = ({
           <SatisfactionRating onRatingChange={handleSidesRatingChange}></SatisfactionRating>
         </View>
 
-        <View className="mb-7">
+        <View 
+          className="mb-7"
+          onLayout={(event) => {
+            const layout = event.nativeEvent.layout;
+            // Store the Y position of the notes field
+            (scrollViewRef.current as any)._notesY = layout.y;
+          }}
+        >
         <Text className="text-white text-base mb-2">Notes</Text>
           <TextInput 
             multiline={true} 
@@ -621,6 +632,16 @@ const InjectionForm = ({
             style={{height:80}}
             value={notes}
             onChangeText={setNotes}
+            onFocus={() => {
+              setTimeout(() => {
+                const notesY = (scrollViewRef.current as any)?._notesY || 0;
+                // Scroll to show notes field with some padding from top
+                scrollViewRef.current?.scrollTo({ 
+                  y: Math.max(0, notesY - 100), 
+                  animated: true 
+                });
+              }, 100);
+            }}
             placeholder="Add any notes about this injection..."
             placeholderTextColor="#6B7280"
           ></TextInput>
