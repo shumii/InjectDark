@@ -1,9 +1,8 @@
-import React, { useMemo, useEffect, useState, useRef, useCallback } from "react";
+import React, { useMemo, useEffect, useState, useRef } from "react";
 import { View, Text, Dimensions, ScrollView, PanResponder, TouchableWithoutFeedback } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { VictoryChart, VictoryLine, VictoryAxis, VictoryTheme, VictoryTooltip, VictoryScatter, VictoryBar, VictoryPie } from "victory-native";
 import { getOppositeSite } from '../utils/injectionUtils';
-import { useFocusEffect } from '@react-navigation/native';
 
 interface StatisticsDashboardProps {
   injectionData?: Array<{
@@ -48,43 +47,46 @@ const StatisticsDashboard = () => {
   const touchStartTime = useRef<number>(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Load data whenever the screen comes into focus
-  useFocusEffect(
-    useCallback(() => {
-      const loadInjections = async () => {
-        try {
-          const storedInjections = await AsyncStorage.getItem("injections");
-          if (storedInjections) {
-            const parsed = JSON.parse(storedInjections);
-            
-            // Clean up any data with missing or undefined site values
-            const cleanedData = parsed.map((injection: any) => {
-              if (!injection.injectionSite) {
-                // If injectionSite is missing, set a default site
-                return {
-                  ...injection,
-                  injectionSite: 'Unknown Site'
-                };
-              }
-              return injection;
-            });
-            
-            // If we made changes, save the cleaned data back to storage
-            if (JSON.stringify(cleanedData) !== storedInjections) {
-              await AsyncStorage.setItem("injections", JSON.stringify(cleanedData));
+  // Load data on mount
+  useEffect(() => {
+    const loadInjections = async () => {
+      try {
+        const storedInjections = await AsyncStorage.getItem("injections");
+        if (storedInjections) {
+          const parsed = JSON.parse(storedInjections);
+          
+          // Clean up any data with missing or undefined site values
+          const cleanedData = parsed.map((injection: any) => {
+            if (!injection.injectionSite) {
+              // If injectionSite is missing, set a default site
+              return {
+                ...injection,
+                injectionSite: 'Unknown Site'
+              };
             }
-            
-            setData(cleanedData);
-          } else {
-            setData([]);
+            return injection;
+          });
+          
+          // Sort by date descending (newest first) to ensure data[0] is most recent
+          const sortedData = cleanedData.sort((a: any, b: any) => 
+            new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()
+          );
+          
+          // If we made changes, save the cleaned data back to storage
+          if (JSON.stringify(cleanedData) !== storedInjections) {
+            await AsyncStorage.setItem("injections", JSON.stringify(cleanedData));
           }
-        } catch (e) {
+          
+          setData(sortedData);
+        } else {
           setData([]);
         }
-      };
-      loadInjections();
-    }, [])
-  );
+      } catch (e) {
+        setData([]);
+      }
+    };
+    loadInjections();
+  }, []);
 
   // Cleanup timeout on unmount
   useEffect(() => {

@@ -760,7 +760,7 @@ export default function HomeScreen() {
           }}
         />;
       case "stats":
-        return <StatisticsDashboard />;
+        return <StatisticsDashboard key={activeTab} />;
       case "settings":
         return (
           <ScrollView className="flex-1 px-4">
