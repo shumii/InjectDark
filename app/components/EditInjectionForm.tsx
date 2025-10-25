@@ -47,6 +47,43 @@ interface Medication {
   concentration: number;
 }
 
+// Placeholder component for BodyDiagram until the actual component is implemented
+const PlaceholderBodyDiagram = ({
+  onSelectSite = (site: string) => { },
+  selectedSite = "",
+}: {
+  onSelectSite: (site: string) => void;
+  selectedSite: string;
+}) => {
+  const sites = [
+    "Left Delt",
+    "Right Delt",
+    "Left Arm",
+    "Right Arm",
+    "Left Glute",
+    "Right Glute",
+    "Left Thigh",
+    "Right Thigh",
+    "Abdomen",
+  ];
+
+  return (
+    <View className="w-full bg-gray-700 p-4 rounded-lg">
+      <View className="flex-row flex-wrap justify-center">
+        {sites.map((site) => (
+          <TouchableOpacity
+            key={site}
+            className={`m-2 p-3 rounded-md ${selectedSite === site ? "bg-blue-600" : "bg-gray-600"}`}
+            onPress={() => onSelectSite(site)}
+          >
+            <Text className="text-white">{site}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+};
+
 const EditInjectionForm = ({
   onClose,
   onSave,
@@ -54,6 +91,28 @@ const EditInjectionForm = ({
 }: EditInjectionFormProps) => {
   const [medications, setMedications] = useState<Medication[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [medicationName, setMedicationName] = useState(injection.medicationName);
+  const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
+  const [showMedicationDropdown, setShowMedicationDropdown] = useState(false);
+  const [dosageUnit, setDosageUnit] = useState<'mg' | 'ml'>('mg');
+  const [dosage, setDosage] = useState(() => {
+    // Format initial dosage with user's locale decimal separator
+    const decimals = injection.dosage % 1 === 0 ? 0 : 2;
+    return formatLocalizedNumber(injection.dosage, decimals);
+  });
+  const [dateTime, setDateTime] = useState(new Date(injection.dateTime));
+  const [injectionSite, setInjectionSite] = useState(injection.injectionSite);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [selectedMoodRating, setSelectedMoodRating] = useState(injection.moodRating);
+  const [selectedSleepRating, setSelectedSleepRating] = useState(injection.sleepRating);
+  const [selectedLibidoRating, setSelectedLibidoRating] = useState(injection.libidoRating);
+  const [selectedEnergyRating, setSelectedEnergyRating] = useState(injection.energyRating);
+  const [selectedSidesRating, setSelectedSidesRating] = useState(injection.sidesRating);
+  const [notes, setNotes] = useState(injection.notes);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Load medications from AsyncStorage
   useEffect(() => {
@@ -80,28 +139,6 @@ const EditInjectionForm = ({
       setSelectedMedication(found || null);
     }
   }, [medications, injection.medicationName, selectedMedication]);
-
-  const [medicationName, setMedicationName] = useState(injection.medicationName);
-  const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
-  const [showMedicationDropdown, setShowMedicationDropdown] = useState(false);
-  const [dosageUnit, setDosageUnit] = useState<'mg' | 'ml'>('mg');
-  const [dosage, setDosage] = useState(() => {
-    // Format initial dosage with user's locale decimal separator
-    const decimals = injection.dosage % 1 === 0 ? 0 : 2;
-    return formatLocalizedNumber(injection.dosage, decimals);
-  });
-  const [dateTime, setDateTime] = useState(new Date(injection.dateTime));
-  const [injectionSite, setInjectionSite] = useState(injection.injectionSite);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [selectedMoodRating, setSelectedMoodRating] = useState(injection.moodRating);
-  const [selectedSleepRating, setSelectedSleepRating] = useState(injection.sleepRating);
-  const [selectedLibidoRating, setSelectedLibidoRating] = useState(injection.libidoRating);
-  const [selectedEnergyRating, setSelectedEnergyRating] = useState(injection.energyRating);
-  const [selectedSidesRating, setSelectedSidesRating] = useState(injection.sidesRating);
-  const [notes, setNotes] = useState(injection.notes);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const scrollViewRef = useRef<ScrollView>(null);
 
   // Load dosage unit preference and convert dosage if needed
   useEffect(() => {
@@ -442,13 +479,12 @@ const EditInjectionForm = ({
         {/* Injection Site */}
         <View className="mb-6">
           <Text className="text-white text-base mb-2">Injection Site</Text>
-          <TextInput
-            className="bg-gray-700 text-white p-3 rounded-md"
-            placeholder="Enter injection site"
-            placeholderTextColor="#9ca3af"
-            value={injectionSite}
-            onChangeText={setInjectionSite}
-          />
+          <View className="items-center">
+            <PlaceholderBodyDiagram
+              onSelectSite={(site) => setInjectionSite(site)}
+              selectedSite={injectionSite}
+            />
+          </View>
           {errors.injectionSite && (
             <Text className="text-red-500 mt-1">{errors.injectionSite}</Text>
           )}
