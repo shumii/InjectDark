@@ -589,11 +589,22 @@ const InjectionHistory = ({
     setSearchQuery(tempSearchQuery);
   };
 
+  // Handler for search text changes
+  const handleSearchTextChange = useCallback((text: string) => {
+    setTempSearchQuery(text);
+    // If search field becomes empty, reload data and clear search
+    if (text === "") {
+      setSearchQuery("");
+      loadInjections();
+    }
+  }, []);
+
   // Handler to clear search
-  const handleClearSearch = () => {
+  const handleClearSearch = useCallback(() => {
     setTempSearchQuery("");
     setSearchQuery("");
-  };
+    loadInjections(); // Reload data when search is cleared
+  }, []);
 
   // Memoize header to prevent TextInput from losing focus
   const renderHeader = useMemo(() => (
@@ -607,7 +618,7 @@ const InjectionHistory = ({
           placeholder="Search medications, sites, dosages..."
           placeholderTextColor="#6B7280"
           value={tempSearchQuery}
-          onChangeText={setTempSearchQuery}
+          onChangeText={handleSearchTextChange}
           onFocus={() => setSearchFocused(true)}
           onBlur={() => setSearchFocused(false)}
           returnKeyType="search"
@@ -634,7 +645,7 @@ const InjectionHistory = ({
         </View>
       </TouchableOpacity>
     </View>
-  ), [tempSearchQuery, searchFocused]);
+  ), [tempSearchQuery, searchFocused, handleSearchTextChange, handleClearSearch]);
 
   // If showing edit form, render it full screen
   if (showEditForm && editingInjection) {
@@ -698,7 +709,7 @@ const InjectionHistory = ({
   }
 
   return (
-    <View className="flex-1 bg-gray-900">
+    <View className="flex-1 bg-gray-900 px-4">
       {loading ? (
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#60a5fa" />
